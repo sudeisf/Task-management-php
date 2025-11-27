@@ -17,8 +17,9 @@ switch ($action) {
     // REGISTER USER
     // -------------------------------------------------
     case 'register':
-        $fullName = trim($_POST['full_name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
+        // Sanitize inputs
+        $fullName = htmlspecialchars(trim($_POST['full_name'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'] ?? '';
         $confirm = $_POST['confirm_password'] ?? '';
 
@@ -41,6 +42,30 @@ switch ($action) {
             exit;
         }
 
+        // Password strength validation
+        $passwordErrors = [];
+        if (strlen($password) < 8) {
+            $passwordErrors[] = "at least 8 characters";
+        }
+        if (!preg_match('/[A-Z]/', $password)) {
+            $passwordErrors[] = "one uppercase letter";
+        }
+        if (!preg_match('/[a-z]/', $password)) {
+            $passwordErrors[] = "one lowercase letter";
+        }
+        if (!preg_match('/[0-9]/', $password)) {
+            $passwordErrors[] = "one number";
+        }
+        if (!preg_match('/[^a-zA-Z0-9]/', $password)) {
+            $passwordErrors[] = "one special character";
+        }
+
+        if (!empty($passwordErrors)) {
+            $_SESSION['error'] = "Password must contain " . implode(', ', $passwordErrors) . ".";
+            header("Location: ../views/auth/register.php");
+            exit;
+        }
+
         // Create user
         if ($userModel->create($fullName, $email, $password)) {
             $_SESSION['success'] = "Registration successful! You can now log in.";
@@ -55,7 +80,8 @@ switch ($action) {
     // LOGIN USER
     // -------------------------------------------------
     case 'login':
-        $email = trim($_POST['email'] ?? '');
+        // Sanitize inputs
+        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'] ?? '';
 
         if (!$email || !$password) {

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Account</title>
+    <title>Set New Password</title>
 
-    <!-- Bootstrap -->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Google Fonts: Rubik for headings, Inter for body -->
@@ -18,8 +18,8 @@
             background: #f5f6fa;
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
-        .register-card {
-            max-width: 450px;
+        .auth-card {
+            max-width: 430px;
             margin: 60px auto;
             border-radius: 12px;
             padding: 30px;
@@ -38,8 +38,11 @@
             color: #fff;
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
         }
+        .helper-text {
+            font-size: 0.85rem;
+        }
         @media (max-width: 576px) {
-            .register-card {
+            .auth-card {
                 margin: 30px 15px;
                 padding: 20px;
             }
@@ -49,57 +52,34 @@
 
 <body>
 
-<div class=" register-card">
+<div class=" auth-card">
+    <h3 class="mb-3">Set New Password</h3>
+    <p class="text-muted helper-text">Create a strong new password for your account.</p>
 
-    <h3 class="text-left mb-3">Create an Account</h3>
-    <p class="text-left text-muted">Join us and start managing your tasks efficiently.</p>
+    <!-- New Password Form -->
+    <form action="../../controllers/AuthController.php?action=reset" method="POST">
+        <!-- If you use tokens, include a hidden token field here -->
+        <!-- <input type="hidden" name="token" value="<?= htmlspecialchars($_GET['token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"> -->
 
-    <!-- Register Form -->
-    <form action="../../controllers/AuthController.php?action=register" method="POST">
-
-        <!-- Full Name -->
+        <!-- New Password -->
         <div class="mb-3">
-            <label class="form-label">Full Name</label>
-            <input 
-                type="text" 
-                name="full_name" 
-                class="form-control" 
-                placeholder="Your full name"
-                required
-            >
-        </div>
-
-        <!-- Email -->
-        <div class="mb-3">
-            <label class="form-label">Email Address</label>
-            <input 
-                type="email" 
-                name="email" 
-                class="form-control" 
-                placeholder="name@example.com"
-                required
-            >
-        </div>
-
-        <!-- Password -->
-        <div class="mb-3">
-            <label class="form-label">Password</label>
-            <input 
-                type="password" 
-                name="password" 
-                class="form-control"
+            <label class="form-label">New Password</label>
+            <input
+                type="password"
+                name="password"
+                class="form-control text-left"
                 placeholder="••••••••••"
                 required
             >
         </div>
 
-        <!-- Confirm Password -->
+        <!-- Confirm New Password -->
         <div class="mb-3">
-            <label class="form-label">Confirm Password</label>
-            <input 
-                type="password" 
-                name="confirm_password" 
-                class="form-control"
+            <label class="form-label">Confirm New Password</label>
+            <input
+                type="password"
+                name="confirm_password"
+                class="form-control text-left"
                 placeholder="••••••••••"
                 required
             >
@@ -107,16 +87,15 @@
 
         <!-- Submit -->
         <button type="submit" class="btn btn-black-shadow w-100 mt-2">
-            Register
+            Update password
         </button>
 
-        <!-- Login Link -->
+        <!-- Back to login -->
         <div class="text-center mt-3">
-            <small>Already have an account?
-                <a href="login.php"> Login</a>
+            <small>Remembered your password?
+                <a href="login.php"> Back to login</a>
             </small>
         </div>
-
     </form>
 </div>
 
