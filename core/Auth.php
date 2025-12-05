@@ -8,7 +8,7 @@ class Auth
     {
         Session::start();
         Session::set("user_id", $user['id']);
-        Session::set("user_name", $user['name']);
+        Session::set("user_name", $user['full_name']); 
     }
 
     public static function logout()

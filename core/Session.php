@@ -4,7 +4,7 @@ class Session
 {
     public static function start()
     {
-        if (session_status() == PHP_SESSION_NONE) {
+        if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
     }
@@ -21,7 +21,12 @@ class Session
 
     public static function destroy()
     {
+        session_unset();
         session_destroy();
-        $_SESSION = [];
+    }
+
+    public static function remove($key)
+    {
+        unset($_SESSION[$key]);
     }
 }

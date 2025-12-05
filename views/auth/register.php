@@ -1,3 +1,4 @@
+<?php session_start(); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,8 +55,26 @@
     <h3 class="text-left mb-3">Create an Account</h3>
     <p class="text-left text-muted">Join us and start managing your tasks efficiently.</p>
 
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger">
+            <?php 
+                echo $_SESSION['error']; 
+                unset($_SESSION['error']);
+            ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success">
+            <?php 
+                echo $_SESSION['success']; 
+                unset($_SESSION['success']);
+            ?>
+        </div>
+    <?php endif; ?>
+
     <!-- Register Form -->
-    <form action="../../controllers/AuthController.php?action=register" method="POST">
+    <form action="../../controller/AuthController.php?action=register" method="POST">
 
         <!-- Full Name -->
         <div class="mb-3">

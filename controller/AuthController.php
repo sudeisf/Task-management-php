@@ -4,7 +4,6 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../core/Session.php';
 require_once __DIR__ . '/../core/Auth.php';
 
-// Start session
 Session::start();
 
 $action = $_GET['action'] ?? '';
@@ -13,17 +12,14 @@ $userModel = new User($conn);
 
 switch ($action) {
 
-    // -------------------------------------------------
-    // REGISTER USER
-    // -------------------------------------------------
+    // ---------------- REGISTER ----------------
     case 'register':
-        // Sanitize inputs
         $fullName = htmlspecialchars(trim($_POST['full_name'] ?? ''), ENT_QUOTES, 'UTF-8');
         $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'] ?? '';
         $confirm = $_POST['confirm_password'] ?? '';
 
-        // Basic validation
+        // Validate
         if (!$fullName || !$email || !$password || !$confirm) {
             $_SESSION['error'] = "All fields are required.";
             header("Location: ../views/auth/register.php");
@@ -42,23 +38,13 @@ switch ($action) {
             exit;
         }
 
-        // Password strength validation
+        // Password strength
         $passwordErrors = [];
-        if (strlen($password) < 8) {
-            $passwordErrors[] = "at least 8 characters";
-        }
-        if (!preg_match('/[A-Z]/', $password)) {
-            $passwordErrors[] = "one uppercase letter";
-        }
-        if (!preg_match('/[a-z]/', $password)) {
-            $passwordErrors[] = "one lowercase letter";
-        }
-        if (!preg_match('/[0-9]/', $password)) {
-            $passwordErrors[] = "one number";
-        }
-        if (!preg_match('/[^a-zA-Z0-9]/', $password)) {
-            $passwordErrors[] = "one special character";
-        }
+        if (strlen($password) < 8) $passwordErrors[] = "at least 8 characters";
+        if (!preg_match('/[A-Z]/', $password)) $passwordErrors[] = "one uppercase letter";
+        if (!preg_match('/[a-z]/', $password)) $passwordErrors[] = "one lowercase letter";
+        if (!preg_match('/[0-9]/', $password)) $passwordErrors[] = "one number";
+        if (!preg_match('/[^a-zA-Z0-9]/', $password)) $passwordErrors[] = "one special character";
 
         if (!empty($passwordErrors)) {
             $_SESSION['error'] = "Password must contain " . implode(', ', $passwordErrors) . ".";
@@ -66,7 +52,6 @@ switch ($action) {
             exit;
         }
 
-        // Create user
         if ($userModel->create($fullName, $email, $password)) {
             $_SESSION['success'] = "Registration successful! You can now log in.";
             header("Location: ../views/auth/login.php");
@@ -76,11 +61,8 @@ switch ($action) {
         }
         exit;
 
-    // -------------------------------------------------
-    // LOGIN USER
-    // -------------------------------------------------
+    // ---------------- LOGIN ----------------
     case 'login':
-        // Sanitize inputs
         $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'] ?? '';
 
@@ -91,19 +73,18 @@ switch ($action) {
         }
 
         $user = $userModel->verify($email, $password);
+
         if ($user) {
-            // Login success
             Auth::login($user);
-            header("Location: ../views/dashboard/index.php");
+            // Redirect to dashboard (fixed path)
+            header("Location: ../views/Dashboard.php");
         } else {
             $_SESSION['error'] = "Invalid email or password.";
             header("Location: ../views/auth/login.php");
         }
         exit;
 
-    // -------------------------------------------------
-    // LOGOUT USER
-    // -------------------------------------------------
+    // ---------------- LOGOUT ----------------
     case 'logout':
         Auth::logout();
         header("Location: ../views/auth/login.php");

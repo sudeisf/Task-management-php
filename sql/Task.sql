@@ -1,38 +1,87 @@
 -- -----------------------------------------------------
--- TASK MANAGEMENT SYSTEM - DATABASE SCHEMA
+-- TASK MANAGEMENT SYSTEM - DATABASE SCHEMA (UPGRADED)
 -- -----------------------------------------------------
 
 CREATE DATABASE IF NOT EXISTS task_manager;
 USE task_manager;
 
 -- -----------------------------------------------------
--- USERS TABLE
+-- ROLES TABLE (More scalable than ENUM)
+-- -----------------------------------------------------
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL,     -- admin, manager, member
+    description TEXT
+);
+
+-- Insert default roles
+INSERT INTO roles (name, description) VALUES
+('admin', 'Full access to the system'),
+('manager', 'Manages teams and tasks'),
+('member', 'Regular user with limited access');
+
+-- -----------------------------------------------------
+-- USERS TABLE (Enhanced)
 -- -----------------------------------------------------
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(120) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'manager', 'member') DEFAULT 'member',
+    role_id INT NOT NULL,                             -- FK instead of ENUM
+    profile_picture VARCHAR(255),
+    phone VARCHAR(20),
+    bio TEXT,
     status ENUM('active', 'inactive') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+-- -----------------------------------------------------
+-- PRIORITY LEVELS TABLE (Dynamic, instead of ENUM)
+-- -----------------------------------------------------
+CREATE TABLE priority_levels (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,      -- low, medium, high
+    weight INT NOT NULL             -- 1, 2, 3 (makes sorting easy)
+);
+
+-- Insert default priority levels
+INSERT INTO priority_levels (name, weight) VALUES
+('low', 1),
+('medium', 2),
+('high', 3);
+
+-- -----------------------------------------------------
+-- CATEGORIES TABLE
+-- -----------------------------------------------------
+CREATE TABLE categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- -----------------------------------------------------
--- TASKS TABLE
+-- TASKS TABLE (Enhanced with relationships)
 -- -----------------------------------------------------
 CREATE TABLE tasks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+    category_id INT,
+    priority_id INT DEFAULT 2,               -- medium by default
     status ENUM('todo', 'in_progress', 'completed') DEFAULT 'todo',
     deadline DATE,
     created_by INT NOT NULL,
     assigned_to INT,
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
+    FOREIGN KEY (priority_id) REFERENCES priority_levels(id),
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL
 );
@@ -87,15 +136,17 @@ CREATE TABLE activity_logs (
 CREATE TABLE notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    task_id INT NULL,
     message VARCHAR(255) NOT NULL,
     is_read TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
 );
 
 -- -----------------------------------------------------
--- TEAMS TABLE (OPTIONAL)
+-- TEAMS TABLE (Optional)
 -- -----------------------------------------------------
 CREATE TABLE teams (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -104,7 +155,7 @@ CREATE TABLE teams (
 );
 
 -- -----------------------------------------------------
--- TEAM MEMBERS TABLE (OPTIONAL)
+-- TEAM MEMBERS TABLE (Optional)
 -- -----------------------------------------------------
 CREATE TABLE team_members (
     id INT AUTO_INCREMENT PRIMARY KEY,
