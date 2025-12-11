@@ -31,4 +31,13 @@ class Auth
             "name" => Session::get("user_name")
         ];
     }
+
+    public static function getUserRole()
+{
+    if (!isset($_SESSION['user'])) {
+        return null;
+    }
+
+    return $_SESSION['user']['role'] ?? null;
+}
 }

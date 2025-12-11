@@ -77,7 +77,7 @@ switch ($action) {
         if ($user) {
             Auth::login($user);
             // Redirect to dashboard (fixed path)
-            header("Location: ../views/Dashboard.php");
+            header("Location: ../views/dashboard/index.php");
         } else {
             $_SESSION['error'] = "Invalid email or password.";
             header("Location: ../views/auth/login.php");

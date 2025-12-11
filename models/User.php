@@ -123,6 +123,39 @@ class User
         return $stmt->execute();
     }
 
+    // Update user profile (flexible for profile updates)
+    public function updateProfile($id, $data)
+    {
+        $fields = [];
+        $values = [];
+        $types = '';
+
+        foreach ($data as $key => $value) {
+            $fields[] = "$key=?";
+            $values[] = $value;
+            
+            // Determine type for bind_param
+            if (is_int($value)) {
+                $types .= 'i';
+            } elseif (is_double($value)) {
+                $types .= 'd';
+            } else {
+                $types .= 's';
+            }
+        }
+
+        $values[] = $id;
+        $types .= 'i';
+
+        $sql = "UPDATE $this->table SET " . implode(', ', $fields) . " WHERE id=?";
+        $stmt = $this->conn->prepare($sql);
+        
+        if (!$stmt) return false;
+
+        $stmt->bind_param($types, ...$values);
+        return $stmt->execute();
+    }
+
     // ---------------- CHANGE PASSWORD ----------------
     public function changePassword($id, $newPassword)
     {
