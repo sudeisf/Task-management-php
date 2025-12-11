@@ -23,10 +23,12 @@ require_once __DIR__ . '/../layout/header.php';
             <h1 class="dashboard-title">Tasks</h1>
             <p class="dashboard-subtitle">Manage and track all your tasks in one place.</p>
         </div>
-        <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=create" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>
-            Create Task
-        </a>
+        <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=create" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>
+                Create Task
+            </a>
+        <?php endif; ?>
     </div>
 
     <!-- Filters and Search -->
@@ -327,10 +329,12 @@ require_once __DIR__ . '/../layout/header.php';
                     <i class="bi bi-inbox display-4 text-muted mb-3"></i>
                     <h4 class="text-muted">No Tasks Found</h4>
                     <p class="text-muted">No tasks match your current filters. Try adjusting your search criteria.</p>
-                    <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=create" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        Create Your First Task
-                    </a>
+                    <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+                        <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=create" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Create Your First Task
+                        </a>
+                    <?php endif; ?>
                 </div>
             <?php endif; ?>
         </div>

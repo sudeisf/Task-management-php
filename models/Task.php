@@ -16,11 +16,12 @@ class Task
     public function create($data)
     {
         $sql = "INSERT INTO $this->table
-                (title, description, category_id, priority_id, status, deadline, created_by, assigned_to)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                (project_id, title, description, category_id, priority_id, status, deadline, created_by, assigned_to)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         $this->db->prepare($sql);
         $params = [
+            $data['project_id'],
             $data['title'],
             $data['description'] ?? null,
             $data['category_id'] ?? null,
@@ -31,7 +32,10 @@ class Task
             $data['assigned_to'] ?? null
         ];
 
-        return $this->db->execute($params);
+        if ($this->db->execute($params)) {
+            return $this->db->getLastInsertId();
+        }
+        return false;
     }
 
     // Update task with enhanced fields
@@ -78,11 +82,13 @@ class Task
         $sql = "SELECT t.*,
                        c.name as category_name,
                        p.name as priority_name,
+                       proj.name as project_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name
                 FROM $this->table t
                 LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
+                LEFT JOIN projects proj ON t.project_id = proj.id
                 LEFT JOIN users creator ON t.created_by = creator.id
                 LEFT JOIN users assignee ON t.assigned_to = assignee.id
                 WHERE t.id=?";
@@ -472,6 +478,62 @@ class Task
         if ($limit) {
             $sql .= " LIMIT ?";
             $params[] = $limit;
+        }
+
+        $this->db->prepare($sql);
+        $this->db->execute($params);
+        return $this->db->getRows();
+    }
+
+    // Get tasks by project
+    public function getByProject($projectId, $filters = [], $limit = null, $offset = null)
+    {
+        $sql = "SELECT t.*,
+                       c.name as category_name,
+                       p.name as priority_name,
+                       creator.full_name as creator_name,
+                       assignee.full_name as assignee_name
+                FROM $this->table t
+                LEFT JOIN categories c ON t.category_id = c.id
+                LEFT JOIN priority_levels p ON t.priority_id = p.id
+                LEFT JOIN users creator ON t.created_by = creator.id
+                LEFT JOIN users assignee ON t.assigned_to = assignee.id
+                WHERE t.project_id = ?";
+
+        $params = [$projectId];
+
+        // Apply filters
+        if (!empty($filters['status'])) {
+            $sql .= " AND t.status=?";
+            $params[] = $filters['status'];
+        }
+
+        if (!empty($filters['priority_id'])) {
+            $sql .= " AND t.priority_id=?";
+            $params[] = $filters['priority_id'];
+        }
+
+        if (!empty($filters['assigned_to'])) {
+            $sql .= " AND t.assigned_to=?";
+            $params[] = $filters['assigned_to'];
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (t.title LIKE ? OR t.description LIKE ?)";
+            $params[] = "%" . $filters['search'] . "%";
+            $params[] = "%" . $filters['search'] . "%";
+        }
+
+        $sql .= " ORDER BY t.created_at DESC";
+
+        if ($limit) {
+            $sql .= " LIMIT ?";
+            $params[] = $limit;
+        }
+
+        if ($offset) {
+            $sql .= " OFFSET ?";
+            $params[] = $offset;
         }
 
         $this->db->prepare($sql);

@@ -76,6 +76,12 @@ if ($currentUser) {
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ProjectController.php">
+                                <i class="bi bi-folder2-open"></i> Projects
+                            </a>
+                        </li>
+
                         <?php if (hasPermission($userRole, 'manage_users')): ?>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -98,11 +104,13 @@ if ($currentUser) {
                             </li>
                         <?php endif; ?>
 
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=index">
-                                <i class="bi bi-graph-up"></i> Reports
-                            </a>
-                        </li>
+                        <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=index">
+                                    <i class="bi bi-graph-up"></i> Reports
+                                </a>
+                            </li>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </ul>
 
@@ -144,8 +152,16 @@ if ($currentUser) {
 
                         <!-- User Menu -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-display="static">
-                                <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($currentUser['name']); ?>
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" data-bs-display="static">
+                                <?php if (!empty($currentUser['avatar'])): ?>
+                                    <img src="<?php echo BASE_URL; ?>/public/uploads/avatars/<?php echo htmlspecialchars($currentUser['avatar']); ?>" 
+                                         alt="Profile" 
+                                         class="rounded-circle me-2" 
+                                         style="width: 32px; height: 32px; object-fit: cover;">
+                                <?php else: ?>
+                                    <i class="bi bi-person-circle me-2"></i>
+                                <?php endif; ?>
+                                <?php echo htmlspecialchars($currentUser['name']); ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" style="z-index: 2001;">
                                 <li><h6 class="dropdown-header"><?php echo htmlspecialchars($currentUser['name']); ?></h6></li>

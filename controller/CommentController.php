@@ -280,9 +280,15 @@ class CommentController
 
     private function createNotification($user_id, $task_id, $message)
     {
-        // This would typically use a Notification model
-        // For now, we'll skip this as the Notification model isn't complete yet
-        return true;
+        require_once __DIR__ . '/../models/Notification.php';
+        $notificationModel = new Notification();
+        
+        return $notificationModel->create([
+            'user_id' => $user_id,
+            'task_id' => $task_id,
+            'message' => $message,
+            'is_read' => 0
+        ]);
     }
 }
 

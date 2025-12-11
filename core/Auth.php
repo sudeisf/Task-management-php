@@ -9,6 +9,8 @@ class Auth
         Session::start();
         Session::set("user_id", $user['id']);
         Session::set("user_name", $user['full_name']); 
+        Session::set("user_role", $user['role_name'] ?? 'member');
+        Session::set("user_avatar", $user['avatar'] ?? null);
     }
 
     public static function logout()
@@ -28,7 +30,9 @@ class Auth
         Session::start();
         return [
             "id" => Session::get("user_id"),
-            "name" => Session::get("user_name")
+            "name" => Session::get("user_name"),
+            "role" => Session::get("user_role"),
+            "avatar" => Session::get("user_avatar")
         ];
     }
 

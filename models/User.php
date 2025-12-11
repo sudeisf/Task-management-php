@@ -83,7 +83,7 @@ class User
     // ---------------- GET USER BY ID ----------------
     public function getById($id)
     {
-        $sql = "SELECT u.id, u.full_name, u.email, r.name as role, u.status, u.created_at
+        $sql = "SELECT u.id, u.full_name, u.email, u.avatar, r.name as role, u.status, u.created_at
                 FROM users u
                 JOIN roles r ON u.role_id = r.id
                 WHERE u.id = ?";

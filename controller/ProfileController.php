@@ -238,6 +238,9 @@ class ProfileController
             $result = $this->userModel->updateProfile($this->currentUser['id'], ['avatar' => $filename]);
 
             if ($result) {
+                // Update session to reflect new avatar
+                Session::set('user_avatar', $filename);
+                
                 setFlashMessage('success', 'Profile picture updated successfully.');
             } else {
                 setFlashMessage('error', 'Failed to update profile picture in database.');

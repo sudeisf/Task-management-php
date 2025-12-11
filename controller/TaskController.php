@@ -9,6 +9,9 @@ require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/Priority.php';
 require_once __DIR__ . '/../models/Comment.php';
 require_once __DIR__ . '/../models/Attachment.php';
+require_once __DIR__ . '/../models/Notification.php';
+require_once __DIR__ . '/../models/Project.php';
+require_once __DIR__ . '/../models/Permission.php';
 
 Session::start();
 
@@ -26,6 +29,9 @@ class TaskController
     private $priorityModel;
     private $commentModel;
     private $attachmentModel;
+    private $notificationModel;
+    private $projectModel;
+    private $permissionModel;
     private $currentUser;
 
     public function __construct()
@@ -36,6 +42,9 @@ class TaskController
         $this->priorityModel = new Priority();
         $this->commentModel = new Comment();
         $this->attachmentModel = new Attachment();
+        $this->notificationModel = new Notification();
+        $this->projectModel = new Project();
+        $this->permissionModel = new Permission();
         $this->currentUser = Auth::user();
     }
 
@@ -85,11 +94,35 @@ class TaskController
     public function create()
     {
         $userRole = $this->getUserRole($this->currentUser['id']);
+        $projectId = $_GET['project_id'] ?? null;
 
-        if (!$this->canCreateTask($userRole)) {
+        // Managers and admins can create tasks
+        if (!$this->permissionModel->canCreateTasks($this->currentUser['id'])) {
             $_SESSION['error'] = "You don't have permission to create tasks.";
             header("Location: ?action=index");
             exit;
+        }
+
+        // If project_id is provided, validate access
+        if ($projectId) {
+            if (!$this->projectModel->hasAccess($projectId, $this->currentUser['id'], $userRole)) {
+                $_SESSION['error'] = "You don't have access to this project.";
+                header("Location: " . BASE_URL . "/controller/ProjectController.php");
+                exit;
+            }
+            $project = $this->projectModel->find($projectId);
+        } else {
+            // For backward compatibility, get first project or require selection
+            $projects = ($userRole === 'admin') ? 
+                $this->projectModel->all() : 
+                $this->projectModel->getByManager($this->currentUser['id']);
+            
+            if (empty($projects)) {
+                $_SESSION['error'] = "No projects available. Please create a project first.";
+                header("Location: " . BASE_URL . "/controller/ProjectController.php");
+                exit;
+            }
+            $project = null;
         }
 
         $categories = $this->categoryModel->all($this->currentUser['id']);
@@ -104,7 +137,18 @@ class TaskController
             $this->seedPriorities();
             $priorities = $this->priorityModel->all();
         }
-        $users = ($userRole === 'admin' || $userRole === 'manager') ? $this->userModel->getAll() : null;
+        
+        // Get users for assignment (project team members if in project context)
+        if ($projectId) {
+            $users = $this->projectModel->getMembers($projectId);
+        } else {
+            $users = ($userRole === 'admin' || $userRole === 'manager') ? $this->userModel->getAll() : null;
+        }
+
+        // Get available projects for selection
+        $projects = ($userRole === 'admin') ? 
+            $this->projectModel->all() : 
+            $this->projectModel->getByManager($this->currentUser['id']);
 
         // Get form data from session if it exists (for validation errors)
         $formData = $_SESSION['form_data'] ?? [];
@@ -126,7 +170,8 @@ class TaskController
 
         $userRole = $this->getUserRole($this->currentUser['id']);
 
-        if (!$this->canCreateTask($userRole)) {
+        // Only managers and admins can create tasks
+        if (!$this->permissionModel->canCreateTasks($this->currentUser['id'])) {
             $_SESSION['error'] = "You don't have permission to create tasks.";
             header("Location: ?action=index");
             exit;
@@ -138,7 +183,15 @@ class TaskController
         if (!$data) {
             // Store form data in session for repopulation
             $_SESSION['form_data'] = $_POST;
-            header("Location: ?action=create");
+            $projectId = $_POST['project_id'] ?? '';
+            header("Location: ?action=create" . ($projectId ? "&project_id=$projectId" : ""));
+            exit;
+        }
+
+        // Validate project access
+        if (!$this->projectModel->hasAccess($data['project_id'], $this->currentUser['id'], $userRole)) {
+            $_SESSION['error'] = "You don't have access to this project.";
+            header("Location: " . BASE_URL . "/controller/ProjectController.php");
             exit;
         }
 
@@ -149,12 +202,22 @@ class TaskController
             $data['assigned_to'] = $this->currentUser['id'];
         }
 
-        if ($this->taskModel->create($data)) {
+        if ($taskId = $this->taskModel->create($data)) {
+            // Create notification if task is assigned to someone
+            if (!empty($data['assigned_to']) && $data['assigned_to'] != $this->currentUser['id']) {
+                $this->notificationModel->createTaskAssignmentNotification(
+                    $taskId,
+                    $data['assigned_to'],
+                    $this->currentUser['id']
+                );
+            }
+            
             $_SESSION['success'] = "Task created successfully!";
-            header("Location: ?action=index");
+            header("Location: ?action=show&id=$taskId");
         } else {
             $_SESSION['error'] = "Failed to create task.";
-            header("Location: ?action=create");
+            $projectId = $data['project_id'] ?? '';
+            header("Location: ?action=create" . ($projectId ? "&project_id=$projectId" : ""));
         }
         exit;
     }
@@ -254,6 +317,15 @@ class TaskController
         }
 
         if ($this->taskModel->update($id, $data)) {
+            // Create notification if assignment changed
+            if (!empty($data['assigned_to']) && $data['assigned_to'] != $task['assigned_to'] && $data['assigned_to'] != $this->currentUser['id']) {
+                $this->notificationModel->createTaskAssignmentNotification(
+                    $id,
+                    $data['assigned_to'],
+                    $this->currentUser['id']
+                );
+            }
+            
             $_SESSION['success'] = "Task updated successfully!";
             header("Location: ?action=show&id=$id");
         } else {
@@ -331,6 +403,14 @@ class TaskController
         }
 
         if ($this->taskModel->updateStatus($id, $status)) {
+            // Create notification if task is completed
+            if ($status === 'completed' && $task['status'] !== 'completed') {
+                $this->notificationModel->createTaskCompletionNotification(
+                    $id,
+                    $this->currentUser['id']
+                );
+            }
+            
             $_SESSION['success'] = "Task status updated successfully!";
         } else {
             $_SESSION['error'] = "Failed to update task status.";
@@ -372,6 +452,13 @@ class TaskController
             // Permission check can go here
             if ($task && $this->canChangeStatus($task, $this->getUserRole($this->currentUser['id']))) {
                 if ($this->taskModel->updateStatus($id, $status)) {
+                    // Create notification if task is completed
+                    if ($status === 'completed' && $task['status'] !== 'completed') {
+                        $this->notificationModel->createTaskCompletionNotification(
+                            $id,
+                            $this->currentUser['id']
+                        );
+                    }
                     $count++;
                 }
             }
@@ -510,6 +597,13 @@ class TaskController
     {
         $errors = [];
 
+        // Required: project_id
+        if (empty($data['project_id'])) {
+            $errors['project_id'] = "Project is required.";
+        } else {
+            $data['project_id'] = (int)$data['project_id'];
+        }
+
         // Required fields
         if (empty(trim($data['title'] ?? ''))) {
             $errors['title'] = "Title is required.";
@@ -558,6 +652,7 @@ class TaskController
         }
 
         return [
+            'project_id' => $data['project_id'],
             'title' => htmlspecialchars(trim($data['title'])),
             'description' => htmlspecialchars(trim($data['description'] ?? '')),
             'category_id' => $data['category_id'] ?? null,

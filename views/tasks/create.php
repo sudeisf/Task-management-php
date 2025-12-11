@@ -40,6 +40,42 @@ require_once __DIR__ . '/../layout/header.php';
                 </div>
                 <div class="card-body">
                     <form action="<?php echo BASE_URL; ?>/controller/TaskController.php?action=store" method="POST" id="create-task-form">
+                        <!-- Project Selection -->
+                        <?php if (isset($project) && $project): ?>
+                            <!-- Project is pre-selected -->
+                            <input type="hidden" name="project_id" value="<?= $project['id'] ?>">
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-folder2-open me-2"></i>
+                                Creating task in project: <strong><?= htmlspecialchars($project['name']) ?></strong>
+                            </div>
+                        <?php else: ?>
+                            <!-- Project selection dropdown -->
+                            <div class="mb-3">
+                                <label for="project_id" class="form-label">
+                                    Project <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select <?php echo isset($errors['project_id']) ? 'is-invalid' : ''; ?>"
+                                        id="project_id" name="project_id" required>
+                                    <option value="">Select Project</option>
+                                    <?php if (isset($projects)): ?>
+                                        <?php foreach ($projects as $proj): ?>
+                                            <option value="<?php echo $proj['id']; ?>"
+                                                    <?php echo (isset($formData['project_id']) && $formData['project_id'] == $proj['id']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($proj['name']); ?>
+                                                <?php if (isset($proj['status'])): ?>
+                                                    (<?php echo ucfirst($proj['status']); ?>)
+                                                <?php endif; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                                <?php if (isset($errors['project_id'])): ?>
+                                    <div class="invalid-feedback"><?php echo $errors['project_id']; ?></div>
+                                <?php endif; ?>
+                                <div class="form-text">Select the project this task belongs to.</div>
+                            </div>
+                        <?php endif; ?>
+
                         <!-- Title -->
                         <div class="mb-3">
                             <label for="title" class="form-label">
