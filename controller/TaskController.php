@@ -105,20 +105,33 @@ class TaskController
             }
             
         } else {
-            // Direct access to tasks without my_tasks=true - redirect to projects
-            // Unless it's a search result?
-            if (!empty($_GET['search'])) {
-                 // Allow search results page
-                 // But strictly per requirements: "Tasks accessed only through Projects"
-                 // "Tasks -> View all tasks" is wrong.
-                 // So we assume generic direct access is forbidden.
-                 // If search is global, where does it live? 
-                 // We will redirect to project list for now as per "Project-First".
-                 header("Location: " . BASE_URL . "/controller/ProjectController.php");
-                 exit;
+            // Direct access to tasks without my_tasks=true
+            // Allow if there are filters (status, search, etc.) or show_all for managers/admins
+            $hasFilters = !empty($filters);
+            $showAll = isset($_GET['show_all']) && $_GET['show_all'] === 'true';
+            
+            if ($userRole === 'admin') {
+                // Admin can access all tasks
+                $tasks = $this->taskModel->all($filters, $perPage, $offset);
+                $totalTasks = $this->taskModel->getCount($filters);
+            } elseif ($userRole === 'manager' && ($hasFilters || $showAll)) {
+                // Manager can access filtered tasks or all tasks
+                $managedProjects = $this->projectModel->getByManager($this->currentUser['id']);
+                
+                if (empty($managedProjects)) {
+                    $tasks = [];
+                    $totalTasks = 0;
+                } else {
+                    $projectIds = array_column($managedProjects, 'id');
+                    $tasks = $this->taskModel->getByProjects($projectIds, $filters, $perPage, $offset);
+                    $allTasksCount = $this->taskModel->getByProjects($projectIds, $filters);
+                    $totalTasks = count($allTasksCount);
+                }
+            } else {
+                // No filters and not admin - redirect to projects (project-first approach)
+                header("Location: " . BASE_URL . "/controller/ProjectController.php");
+                exit;
             }
-             header("Location: " . BASE_URL . "/controller/ProjectController.php");
-             exit;
         }
 
         $totalPages = ceil($totalTasks / $perPage);

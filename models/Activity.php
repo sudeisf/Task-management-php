@@ -13,7 +13,7 @@ class Activity
     }
 
     // Log activity
-    public function log($user_id, $action, $task_id = null, $details = null)
+    public function log($user_id, $task_id, $action, $details = null)
     {
         $sql = "INSERT INTO $this->table (user_id, task_id, action, details) VALUES (?, ?, ?, ?)";
 

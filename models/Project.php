@@ -321,7 +321,8 @@ class Project
     {
         $stats = [
             'total_projects' => 0,
-            'active_projects' => 0,
+            'planning_projects' => 0,
+            'in_progress_projects' => 0,
             'completed_projects' => 0,
             'avg_progress' => 0
         ];
@@ -329,7 +330,8 @@ class Project
         if ($userRole === 'admin') {
             $sql = "SELECT 
                     COUNT(DISTINCT id) as total_projects,
-                    COUNT(DISTINCT CASE WHEN status = 'active' THEN id END) as active_projects,
+                    COUNT(DISTINCT CASE WHEN status = 'planning' THEN id END) as planning_projects,
+                    COUNT(DISTINCT CASE WHEN status = 'in_progress' THEN id END) as in_progress_projects,
                     COUNT(DISTINCT CASE WHEN status = 'completed' THEN id END) as completed_projects
                     FROM $this->table";
             $params = [];
@@ -337,7 +339,8 @@ class Project
             // Projects managed by user
             $sql = "SELECT 
                     COUNT(DISTINCT p.id) as total_projects,
-                    COUNT(DISTINCT CASE WHEN p.status = 'active' THEN p.id END) as active_projects,
+                    COUNT(DISTINCT CASE WHEN p.status = 'planning' THEN p.id END) as planning_projects,
+                    COUNT(DISTINCT CASE WHEN p.status = 'in_progress' THEN p.id END) as in_progress_projects,
                     COUNT(DISTINCT CASE WHEN p.status = 'completed' THEN p.id END) as completed_projects
                     FROM $this->table p
                     JOIN project_users pu ON p.id = pu.project_id
@@ -348,7 +351,8 @@ class Project
             // Simplifying to: projects user is member of (explicitly assigned logic)
             $sql = "SELECT 
                     COUNT(DISTINCT p.id) as total_projects,
-                    COUNT(DISTINCT CASE WHEN p.status = 'active' THEN p.id END) as active_projects,
+                    COUNT(DISTINCT CASE WHEN p.status = 'planning' THEN p.id END) as planning_projects,
+                    COUNT(DISTINCT CASE WHEN p.status = 'in_progress' THEN p.id END) as in_progress_projects,
                     COUNT(DISTINCT CASE WHEN p.status = 'completed' THEN p.id END) as completed_projects
                     FROM $this->table p
                     JOIN project_users pu ON p.id = pu.project_id

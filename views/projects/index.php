@@ -33,6 +33,65 @@ $currentUser = Auth::user();
         </div>
     <?php endif; ?>
 
+    <!-- Search and Filter -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="" class="row g-3">
+                <!-- Preserve action parameter if exists -->
+                <?php if (isset($_GET['action'])): ?>
+                    <input type="hidden" name="action" value="<?= htmlspecialchars($_GET['action']) ?>">
+                <?php endif; ?>
+                
+                <!-- Search Bar -->
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control" 
+                               name="search" 
+                               placeholder="Search projects by name or description..." 
+                               value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-md-4">
+                    <select class="form-select" name="status">
+                        <option value="">All Statuses</option>
+                        <option value="planning" <?= (isset($_GET['status']) && $_GET['status'] === 'planning') ? 'selected' : '' ?>>
+                            To Do
+                        </option>
+                        <option value="in_progress" <?= (isset($_GET['status']) && $_GET['status'] === 'in_progress') ? 'selected' : '' ?>>
+                            In Progress
+                        </option>
+                        <option value="completed" <?= (isset($_GET['status']) && $_GET['status'] === 'completed') ? 'selected' : '' ?>>
+                            Completed
+                        </option>
+                        <option value="on_hold" <?= (isset($_GET['status']) && $_GET['status'] === 'on_hold') ? 'selected' : '' ?>>
+                            On Hold
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="col-md-2">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                        <?php if (!empty($_GET['search']) || !empty($_GET['status'])): ?>
+                            <a href="?" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Projects Grid -->
     <?php if (empty($projects)): ?>
         <div class="alert alert-info">
