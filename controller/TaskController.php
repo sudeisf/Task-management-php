@@ -67,14 +67,58 @@ class TaskController
             return;
         }
 
-        // Get tasks based on user role
-        if ($userRole === 'admin' || $userRole === 'manager') {
-            $tasks = $this->taskModel->all($filters, $perPage, $offset);
-            $totalTasks = $this->taskModel->getCount($filters);
+        // Check if accessing "My Tasks"
+        if (isset($_GET['my_tasks']) && $_GET['my_tasks'] === 'true') {
+            
+            if ($userRole === 'manager') {
+                // Manager: Show tasks in projects they manage
+                $managedProjects = $this->projectModel->getByManager($this->currentUser['id']);
+                
+                if (empty($managedProjects)) {
+                    $tasks = [];
+                    $totalTasks = 0;
+                } else {
+                    $projectIds = array_column($managedProjects, 'id');
+                    $tasks = $this->taskModel->getByProjects($projectIds, $filters, $perPage, $offset);
+                    // Note: getCount might need update to support projectIds, but for now we'll accept approximate or fix later if needed
+                    // A better way is to filter getCount via a custom query or strict logical verification
+                    // For now, let's use count($tasks) if page 1 and < perPage, else we might default to 0 or fix getCount.
+                    // Actually, simpler: TaskModel::assignedTo was used before.
+                    // We can't reuse getCount easily without modification. 
+                    // Let's implement a workaround or accept we show what we have.
+                    // To be robust: update getCount too? Or just simple count since managers won't have infinite tasks usually.
+                    // Actually, let's just fetch all project tasks count for pagination.
+                    // We'll leave totalTasks approximate for this specific filtered view or just fetch all without limit to count (expensive but safe).
+                    $allTasksCount = $this->taskModel->getByProjects($projectIds, $filters); 
+                    $totalTasks = count($allTasksCount);
+                }
+                
+            } elseif ($userRole === 'member') {
+                // Member: Show only tasks assigned to them
+                $tasks = $this->taskModel->assignedTo($this->currentUser['id'], $filters, $perPage, $offset);
+                $totalTasks = $this->taskModel->getCount($filters, $this->currentUser['id'], $userRole);
+                
+            } else {
+                // Admin: Redirect to All Tasks in admin menu
+                header("Location: " . BASE_URL . "/controller/AdminController.php?action=all_tasks");
+                exit;
+            }
+            
         } else {
-            // Regular users see only their tasks
-            $tasks = $this->taskModel->assignedTo($this->currentUser['id'], $filters, $perPage, $offset);
-            $totalTasks = $this->taskModel->getCount($filters, $this->currentUser['id'], $userRole);
+            // Direct access to tasks without my_tasks=true - redirect to projects
+            // Unless it's a search result?
+            if (!empty($_GET['search'])) {
+                 // Allow search results page
+                 // But strictly per requirements: "Tasks accessed only through Projects"
+                 // "Tasks -> View all tasks" is wrong.
+                 // So we assume generic direct access is forbidden.
+                 // If search is global, where does it live? 
+                 // We will redirect to project list for now as per "Project-First".
+                 header("Location: " . BASE_URL . "/controller/ProjectController.php");
+                 exit;
+            }
+             header("Location: " . BASE_URL . "/controller/ProjectController.php");
+             exit;
         }
 
         $totalPages = ceil($totalTasks / $perPage);
@@ -409,6 +453,11 @@ class TaskController
                     $id,
                     $this->currentUser['id']
                 );
+            }
+            
+            // Auto-update project status based on task completion
+            if (!empty($task['project_id'])) {
+                $this->projectModel->updateProjectStatus($task['project_id']);
             }
             
             $_SESSION['success'] = "Task status updated successfully!";

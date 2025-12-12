@@ -90,6 +90,24 @@ class Project
         return $this->db->getRows();
     }
 
+    // Get recent projects
+    public function getRecent($limit = 5)
+    {
+        $sql = "SELECT p.*, u.full_name as creator_name,
+                COUNT(DISTINCT t.id) as total_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks
+                FROM $this->table p
+                LEFT JOIN users u ON p.created_by = u.id
+                LEFT JOIN tasks t ON p.id = t.project_id
+                GROUP BY p.id
+                ORDER BY p.created_at DESC
+                LIMIT ?";
+        
+        $this->db->prepare($sql);
+        $this->db->execute([$limit]);
+        return $this->db->getRows();
+    }
+
     // Get projects assigned to a manager
     public function getByManager($managerId)
     {
@@ -281,9 +299,11 @@ class Project
         } else {
             // System-wide stats
             $sql = "SELECT 
-                    COUNT(DISTINCT p.id) as total_projects,
-                    COUNT(DISTINCT CASE WHEN p.status = 'active' THEN p.id END) as active_projects,
-                    COUNT(DISTINCT CASE WHEN p.status = 'completed' THEN p.id END) as completed_projects,
+                    COUNT(DISTINCT p.id) as total,
+                    COUNT(DISTINCT CASE WHEN p.status = 'planning' THEN p.id END) as planning,
+                    COUNT(DISTINCT CASE WHEN p.status = 'in_progress' THEN p.id END) as in_progress,
+                    COUNT(DISTINCT CASE WHEN p.status = 'completed' THEN p.id END) as completed,
+                    COUNT(DISTINCT CASE WHEN p.status = 'on_hold' THEN p.id END) as on_hold,
                     COUNT(DISTINCT t.id) as total_tasks,
                     COUNT(DISTINCT pu.user_id) as total_team_members
                     FROM projects p
@@ -294,5 +314,95 @@ class Project
             $this->db->execute([]);
             return $this->db->getRow();
         }
+    }
+
+    // Role-based dashboard statistics
+    public function getDashboardStatistics($userId, $userRole)
+    {
+        $stats = [
+            'total_projects' => 0,
+            'active_projects' => 0,
+            'completed_projects' => 0,
+            'avg_progress' => 0
+        ];
+
+        if ($userRole === 'admin') {
+            $sql = "SELECT 
+                    COUNT(DISTINCT id) as total_projects,
+                    COUNT(DISTINCT CASE WHEN status = 'active' THEN id END) as active_projects,
+                    COUNT(DISTINCT CASE WHEN status = 'completed' THEN id END) as completed_projects
+                    FROM $this->table";
+            $params = [];
+        } elseif ($userRole === 'manager') {
+            // Projects managed by user
+            $sql = "SELECT 
+                    COUNT(DISTINCT p.id) as total_projects,
+                    COUNT(DISTINCT CASE WHEN p.status = 'active' THEN p.id END) as active_projects,
+                    COUNT(DISTINCT CASE WHEN p.status = 'completed' THEN p.id END) as completed_projects
+                    FROM $this->table p
+                    JOIN project_users pu ON p.id = pu.project_id
+                    WHERE pu.user_id = ? AND pu.role_in_project = 'manager'";
+            $params = [$userId];
+        } else {
+            // Projects user is member of OR has tasks in
+            // Simplifying to: projects user is member of (explicitly assigned logic)
+            $sql = "SELECT 
+                    COUNT(DISTINCT p.id) as total_projects,
+                    COUNT(DISTINCT CASE WHEN p.status = 'active' THEN p.id END) as active_projects,
+                    COUNT(DISTINCT CASE WHEN p.status = 'completed' THEN p.id END) as completed_projects
+                    FROM $this->table p
+                    JOIN project_users pu ON p.id = pu.project_id
+                    WHERE pu.user_id = ?";
+            $params = [$userId];
+        }
+
+        $this->db->prepare($sql);
+        $this->db->execute($params);
+        $result = $this->db->getRow();
+
+        if ($result) {
+            $stats = array_merge($stats, $result);
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Automatically update project status based on task completion
+     * - planning: No tasks completed
+     * - in_progress: Some tasks completed but not all
+     * - completed: All tasks completed
+     */
+    public function updateProjectStatus($projectId)
+    {
+        // Get project task statistics
+        $sql = "SELECT 
+                COUNT(*) as total_tasks,
+                COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_tasks
+                FROM tasks 
+                WHERE project_id = ?";
+        
+        $this->db->prepare($sql);
+        $this->db->execute([$projectId]);
+        $stats = $this->db->getRow();
+        
+        $totalTasks = $stats['total_tasks'] ?? 0;
+        $completedTasks = $stats['completed_tasks'] ?? 0;
+        
+        // Determine new status
+        $newStatus = 'planning'; // Default: To Do
+        
+        if ($totalTasks > 0) {
+            if ($completedTasks === $totalTasks) {
+                $newStatus = 'completed'; // All tasks completed
+            } elseif ($completedTasks > 0) {
+                $newStatus = 'in_progress'; // Some tasks completed
+            }
+        }
+        
+        // Update project status
+        $updateSql = "UPDATE $this->table SET status = ? WHERE id = ?";
+        $this->db->prepare($updateSql);
+        return $this->db->execute([$newStatus, $projectId]);
     }
 }

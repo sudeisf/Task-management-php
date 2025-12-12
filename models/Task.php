@@ -105,10 +105,12 @@ class Task
                        c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
-                       assignee.full_name as assignee_name
+                       assignee.full_name as assignee_name,
+                       proj.name as project_name
                 FROM $this->table t
                 LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
+                LEFT JOIN projects proj ON t.project_id = proj.id
                 LEFT JOIN users creator ON t.created_by = creator.id
                 LEFT JOIN users assignee ON t.assigned_to = assignee.id
                 WHERE t.assigned_to=?";
@@ -204,10 +206,12 @@ class Task
                        c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
-                       assignee.full_name as assignee_name
+                       assignee.full_name as assignee_name,
+                       proj.name as project_name
                 FROM $this->table t
                 LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
+                LEFT JOIN projects proj ON t.project_id = proj.id
                 LEFT JOIN users creator ON t.created_by = creator.id
                 LEFT JOIN users assignee ON t.assigned_to = assignee.id
                 WHERE 1=1";
@@ -492,15 +496,81 @@ class Task
                        c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
-                       assignee.full_name as assignee_name
+                       assignee.full_name as assignee_name,
+                       proj.name as project_name
                 FROM $this->table t
                 LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
+                LEFT JOIN projects proj ON t.project_id = proj.id
                 LEFT JOIN users creator ON t.created_by = creator.id
                 LEFT JOIN users assignee ON t.assigned_to = assignee.id
                 WHERE t.project_id = ?";
 
         $params = [$projectId];
+
+        // Apply filters
+        if (!empty($filters['status'])) {
+            $sql .= " AND t.status=?";
+            $params[] = $filters['status'];
+        }
+
+        if (!empty($filters['priority_id'])) {
+            $sql .= " AND t.priority_id=?";
+            $params[] = $filters['priority_id'];
+        }
+
+        if (!empty($filters['assigned_to'])) {
+            $sql .= " AND t.assigned_to=?";
+            $params[] = $filters['assigned_to'];
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (t.title LIKE ? OR t.description LIKE ?)";
+            $params[] = "%" . $filters['search'] . "%";
+            $params[] = "%" . $filters['search'] . "%";
+        }
+
+        $sql .= " ORDER BY t.created_at DESC";
+
+        if ($limit) {
+            $sql .= " LIMIT ?";
+            $params[] = $limit;
+        }
+
+        if ($offset) {
+            $sql .= " OFFSET ?";
+            $params[] = $offset;
+        }
+
+        $this->db->prepare($sql);
+        $this->db->execute($params);
+        return $this->db->getRows();
+    }
+
+    // Get tasks by multiple projects
+    public function getByProjects($projectIds, $filters = [], $limit = null, $offset = null)
+    {
+        if (empty($projectIds)) {
+            return [];
+        }
+
+        $placeholders = str_repeat('?,', count($projectIds) - 1) . '?';
+        
+        $sql = "SELECT t.*,
+                       c.name as category_name,
+                       p.name as priority_name,
+                       creator.full_name as creator_name,
+                       assignee.full_name as assignee_name,
+                       proj.name as project_name
+                FROM $this->table t
+                LEFT JOIN categories c ON t.category_id = c.id
+                LEFT JOIN priority_levels p ON t.priority_id = p.id
+                LEFT JOIN projects proj ON t.project_id = proj.id
+                LEFT JOIN users creator ON t.created_by = creator.id
+                LEFT JOIN users assignee ON t.assigned_to = assignee.id
+                WHERE t.project_id IN ($placeholders)";
+
+        $params = $projectIds;
 
         // Apply filters
         if (!empty($filters['status'])) {

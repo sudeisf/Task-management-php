@@ -56,8 +56,24 @@ $currentUser = Auth::user();
                                         <?= htmlspecialchars($project['name']) ?>
                                     </a>
                                 </h5>
-                                <span class="badge bg-<?= $project['status'] === 'active' ? 'success' : ($project['status'] === 'completed' ? 'primary' : 'warning') ?>">
-                                    <?= ucfirst($project['status']) ?>
+                                <?php
+                                $statusColors = [
+                                    'planning' => 'secondary',
+                                    'in_progress' => 'primary',
+                                    'completed' => 'success',
+                                    'on_hold' => 'warning'
+                                ];
+                                $statusLabels = [
+                                    'planning' => 'To Do',
+                                    'in_progress' => 'In Progress',
+                                    'completed' => 'Completed',
+                                    'on_hold' => 'On Hold'
+                                ];
+                                $statusColor = $statusColors[$project['status']] ?? 'secondary';
+                                $statusLabel = $statusLabels[$project['status']] ?? ucfirst($project['status']);
+                                ?>
+                                <span class="badge bg-<?= $statusColor ?>">
+                                    <?= $statusLabel ?>
                                 </span>
                             </div>
 

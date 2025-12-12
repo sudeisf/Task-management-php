@@ -5,6 +5,7 @@ require_once __DIR__ . '/../core/Session.php';
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../core/Database.php';
 require_once __DIR__ . '/../models/Project.php';
+require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Permission.php';
 require_once __DIR__ . '/../helpers/functions.php';
@@ -20,6 +21,7 @@ if (!Auth::check()) {
 class ProjectController
 {
     private $projectModel;
+    private $taskModel;
     private $userModel;
     private $permissionModel;
     private $currentUser;
@@ -28,6 +30,7 @@ class ProjectController
     {
         $db = new Database();
         $this->projectModel = new Project();
+        $this->taskModel = new Task();
         $this->userModel = new User($db->getConnection());
         $this->permissionModel = new Permission();
         $this->currentUser = Auth::user();
@@ -150,11 +153,17 @@ class ProjectController
         // Get project statistics
         $statistics = $this->projectModel->getStatistics($id);
 
+        // Get project tasks
+        // Assuming getByProject returns array of tasks. 
+        // We might want to add filters here later from $_GET
+        $tasks = $this->taskModel->getByProject($id);
+
         // Extract data for view
         extract([
             'project' => $project,
             'teamMembers' => $teamMembers,
             'statistics' => $statistics,
+            'tasks' => $tasks,
             'userRole' => $userRole
         ]);
 

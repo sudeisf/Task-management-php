@@ -7,6 +7,9 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/Activity.php';
 require_once __DIR__ . '/../models/Dashboard.php';
+require_once __DIR__ . '/../models/Category.php';
+require_once __DIR__ . '/../models/Priority.php';
+require_once __DIR__ . '/../models/Project.php';
 
 Session::start();
 
@@ -22,6 +25,9 @@ class AdminController
     private $taskModel;
     private $activityModel;
     private $dashboardModel;
+    private $categoryModel;
+    private $priorityModel;
+    private $projectModel;
     private $currentUser;
 
     public function __construct()
@@ -30,6 +36,9 @@ class AdminController
         $this->taskModel = new Task();
         $this->activityModel = new Activity();
         $this->dashboardModel = new Dashboard();
+        $this->categoryModel = new Category();
+        $this->priorityModel = new Priority();
+        $this->projectModel = new Project();
         $this->currentUser = Auth::user();
 
         // Check if user is admin
@@ -49,8 +58,10 @@ class AdminController
         // Get recent activities
         $recentActivities = $this->activityModel->getRecent(15);
 
-        // Get recent users
-        $recentUsers = $this->userModel->getAll();
+        // Get tasks by status for dashboard preview
+        $todoTasks = $this->taskModel->all(['status' => 'todo'], 5, 0);
+        $inProgressTasks = $this->taskModel->all(['status' => 'in_progress'], 5, 0);
+        $completedTasks = $this->taskModel->all(['status' => 'completed'], 5, 0);
 
         // Load admin dashboard view
         require_once __DIR__ . '/../views/layout/header.php';
@@ -299,20 +310,26 @@ class AdminController
         exit;
     }
 
-    // Task management overview
-    public function tasks()
+    // All Tasks (System-wide)
+    public function allTasks()
     {
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $perPage = ITEMS_PER_PAGE;
         $offset = ($page - 1) * $perPage;
 
-        // Get all tasks for admin view
+        // Get all tasks without filters (unless explicitly filtered in admin view)
+        // We can reuse TaskController filters if we want consistent filtering in admin view too
         $tasks = $this->taskModel->all([], $perPage, $offset);
         $totalTasks = $this->taskModel->getCount();
         $totalPages = ceil($totalTasks / $perPage);
 
+        // Get additional data for filters
+        $categories = $this->categoryModel->all($this->currentUser['id']);
+        $priorities = $this->priorityModel->all();
+        $users = $this->userModel->getAll();
+
         require_once __DIR__ . '/../views/layout/header.php';
-        require_once __DIR__ . '/../views/admin/tasks.php';
+        require_once __DIR__ . '/../views/admin/all_tasks.php';
         require_once __DIR__ . '/../views/layout/footer.php';
     }
 
@@ -369,7 +386,15 @@ class AdminController
             'total_tasks' => 0,
             'completed_tasks' => 0,
             'total_activities' => 0,
-            'storage_used' => 0
+            'storage_used' => 0,
+            'total_projects' => 0,
+            'planning_projects' => 0,
+            'in_progress_projects' => 0,
+            'completed_projects' => 0,
+            'todo_count' => 0,
+            'in_progress_count' => 0,
+            'completed_count' => 0,
+            'pending_tasks' => 0
         ];
 
         // User statistics
@@ -389,6 +414,17 @@ class AdminController
         // Task statistics
         $taskStats = $this->taskModel->getStatistics();
         $stats['total_tasks'] = $taskStats['total'] ?? 0;
+        $stats['todo_count'] = $taskStats['todo'] ?? 0;
+        $stats['in_progress_count'] = $taskStats['in_progress'] ?? 0;
+        $stats['completed_count'] = $taskStats['completed'] ?? 0;
+        $stats['pending_tasks'] = ($stats['todo_count'] + $stats['in_progress_count']);
+
+        // Project statistics
+        $projectStats = $this->projectModel->getStatistics();
+        $stats['total_projects'] = $projectStats['total'] ?? 0;
+        $stats['planning_projects'] = $projectStats['planning'] ?? 0;
+        $stats['in_progress_projects'] = $projectStats['in_progress'] ?? 0;
+        $stats['completed_projects'] = $projectStats['completed'] ?? 0;
 
         // Activity count
         $stats['total_activities'] = $this->activityModel->getCount();
@@ -444,10 +480,10 @@ switch ($action) {
         }
         break;
 
-    case 'tasks':
-        $controller->tasks();
+    case 'all_tasks':
+        $controller->allTasks();
         break;
-
+        
     case 'settings':
         $controller->settings();
         break;

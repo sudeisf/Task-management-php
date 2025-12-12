@@ -123,13 +123,80 @@ $pageTitle = $project['name'];
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="row">
-        <div class="col-md-12">
-            <a href="<?= BASE_URL ?>/controller/TaskController.php?project_id=<?= $project['id'] ?>" 
-               class="btn btn-lg btn-outline-primary w-100">
-                <i class="bi bi-list-check me-2"></i>View All Tasks
-            </a>
+    <!-- Project Tasks -->
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>Tasks</h5>
+             <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+                <a href="<?= BASE_URL ?>/controller/TaskController.php?action=create&project_id=<?= $project['id'] ?>" 
+                   class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i>New Task
+                </a>
+            <?php endif; ?>
+        </div>
+        <div class="card-body">
+            <?php if (empty($tasks)): ?>
+                <p class="text-muted text-center py-3">No tasks created for this project yet.</p>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Assigned To</th>
+                                <th>Deadline</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($tasks as $task): ?>
+                                <tr>
+                                    <td>
+                                        <a href="<?= BASE_URL ?>/controller/TaskController.php?action=show&id=<?= $task['id'] ?>" 
+                                           class="text-decoration-none fw-bold <?= $task['status'] === 'completed' ? 'text-decoration-line-through text-muted' : '' ?>">
+                                            <?= htmlspecialchars($task['title']) ?>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-priority-<?= $task['priority_name'] ?>">
+                                            <?= ucfirst($task['priority_name']) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-status-<?= $task['status'] ?>">
+                                            <?= ucfirst(str_replace('_', ' ', $task['status'])) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php if ($task['assignee_name']): ?>
+                                            <?= htmlspecialchars($task['assignee_name']) ?>
+                                        <?php else: ?>
+                                            <span class="text-muted">Unassigned</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($task['deadline']): ?>
+                                            <span class="<?= (strtotime($task['deadline']) < time() && $task['status'] !== 'completed') ? 'text-danger' : '' ?>">
+                                                <?= date('M d, Y', strtotime($task['deadline'])) ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <a href="<?= BASE_URL ?>/controller/TaskController.php?action=show&id=<?= $task['id'] ?>" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>

@@ -33,6 +33,53 @@ require_once __DIR__ . '/../layout/header.php';
     </div>
 
     <!-- Statistics Cards -->
+    <?php 
+    // Get current user role
+    $currentUser = Auth::user();
+    $userRole = $currentUser['role'] ?? null;
+    ?>
+    
+    <?php if ($userRole !== 'member'): ?>
+    <!-- Project Statistics (Hidden for Members) -->
+    <h5 class="mb-3 text-muted">Project Statistics</h5>
+    <div class="stats-grid mb-4">
+        <div class="stats-card">
+            <div class="stats-icon primary">
+                <i class="bi bi-folder"></i>
+            </div>
+            <div class="stats-number"><?php echo $projectStats['total_projects'] ?? 0; ?></div>
+            <div class="stats-label">Total Projects</div>
+        </div>
+
+        <div class="stats-card">
+            <div class="stats-icon success">
+                <i class="bi bi-play-circle-fill"></i>
+            </div>
+            <div class="stats-number"><?php echo $projectStats['active_projects'] ?? 0; ?></div>
+            <div class="stats-label">Active Projects</div>
+        </div>
+
+        <div class="stats-card">
+            <div class="stats-icon info">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="stats-number"><?php echo $projectStats['completed_projects'] ?? 0; ?></div>
+            <div class="stats-label">Completed Projects</div>
+        </div>
+        
+        <!-- Placeholder for Progress if implemented later -->
+        <div class="stats-card">
+             <div class="stats-icon warning">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="stats-number">--%</div>
+            <div class="stats-label">Avg. Progress</div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Task Statistics -->
+    <h5 class="mb-3 text-muted">Task Statistics</h5>
     <div class="stats-grid">
         <div class="stats-card">
             <div class="stats-icon primary">

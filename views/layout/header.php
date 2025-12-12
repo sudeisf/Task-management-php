@@ -70,13 +70,7 @@ if ($currentUser) {
                                 <i class="bi bi-house-door"></i> Dashboard
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index">
-                                <i class="bi bi-list-task"></i> Tasks
-                            </a>
-                        </li>
 
-                        <li class="nav-item">
                             <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ProjectController.php">
                                 <i class="bi bi-folder2-open"></i> Projects
                             </a>
@@ -89,12 +83,12 @@ if ($currentUser) {
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=index">
-                                        <i class="bi bi-speedometer2"></i> Dashboard
+                                        <i class="bi bi-speedometer2"></i> System Dashboard
                                     </a></li>
                                     <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=users">
                                         <i class="bi bi-people"></i> Users
                                     </a></li>
-                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=tasks">
+                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks">
                                         <i class="bi bi-list-task"></i> All Tasks
                                     </a></li>
                                     <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=activity_logs">
@@ -202,48 +196,42 @@ if ($currentUser) {
                 <nav class="col-md-2 d-none d-md-block bg-light sidebar">
                     <div class="sidebar-sticky">
                         <ul class="nav flex-column">
-                            <li class="nav-item">
-                                <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/DashboardController.php?action=index">
-                                    <i class="bi bi-house-door"></i> Dashboard
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index">
-                                    <i class="bi bi-list-task"></i> My Tasks
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=create">
-                                    <i class="bi bi-plus-circle"></i> Create Task
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/CategoryController.php?action=create">
-                                    <i class="bi bi-tags"></i> Create Category
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=todo">
-                                    <i class="bi bi-circle"></i> To Do
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=in_progress">
-                                    <i class="bi bi-play-circle"></i> In Progress
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=completed">
-                                    <i class="bi bi-check-circle"></i> Completed
-                                </a>
-                            </li>
-
-                            <?php if (hasPermission($userRole, 'manage_users')): ?>
+                            <?php if ($userRole === 'admin'): ?>
+                                <!-- Admin Sidebar -->
                                 <li class="nav-item">
-                                    <hr class="my-2">
-                                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-                                        <span>Administration</span>
-                                    </h6>
+                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=index">
+                                        <i class="bi bi-speedometer2"></i> Dashboard
+                                    </a>
+                                </li>
+                                
+                                <!-- Projects Section -->
+                                <li class="nav-item mt-3">
+                                    <small class="text-muted px-3 text-uppercase fw-bold">Projects</small>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ProjectController.php?status=planning">
+                                        <i class="bi bi-circle"></i> To Do
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ProjectController.php?status=in_progress">
+                                        <i class="bi bi-arrow-repeat"></i> In Progress
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ProjectController.php?status=completed">
+                                        <i class="bi bi-check-circle"></i> Complete
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ProjectController.php">
+                                        <i class="bi bi-folder2-open"></i> All Projects
+                                    </a>
+                                </li>
+                                
+                                <!-- Management Section -->
+                                <li class="nav-item mt-3">
+                                    <small class="text-muted px-3 text-uppercase fw-bold">Management</small>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=users">
@@ -251,15 +239,56 @@ if ($currentUser) {
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=tasks">
+                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks">
                                         <i class="bi bi-list-task"></i> All Tasks
                                     </a>
                                 </li>
+                            <?php else: ?>
+                                <!-- Sidebar for Manager/Member -->
                                 <li class="nav-item">
-                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=index">
-                                        <i class="bi bi-graph-up"></i> Reports
+                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/DashboardController.php?action=index">
+                                        <i class="bi bi-house-door"></i> Dashboard
                                     </a>
                                 </li>
+
+                                <?php if ($userRole === 'manager'): ?>
+                                    <!-- Manager: Show Projects -->
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ProjectController.php">
+                                            <i class="bi bi-folder2-open"></i> Projects
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?my_tasks=true">
+                                            <i class="bi bi-list-task"></i> My Tasks
+                                        </a>
+                                    </li>
+                                <?php elseif ($userRole === 'member'): ?>
+                                    <!-- Member: Show Task Status Filters -->
+                                    <li class="nav-item mt-3">
+                                        <small class="text-muted px-3 text-uppercase fw-bold">My Tasks</small>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?my_tasks=true&status=todo">
+                                            <i class="bi bi-circle"></i> To Do
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?my_tasks=true&status=in_progress">
+                                            <i class="bi bi-arrow-repeat"></i> In Progress
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?my_tasks=true&status=completed">
+                                            <i class="bi bi-check-circle"></i> Completed
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?my_tasks=true">
+                                            <i class="bi bi-list-task"></i> All My Tasks
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </ul>
                     </div>
