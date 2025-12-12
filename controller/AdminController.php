@@ -7,7 +7,6 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/Activity.php';
 require_once __DIR__ . '/../models/Dashboard.php';
-require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/Priority.php';
 require_once __DIR__ . '/../models/Project.php';
 
@@ -25,7 +24,6 @@ class AdminController
     private $taskModel;
     private $activityModel;
     private $dashboardModel;
-    private $categoryModel;
     private $priorityModel;
     private $projectModel;
     private $currentUser;
@@ -36,7 +34,6 @@ class AdminController
         $this->taskModel = new Task();
         $this->activityModel = new Activity();
         $this->dashboardModel = new Dashboard();
-        $this->categoryModel = new Category();
         $this->priorityModel = new Priority();
         $this->projectModel = new Project();
         $this->currentUser = Auth::user();
@@ -324,7 +321,6 @@ class AdminController
         $totalPages = ceil($totalTasks / $perPage);
 
         // Get additional data for filters
-        $categories = $this->categoryModel->all($this->currentUser['id']);
         $priorities = $this->priorityModel->all();
         $users = $this->userModel->getAll();
 

@@ -5,7 +5,6 @@ require_once __DIR__ . '/../core/Session.php';
 require_once __DIR__ . '/../core/Auth.php';
 require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/User.php';
-require_once __DIR__ . '/../models/Category.php';
 require_once __DIR__ . '/../models/Priority.php';
 require_once __DIR__ . '/../models/Comment.php';
 require_once __DIR__ . '/../models/Attachment.php';
@@ -25,7 +24,6 @@ class TaskController
 {
     private $taskModel;
     private $userModel;
-    private $categoryModel;
     private $priorityModel;
     private $commentModel;
     private $attachmentModel;
@@ -38,7 +36,6 @@ class TaskController
     {
         $this->taskModel = new Task();
         $this->userModel = new User(require_once __DIR__ . '/../config/db.php');
-        $this->categoryModel = new Category();
         $this->priorityModel = new Priority();
         $this->commentModel = new Comment();
         $this->attachmentModel = new Attachment();
@@ -137,7 +134,6 @@ class TaskController
         $totalPages = ceil($totalTasks / $perPage);
 
         // Get additional data for filters
-        $categories = $this->categoryModel->all($this->currentUser['id']);
         $priorities = $this->priorityModel->all();
         $users = ($userRole === 'admin' || $userRole === 'manager') ? $this->userModel->getAll() : null;
 
@@ -182,14 +178,9 @@ class TaskController
             $project = null;
         }
 
-        $categories = $this->categoryModel->all($this->currentUser['id']);
         $priorities = $this->priorityModel->all();
 
         // Self-healing: Seed defaults if empty
-        if (empty($categories)) {
-            $this->seedCategories();
-            $categories = $this->categoryModel->all($this->currentUser['id']);
-        }
         if (empty($priorities)) {
             $this->seedPriorities();
             $priorities = $this->priorityModel->all();
@@ -327,7 +318,6 @@ class TaskController
             exit;
         }
 
-        $categories = $this->categoryModel->all($this->currentUser['id']);
         $priorities = $this->priorityModel->all();
         $users = ($userRole === 'admin' || $userRole === 'manager') ? $this->userModel->getAll() : null;
 
@@ -632,10 +622,6 @@ class TaskController
             $filters['priority_id'] = (int)$_GET['priority_id'];
         }
 
-        if (!empty($_GET['category_id'])) {
-            $filters['category_id'] = (int)$_GET['category_id'];
-        }
-
         if (!empty($_GET['assigned_to'])) {
             $filters['assigned_to'] = (int)$_GET['assigned_to'];
         }
@@ -698,11 +684,6 @@ class TaskController
             }
         }
 
-        // Validate category
-        if (!empty($data['category_id'])) {
-            $data['category_id'] = (int)$data['category_id'];
-        }
-
         // Validate assigned_to
         if (!empty($data['assigned_to'])) {
             $data['assigned_to'] = (int)$data['assigned_to'];
@@ -717,7 +698,6 @@ class TaskController
             'project_id' => $data['project_id'],
             'title' => htmlspecialchars(trim($data['title'])),
             'description' => htmlspecialchars(trim($data['description'] ?? '')),
-            'category_id' => $data['category_id'] ?? null,
             'priority_id' => $data['priority_id'] ?? 2,
             'status' => !empty($data['status']) ? $data['status'] : 'todo',
             'deadline' => $data['deadline'] ?? null,
@@ -775,24 +755,6 @@ class TaskController
 
         // Members can change status of tasks assigned to them or created by them
         return $task['assigned_to'] == $this->currentUser['id'] || $task['created_by'] == $this->currentUser['id'];
-    }
-
-    // Helper methods to seed default data if missing
-    private function seedCategories()
-    {
-        $defaults = [
-            ['name' => 'Development', 'description' => 'Software development tasks'],
-            ['name' => 'Design', 'description' => 'UI/UX and graphic design tasks'],
-            ['name' => 'Testing', 'description' => 'Quality assurance and testing tasks'],
-            ['name' => 'Documentation', 'description' => 'Documentation and knowledge base tasks'],
-            ['name' => 'Maintenance', 'description' => 'System maintenance and updates'],
-            ['name' => 'Research', 'description' => 'Research and analysis tasks'],
-            ['name' => 'Planning', 'description' => 'Project planning and management']
-        ];
-
-        foreach ($defaults as $data) {
-            $this->categoryModel->create($data);
-        }
     }
 
     private function seedPriorities()

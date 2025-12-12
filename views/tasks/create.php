@@ -103,31 +103,9 @@ require_once __DIR__ . '/../layout/header.php';
                             <div class="form-text">Provide detailed instructions and requirements for this task.</div>
                         </div>
 
-                        <!-- Category and Priority Row -->
+                        <!-- Priority Row -->
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="category_id" class="form-label">Category</label>
-                                <select class="form-select <?php echo isset($errors['category_id']) ? 'is-invalid' : ''; ?>"
-                                        id="category_id" name="category_id">
-                                    <option value="">Select Category</option>
-                                    <?php foreach ($categories as $category): ?>
-                                        <option value="<?php echo $category['id']; ?>"
-                                                <?php echo (isset($formData['category_id']) && $formData['category_id'] == $category['id']) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($category['name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <div class="form-text">
-                                    <a href="<?php echo BASE_URL; ?>/controller/CategoryController.php?action=create" class="text-decoration-none">
-                                        <i class="bi bi-plus"></i> Create New Category
-                                    </a>
-                                </div>
-                                <?php if (isset($errors['category_id'])): ?>
-                                    <div class="invalid-feedback"><?php echo $errors['category_id']; ?></div>
-                                <?php endif; ?>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label for="priority_id" class="form-label">
                                     Priority <span class="text-danger">*</span>
                                 </label>
@@ -183,6 +161,15 @@ require_once __DIR__ . '/../layout/header.php';
                                     id="assigned_to" name="assigned_to">
                                 <option value="">Unassigned</option>
                                 <?php foreach ($users as $user): ?>
+                                    <?php 
+                                    // Exclude admins from assignment
+                                    if ($user['role'] === 'admin') continue;
+                                    
+                                    // If current user is a manager, exclude other managers (but allow self-assignment)
+                                    if ($userRole === 'manager' && $user['role'] === 'manager' && $user['id'] != $currentUser['id']) {
+                                        continue;
+                                    }
+                                    ?>
                                     <option value="<?php echo $user['id']; ?>"
                                             <?php echo (isset($formData['assigned_to']) && $formData['assigned_to'] == $user['id']) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($user['full_name']); ?> (<?php echo htmlspecialchars($user['role']); ?>)
@@ -192,7 +179,13 @@ require_once __DIR__ . '/../layout/header.php';
                             <?php if (isset($errors['assigned_to'])): ?>
                                 <div class="invalid-feedback"><?php echo $errors['assigned_to']; ?></div>
                             <?php endif; ?>
-                            <div class="form-text">Select a team member to assign this task to.</div>
+                            <div class="form-text">
+                                <?php if ($userRole === 'manager'): ?>
+                                    You can assign tasks to yourself or team members.
+                                <?php else: ?>
+                                    Select a team member to assign this task to.
+                                <?php endif; ?>
+                            </div>
                         </div>
 
                         <!-- Quick Actions -->

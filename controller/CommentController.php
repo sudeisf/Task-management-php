@@ -81,8 +81,8 @@ class CommentController
             // Log activity
             $this->activityModel->log(
                 $this->currentUser['id'],
-                'comment_added',
                 $task_id,
+                'comment_added',
                 "Added comment to task: " . substr($comment_text, 0, 50) . "..."
             );
 
@@ -150,8 +150,8 @@ class CommentController
             // Log activity
             $this->activityModel->log(
                 $this->currentUser['id'],
-                'comment_updated',
                 $task_id,
+                'comment_updated',
                 "Updated comment on task"
             );
 
@@ -193,8 +193,8 @@ class CommentController
             // Log activity
             $this->activityModel->log(
                 $this->currentUser['id'],
-                'comment_deleted',
                 $task_id,
+                'comment_deleted',
                 "Deleted comment from task"
             );
 

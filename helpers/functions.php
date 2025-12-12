@@ -447,3 +447,24 @@ function baseUrl()
 
     return $protocol . '://' . $host . $script;
 }
+
+/**
+ * Get activity icon based on notification type
+ */
+function getActivityIcon($type)
+{
+    $icons = [
+        'task_assigned' => 'person-check',
+        'task_completed' => 'check-circle',
+        'task_updated' => 'pencil',
+        'task_created' => 'plus-circle',
+        'comment_added' => 'chat',
+        'project_created' => 'folder-plus',
+        'project_updated' => 'folder',
+        'user_registered' => 'person-plus',
+        'status_changed' => 'arrow-repeat',
+        'deadline_approaching' => 'clock',
+    ];
+    
+    return $icons[$type] ?? 'bell';
+}

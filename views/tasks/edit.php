@@ -148,6 +148,15 @@ require_once __DIR__ . '/../layout/header.php';
                                     id="assigned_to" name="assigned_to">
                                 <option value="">Unassigned</option>
                                 <?php foreach ($users as $user): ?>
+                                    <?php 
+                                    // Exclude admins from assignment
+                                    if ($user['role'] === 'admin') continue;
+                                    
+                                    // If current user is a manager, exclude other managers (but allow self-assignment)
+                                    if ($userRole === 'manager' && $user['role'] === 'manager' && $user['id'] != $currentUser['id']) {
+                                        continue;
+                                    }
+                                    ?>
                                     <option value="<?php echo $user['id']; ?>"
                                             <?php echo (($task['assigned_to'] ?? $_POST['assigned_to'] ?? '') == $user['id']) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($user['full_name']); ?> (<?php echo htmlspecialchars($user['role']); ?>)
