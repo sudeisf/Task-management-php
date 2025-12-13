@@ -43,7 +43,7 @@ define('PRIORITY_MEDIUM', 'medium');
 define('PRIORITY_HIGH', 'high');
 
 // Session Configuration
-define('SESSION_LIFETIME', 3600); // 1 hour
+define('SESSION_LIFETIME', 7200); // 2 hours
 define('SESSION_NAME', 'task_manager_session');
 
 // Security Configuration

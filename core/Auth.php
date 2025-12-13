@@ -11,6 +11,7 @@ class Auth
         Session::set("user_name", $user['full_name']); 
         Session::set("user_role", $user['role_name'] ?? 'member');
         Session::set("user_avatar", $user['avatar'] ?? null);
+        Session::set("last_activity", time());
     }
 
     public static function logout()
@@ -22,7 +23,20 @@ class Auth
     public static function check()
     {
         Session::start();
-        return Session::get("user_id") !== null;
+        if (Session::get("user_id") === null) {
+            return false;
+        }
+
+        // Check for session timeout
+        $lastActivity = Session::get("last_activity");
+        if ($lastActivity && (time() - $lastActivity > SESSION_LIFETIME)) {
+            self::logout();
+            return false;
+        }
+
+        // Update last activity time
+        Session::set("last_activity", time());
+        return true;
     }
 
     public static function user()
