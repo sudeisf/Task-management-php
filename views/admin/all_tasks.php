@@ -11,7 +11,6 @@
 // $tasks - array of tasks
 // $filters - current filter values
 // $pagination - pagination data
-// $categories - available categories
 // $priorities - available priorities
 // $users - available users
 ?>
@@ -63,18 +62,7 @@
                     </select>
                 </div>
 
-                <!-- Category Filter -->
-                <div class="col-md-2">
-                    <label for="category_id" class="form-label">Category</label>
-                    <select name="category_id" id="category_id" class="form-select">
-                        <option value="">All Categories</option>
-                        <?php foreach ($categories as $category): ?>
-                            <option value="<?php echo $category['id']; ?>" <?php echo (isset($_GET['category_id']) && $_GET['category_id'] == $category['id']) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($category['name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+
 
                 <!-- Assigned To Filter -->
                 <div class="col-md-2">

@@ -578,7 +578,7 @@ class TaskController
         $output = fopen('php://output', 'w');
         
         // Header row
-        fputcsv($output, ['ID', 'Title', 'Status', 'Priority', 'Category', 'Assigned To', 'Due Date', 'Created At']);
+        fputcsv($output, ['ID', 'Title', 'Status', 'Priority', 'Assigned To', 'Due Date', 'Created At']);
         
         foreach ($tasks as $task) {
             fputcsv($output, [
@@ -586,7 +586,6 @@ class TaskController
                 $task['title'],
                 ucfirst(str_replace('_', ' ', $task['status'])),
                 ucfirst($task['priority_name']),
-                $task['category_name'],
                 $task['assignee_name'] ?? 'Unassigned',
                 $task['deadline'],
                 $task['created_at']

@@ -9,7 +9,6 @@ require_once __DIR__ . '/../layout/header.php';
 
 // Assuming these variables are passed from the controller
 // $task - the task data to edit
-// $categories - available categories
 // $priorities - available priorities
 // $users - available users for assignment
 // $errors - validation errors (if any)
@@ -74,26 +73,9 @@ require_once __DIR__ . '/../layout/header.php';
                             <?php endif; ?>
                         </div>
 
-                        <!-- Category and Priority Row -->
+                        <!-- Priority Row -->
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="category_id" class="form-label">Category</label>
-                                <select class="form-select <?php echo isset($errors['category_id']) ? 'is-invalid' : ''; ?>"
-                                        id="category_id" name="category_id">
-                                    <option value="">Select Category</option>
-                                    <?php foreach ($categories as $category): ?>
-                                        <option value="<?php echo $category['id']; ?>"
-                                                <?php echo (($task['category_id'] ?? $_POST['category_id'] ?? '') == $category['id']) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($category['name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <?php if (isset($errors['category_id'])): ?>
-                                    <div class="invalid-feedback"><?php echo $errors['category_id']; ?></div>
-                                <?php endif; ?>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label for="priority_id" class="form-label">
                                     Priority <span class="text-danger">*</span>
                                 </label>
