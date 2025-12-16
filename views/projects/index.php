@@ -202,7 +202,7 @@ $currentUser = Auth::user();
                                 <a href="?action=show&id=<?= $project['id'] ?>" class="btn btn-sm btn-outline-primary flex-fill">
                                     <i class="bi bi-eye me-1"></i>View
                                 </a>
-                                <a href="<?= BASE_URL ?>/controller/TaskController.php?project_id=<?= $project['id'] ?>" 
+                                <a href="?action=show&id=<?= $project['id'] ?>" 
                                    class="btn btn-sm btn-outline-secondary flex-fill">
                                     <i class="bi bi-list-check me-1"></i>Tasks
                                 </a>

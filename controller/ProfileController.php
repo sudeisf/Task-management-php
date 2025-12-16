@@ -122,7 +122,8 @@ class ProfileController
                 $errors[] = 'Current password is required to set a new password.';
             } else {
                 // Verify current password - need to get password from database
-                $conn = Database::getInstance()->getConnection();
+                $db = new Database();
+                $conn = $db->getConnection();
                 $stmt = $conn->prepare("SELECT password FROM users WHERE id = ?");
                 $stmt->bind_param("i", $userId);
                 $stmt->execute();
@@ -155,23 +156,38 @@ class ProfileController
             'email' => $email
         ];
 
-        // Add password to update if changing
+        // Update basic profile info
+        $profileUpdated = $this->userModel->updateProfile($userId, $updateData);
+        $passwordUpdated = true;
+
+        // Change password if provided
         if (!empty($newPassword)) {
-            $updateData['password'] = password_hash($newPassword, PASSWORD_BCRYPT);
+            $passwordUpdated = $this->userModel->changePassword($userId, $newPassword);
         }
 
-        // Update user
-        $result = $this->userModel->updateProfile($userId, $updateData);
-
-        if ($result) {
+        if ($profileUpdated) {
             // Update session data
             $_SESSION['user']['name'] = $fullName;
             $_SESSION['user']['email'] = $email;
 
-            setFlashMessage('success', 'Profile updated successfully.');
-            redirect(BASE_URL . '/controller/ProfileController.php?action=index');
+            if (!empty($newPassword)) {
+                if ($passwordUpdated) {
+                    setFlashMessage('success', 'Profile and password updated successfully.');
+                    redirect(BASE_URL . '/controller/ProfileController.php?action=index');
+                } else {
+                    setFlashMessage('warning', 'Profile details updated, but failed to change password. Please try again.');
+                    redirect(BASE_URL . '/controller/ProfileController.php?action=edit');
+                }
+            } else {
+                setFlashMessage('success', 'Profile updated successfully.');
+                redirect(BASE_URL . '/controller/ProfileController.php?action=index');
+            }
         } else {
-            setFlashMessage('error', 'Failed to update profile. Please try again.');
+            if (!empty($newPassword) && $passwordUpdated) {
+                setFlashMessage('warning', 'Password changed, but failed to update profile details.');
+            } else {
+                setFlashMessage('error', 'Failed to update profile. Please try again.');
+            }
             redirect(BASE_URL . '/controller/ProfileController.php?action=edit');
         }
     }

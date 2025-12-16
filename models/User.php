@@ -133,17 +133,10 @@ class User
         foreach ($data as $key => $value) {
             $fields[] = "$key=?";
             $values[] = $value;
-            
-            // Determine type for bind_param
-            if (is_int($value)) {
-                $types .= 'i';
-            } elseif (is_double($value)) {
-                $types .= 'd';
-            } else {
-                $types .= 's';
-            }
+            $types .= 's'; // Default to string for safety
         }
 
+        // Add ID to values
         $values[] = $id;
         $types .= 'i';
 
@@ -152,7 +145,13 @@ class User
         
         if (!$stmt) return false;
 
-        $stmt->bind_param($types, ...$values);
+        // Convert to references for bind_param
+        $bindParams[] = &$types;
+        for ($i = 0; $i < count($values); $i++) {
+            $bindParams[] = &$values[$i];
+        }
+
+        call_user_func_array([$stmt, 'bind_param'], $bindParams);
         return $stmt->execute();
     }
 

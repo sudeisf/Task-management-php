@@ -729,7 +729,7 @@ class TaskController
         }
 
         // Members can only edit their own tasks or tasks assigned to them
-        return $task['created_by'] == $this->currentUser['id'];
+        return $task['created_by'] == $this->currentUser['id'] || $task['assigned_to'] == $this->currentUser['id'];
     }
 
     private function canDeleteTask($task, $userRole)
@@ -742,8 +742,8 @@ class TaskController
             return true; // Managers can delete all tasks
         }
 
-        // Members can only delete their own created tasks
-        return $task['created_by'] == $this->currentUser['id'];
+        // Members cannot delete tasks
+        return false;
     }
 
     private function canChangeStatus($task, $userRole)

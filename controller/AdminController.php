@@ -408,7 +408,7 @@ class AdminController
         $stats['active_users'] = $activeUsers;
 
         // Task statistics
-        $taskStats = $this->taskModel->getStatistics();
+        $taskStats = $this->taskModel->getStatistics(null, 'admin');
         $stats['total_tasks'] = $taskStats['total'] ?? 0;
         $stats['todo_count'] = $taskStats['todo'] ?? 0;
         $stats['in_progress_count'] = $taskStats['in_progress'] ?? 0;

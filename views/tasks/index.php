@@ -35,6 +35,9 @@ require_once __DIR__ . '/../layout/header.php';
         <div class="card-body">
             <form method="GET" action="<?php echo BASE_URL; ?>/controller/TaskController.php" class="row g-3">
                 <input type="hidden" name="action" value="index">
+                <?php if (isset($_GET['my_tasks']) && $_GET['my_tasks'] === 'true'): ?>
+                    <input type="hidden" name="my_tasks" value="true">
+                <?php endif; ?>
 
                 <!-- Search -->
                 <div class="col-md-4">
@@ -103,7 +106,7 @@ require_once __DIR__ . '/../layout/header.php';
                     <button type="submit" class="btn btn-primary me-2">
                         <i class="bi bi-filter"></i> Apply Filters
                     </button>
-                    <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index" class="btn btn-outline-secondary me-2">
+                    <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index<?php echo (isset($_GET['my_tasks']) && $_GET['my_tasks'] === 'true') ? '&my_tasks=true' : ''; ?>" class="btn btn-outline-secondary me-2">
                         <i class="bi bi-x-circle"></i> Clear Filters
                     </a>
                     <?php if (!empty($tasks)): ?>
@@ -220,11 +223,13 @@ require_once __DIR__ . '/../layout/header.php';
                                                    class="btn btn-sm btn-outline-secondary" title="Edit">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                        onclick="deleteTask(<?php echo $task['id']; ?>, '<?php echo htmlspecialchars(addslashes($task['title'])); ?>')"
-                                                        title="Delete">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
+                                                <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                            onclick="deleteTask(<?php echo $task['id']; ?>, '<?php echo htmlspecialchars(addslashes($task['title'])); ?>')"
+                                                            title="Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>

@@ -131,14 +131,22 @@ class Project
         return $this->db->getRows();
     }
 
-    // Get projects where user is a member
+    // Get projects where user is a member (has tasks assigned)
     public function getByMember($memberId)
     {
-        $sql = "SELECT DISTINCT p.*, u.full_name as creator_name
+        $sql = "SELECT p.*, u.full_name as creator_name,
+                COUNT(DISTINCT t.id) as total_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
+                COUNT(DISTINCT pu.user_id) as team_size
                 FROM $this->table p
                 LEFT JOIN users u ON p.created_by = u.id
-                INNER JOIN tasks t ON p.id = t.project_id
-                WHERE t.assigned_to = ?
+                LEFT JOIN tasks t ON p.id = t.project_id
+                LEFT JOIN project_users pu ON p.id = pu.project_id
+                WHERE p.id IN (
+                    SELECT DISTINCT project_id FROM tasks 
+                    WHERE assigned_to = ?
+                )
+                GROUP BY p.id
                 ORDER BY p.created_at DESC";
         
         $this->db->prepare($sql);

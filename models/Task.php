@@ -78,7 +78,6 @@ class Task
     public function find($id)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        proj.name as project_name,
                        creator.full_name as creator_name,
@@ -99,7 +98,6 @@ class Task
     public function assignedTo($user_id, $filters = [], $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name,
@@ -163,7 +161,6 @@ class Task
     public function createdBy($user_id, $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name
@@ -195,7 +192,6 @@ class Task
     public function all($filters = [], $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name,
@@ -263,7 +259,6 @@ class Task
     public function search($query, $user_id = null, $user_role = null, $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name
@@ -363,7 +358,6 @@ class Task
     public function getRecent($limit = 5, $user_id = null, $user_role = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name

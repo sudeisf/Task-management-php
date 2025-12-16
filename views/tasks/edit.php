@@ -26,7 +26,7 @@ require_once __DIR__ . '/../layout/header.php';
                 <i class="bi bi-eye me-2"></i>
                 View Task
             </a>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index" class="btn btn-outline-secondary">
+            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&my_tasks=true" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-2"></i>
                 Back to Tasks
             </a>
@@ -48,6 +48,7 @@ require_once __DIR__ . '/../layout/header.php';
                 </div>
                 <div class="card-body">
                     <form action="<?php echo BASE_URL; ?>/controller/TaskController.php?action=update&id=<?php echo $task['id']; ?>" method="POST" id="edit-task-form">
+                        <input type="hidden" name="project_id" value="<?php echo $task['project_id']; ?>">
                         <!-- Title -->
                         <div class="mb-3">
                             <label for="title" class="form-label">
@@ -201,11 +202,14 @@ require_once __DIR__ . '/../layout/header.php';
                                     <i class="bi bi-check-circle me-2"></i>
                                     Update Task
                                 </button>
-                                <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=delete&id=<?php echo $task['id']; ?>"
-                                   class="btn btn-outline-danger"
-                                   onclick="return confirm('Are you sure you want to delete this task? This action cannot be undone.')">
-                                    <i class="bi bi-trash me-2"></i>
-                                    Delete Task
+                                <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+                                    <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=delete&id=<?php echo $task['id']; ?>"
+                                       class="btn btn-outline-danger"
+                                       onclick="return confirm('Are you sure you want to delete this task? This action cannot be undone.')">
+                                        <i class="bi bi-trash me-2"></i>
+                                        Delete Task
+                                    </a>
+                                <?php endif; ?>
                                 </a>
                             </div>
                         </div>

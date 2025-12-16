@@ -112,7 +112,7 @@ if ($currentUser) {
                     <ul class="navbar-nav">
                         <!-- Notifications -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" data-bs-display="static">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-bell"></i>
                                 <?php if ($notificationCount > 0): ?>
                                     <span class="badge bg-danger"><?php echo $notificationCount; ?></span>
@@ -146,7 +146,7 @@ if ($currentUser) {
 
                         <!-- User Menu -->
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" data-bs-display="static">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                                 <?php if (!empty($currentUser['avatar'])): ?>
                                     <img src="<?php echo BASE_URL; ?>/public/uploads/avatars/<?php echo htmlspecialchars($currentUser['avatar']); ?>" 
                                          alt="Profile" 
