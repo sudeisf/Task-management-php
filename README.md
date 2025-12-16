@@ -1,117 +1,79 @@
 # Task Management System
 
-## Objective
+A comprehensive PHP-based Task Management System designed to help teams facilitate project tracking, task assignment, and collaboration. Built with a custom MVC architecture, it supports role-based access control (Admin, Manager, Member), real-time status updates, and automated workflows.
 
-To build a platform that helps individuals and teams plan, assign, and track tasks efficiently, enhancing productivity and accountability.
+## Features
 
----
+*   **Role-Based Access Control (RBAC)**:a
+    *   **Admin**: Full system access, user management, and global oversight.
+    *   **Manager**: Create and manage projects, assign tasks, and track team progress.
+    *   **Member**: View assigned tasks, update status, and collaborate.
+*   **Project Management**:
+    *   Create and manage projects.
+    *   **Automated Status**: Projects automatically update to "In Progress" or "Completed" based on task progress.
+    *   **Team Sync**: Assigning a user to a task automatically adds them to the project team.
+*   **Task Management**:
+    *   Create, edit, delete, and assign tasks.
+    *   Set priorities, deadlines, and descriptions.
+    *   **Search & Filter**: Powerful search capabilities for tasks and projects.
+    *   **Bulk Actions**: Update or delete multiple tasks at once.
+*   **User Management**:
+    *   Secure registration and login.
+    *   Admin panel to manage user roles and status (Active/Inactive).
+    *   **Security**: Inactive users are automatically blocked from logging in.
+*   **Dashboard**:
+    *   Visual overview of system statistics.
+    *   Recent activity logs and notifications.
+    *   "My Tasks" quick view for members.
+
+## Tech Stack
+
+*   **Backend**: Native PHP 8.x (MVC Pattern)
+*   **Database**: MySQL
+*   **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
+*   **Server**: Built-in PHP server or Apache/Nginx
 
 ## Folder Structure
 
 ```
-actions/      — Server-side PHP endpoints (CRUD, auth, file uploads)
-view/         — Frontend PHP/HTML pages (forms, dashboard, task views)
-config/       — Shared configuration and database connection (config.php, db.php)
-uploads/      — Directory for uploaded files (.gitkeep included)
-sql/          — Database schema and example scripts (schema.sql)
-index.php     — Root entry point that routes users to login or dashboard
+config/         — Database connection and global constants
+controller/     — Business logic and request handling (Admin, Task, Project, etc.)
+models/         — Database interactions and data logic (User, Task, Project, etc.)
+views/          — Frontend templates (layouts, forms, lists)
+core/           — Framework core (Database, Session, Auth, Router)
+helpers/        — Utility functions
+sql/            — Database schema scripts
+public/         — Public assets (CSS, JS, images)
+uploads/        — User uploaded attachments
 ```
 
----
+## Installation & Setup
 
-## Main Features
+1.  **Clone the Repository**
+    ```bash
+    git clone <repository-url>
+    cd task-management-php
+    ```
 
-* **User Management:** Secure registration, login, and role-based access control.
-* **Task Operations:** Create, edit, delete, assign, and track tasks with priorities and deadlines.
-* **Dashboard & Reports:** Visual performance summaries and productivity reports.
-* **Notifications & Reminders:** Alerts for assignments and due dates.
-* **Collaboration Tools:** Comments, file attachments, and activity logs.
-* **Search & Filter:** Quickly find tasks by keyword, status, or user.
-* **Admin Controls:** Manage users and oversee team operations.
+2.  **Database Setup**
+    *   Create a MySQL database (e.g., `task_manager`).
+    *   Import the schema files from the `sql/` directory in order.
+    *   Update database credentials in `config/db.php`.
 
----
+3.  **Run the Application**
+    Start the built-in PHP development server:
+    ```bash
+    php -S localhost:8000
+    ```
 
-## How to Run Locally
+4.  **Access the App**
+    Open your browser and navigate to:
+    ```
+    http://localhost:8000
+    ```
 
-1. Clone the repository:
+## Development Notes
 
-```bash
-git clone <repository-url>
-```
-
-2. Navigate to the project root:
-
-```bash
-cd task-management-system
-```
-
-3. Start PHP's built-in server:
-
-```bash
-php -S localhost:8000
-```
-
-4. Open the dashboard or login page in your browser:
-
-```
-http://localhost:8000/index.php
-```
-
----
-
-## Notes
-
-<<<<<<< HEAD
-Tell me which of those you'd like next and I'll implement it.
-
-## Features to implement (based on project objective)
-
-This section breaks the Main Features into concrete implementation tasks with suggested files/folders and notes for a plain-PHP school project.
-
-- **User Management — Secure registration, login, role-based access**
-	- Purpose: let individuals sign up, sign in, and give admins/managers role-based privileges.
-	- Suggested files: `actions/register.php`, `actions/login.php`, `actions/logout.php`, `view/auth/register.php`, `view/auth/login.php`.
-	- Data: `sql/schema.sql` (add `users` table), store hashed passwords (`password_hash`) and role column.
-	- Notes: implement session-based auth, CSRF tokens for forms, and server-side validation.
-
-- **Task Operations — Create, edit, delete, assign, priorities, deadlines**
-	- Purpose: core task CRUD and assignment workflow.
-	- Suggested files: `view/tasks/list.php`, `view/tasks/create.php`, `view/tasks/edit.php`, `actions/tasks_save.php`, `actions/tasks_delete.php`.
-	- Data: `sql/schema.sql` (add `tasks` table, `assigned_to`, `priority`, `status`, `due_date`).
-
-- **Dashboard & Reports — Visual summaries and productivity reports**
-	- Purpose: quick performance overview for users and managers.
-	- Suggested files: `view/dashboard.php`, `actions/reports_export.php`.
-	- Notes: implement simple charts (Chart.js via CDN) and CSV export for reports.
-
-- **Notifications & Reminders — Alerts for assignments and due dates**
-	- Purpose: notify users about new assignments and upcoming/overdue tasks.
-	- Suggested files: `actions/notify.php`, `scripts/cron_reminders.php`, `view/notifications.php`.
-	- Notes: implement email sending with `mail()` or a library, plus an in-app `notifications` table for history.
-
-- **Collaboration Tools — Comments, file attachments, activity logs**
-	- Purpose: let users comment on tasks, attach files, and view activity history.
-	- Suggested files: `view/tasks/comments.php`, `actions/comment_add.php`, attachments handled by `actions/upload.php` (already present), `sql` additions for `comments` and `activity_logs`.
-
-- **Search & Filter — Find tasks by keyword, status, user**
-	- Purpose: quick lookup and filtering of large task lists.
-	- Suggested files: add query parameters to `view/tasks/list.php` and implement `actions/search.php` or server-side filtering.
-
-- **Admin Controls — Manage users and oversee team operations**
-	- Purpose: user management UI for admins: list users, change roles, deactivate accounts.
-	- Suggested files: `view/admin/users.php`, `actions/admin_user_update.php`.
-
-- **Tests, Security & Documentation**
-	- Purpose: validate core workflows and secure the app (input validation, file upload restrictions, session handling).
-	- Suggested files: `tests/` folder for simple PHP test scripts, documentation in `docs/implementation-notes.md`.
-
-If you want, I can start implementing any one of these features now — tell me which to begin with and I'll update the todo progress and create the required files.
-=======
-* `actions/` contains all backend logic for tasks, users, comments, file uploads, and notifications.
-* `uploads/` stores attachments. Make sure to validate file types and size in production.
-* `config/` contains database connection (`db.php`) and other project-wide settings (`config.php`).
-* `sql/` contains schema and sample data to quickly set up the database.
-* Use Bootstrap CDN for styling; no local CSS/JS is required.
-
----
->>>>>>> 23eab38880d46f8c183a775c6e805b43c1031251
+*   **Clean Code**: The project follows strict MVC principles for maintainability.
+*   **Security**: Inputs are sanitized, and SQL injections are prevented using prepared statements. Passwords are hashed using `password_hash()`.
+*   **Automation**: Several background logic hooks (like project status updates) are implemented in the keys Controller methods (e.g., `TaskController`).
