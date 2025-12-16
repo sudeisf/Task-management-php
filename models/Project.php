@@ -109,7 +109,7 @@ class Project
     }
 
     // Get projects assigned to a manager
-    public function getByManager($managerId)
+    public function getByManager($managerId, $filters = [])
     {
         $sql = "SELECT p.*, u.full_name as creator_name,
                 COUNT(DISTINCT t.id) as total_tasks,
@@ -122,17 +122,43 @@ class Project
                 WHERE p.id IN (
                     SELECT project_id FROM project_users 
                     WHERE user_id = ? AND role_in_project = 'manager'
-                )
-                GROUP BY p.id
-                ORDER BY p.created_at DESC";
+                )";
+
+        // Apply filters
+        if (!empty($filters['status'])) {
+            $sql .= " AND p.status = ?";
+            $params[] = $filters['status'];
+        }
         
+        if (!empty($filters['search'])) {
+            $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+
+        $sql .= " GROUP BY p.id ORDER BY p.created_at DESC";
+        
+        // Add ID to params at the beginning (wait, params are positional!)
+        // The first param is ? for user_id in subquery.
+        // So params list starts with $managerId.
+        // Then we append filter params.
+        // Fix: Use array_unshift or build array carefully.
+        
+        $queryParams = [$managerId];
+        if (!empty($filters['status'])) $queryParams[] = $filters['status'];
+        if (!empty($filters['search'])) {
+            $queryParams[] = $searchTerm;
+            $queryParams[] = $searchTerm;
+        }
+
         $this->db->prepare($sql);
-        $this->db->execute([$managerId]);
+        $this->db->execute($queryParams);
         return $this->db->getRows();
     }
 
     // Get projects where user is a member (has tasks assigned)
-    public function getByMember($memberId)
+    public function getByMember($memberId, $filters = [])
     {
         $sql = "SELECT p.*, u.full_name as creator_name,
                 COUNT(DISTINCT t.id) as total_tasks,
@@ -145,12 +171,32 @@ class Project
                 WHERE p.id IN (
                     SELECT DISTINCT project_id FROM tasks 
                     WHERE assigned_to = ?
-                )
-                GROUP BY p.id
-                ORDER BY p.created_at DESC";
+                )";
+
+        // Apply filters
+        if (!empty($filters['status'])) {
+            $sql .= " AND p.status = ?";
+            $params[] = $filters['status'];
+        }
+        
+        if (!empty($filters['search'])) {
+            $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+
+        $sql .= " GROUP BY p.id ORDER BY p.created_at DESC";
+
+        $queryParams = [$memberId];
+        if (!empty($filters['status'])) $queryParams[] = $filters['status'];
+        if (!empty($filters['search'])) {
+            $queryParams[] = $searchTerm;
+            $queryParams[] = $searchTerm;
+        }
         
         $this->db->prepare($sql);
-        $this->db->execute([$memberId]);
+        $this->db->execute($queryParams);
         return $this->db->getRows();
     }
 
@@ -390,7 +436,8 @@ class Project
         // Get project task statistics
         $sql = "SELECT 
                 COUNT(*) as total_tasks,
-                COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_tasks
+                COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_tasks,
+                COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress_tasks
                 FROM tasks 
                 WHERE project_id = ?";
         
@@ -400,6 +447,7 @@ class Project
         
         $totalTasks = $stats['total_tasks'] ?? 0;
         $completedTasks = $stats['completed_tasks'] ?? 0;
+        $inProgressTasks = $stats['in_progress_tasks'] ?? 0;
         
         // Determine new status
         $newStatus = 'planning'; // Default: To Do
@@ -407,8 +455,8 @@ class Project
         if ($totalTasks > 0) {
             if ($completedTasks === $totalTasks) {
                 $newStatus = 'completed'; // All tasks completed
-            } elseif ($completedTasks > 0) {
-                $newStatus = 'in_progress'; // Some tasks completed
+            } elseif ($completedTasks > 0 || $inProgressTasks > 0) {
+                $newStatus = 'in_progress'; // Some tasks completed or in progress
             }
         }
         

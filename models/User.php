@@ -110,16 +110,16 @@ class User
     }
 
     // ---------------- UPDATE USER ----------------
-    public function update($id, $fullName, $email, $roleName)
+    public function update($id, $fullName, $email, $roleName, $status = 'active')
     {
         $role_id = $this->getRoleId($roleName);
         if (!$role_id) return false;
 
-        $sql = "UPDATE $this->table SET full_name=?, email=?, role_id=? WHERE id=?";
+        $sql = "UPDATE $this->table SET full_name=?, email=?, role_id=?, status=? WHERE id=?";
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) return false;
 
-        $stmt->bind_param("ssii", $fullName, $email, $role_id, $id);
+        $stmt->bind_param("ssisi", $fullName, $email, $role_id, $status, $id);
         return $stmt->execute();
     }
 

@@ -124,12 +124,14 @@ $currentUser = Auth::user();
                                 ];
                                 $statusLabels = [
                                     'planning' => 'To Do',
+                                    'todo' => 'To Do',
+                                    'active' => 'To Do',
                                     'in_progress' => 'In Progress',
                                     'completed' => 'Completed',
                                     'on_hold' => 'On Hold'
                                 ];
                                 $statusColor = $statusColors[$project['status']] ?? 'secondary';
-                                $statusLabel = $statusLabels[$project['status']] ?? ucfirst($project['status']);
+                                $statusLabel = $statusLabels[$project['status']] ?? 'To Do';
                                 ?>
                                 <span class="badge bg-<?= $statusColor ?>">
                                     <?= $statusLabel ?>

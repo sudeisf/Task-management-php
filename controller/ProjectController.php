@@ -42,16 +42,18 @@ class ProjectController
     {
         $userRole = $this->getUserRole();
         
+        // Build filters for all roles
+        $filters = $this->buildFilters();
+        
         // Check permission
         if ($userRole === 'member') {
             // Members see projects through their tasks
-            $projects = $this->projectModel->getByMember($this->currentUser['id']);
+            $projects = $this->projectModel->getByMember($this->currentUser['id'], $filters);
         } elseif ($userRole === 'manager') {
             // Managers see assigned projects
-            $projects = $this->projectModel->getByManager($this->currentUser['id']);
+            $projects = $this->projectModel->getByManager($this->currentUser['id'], $filters);
         } else {
             // Admins see all projects
-            $filters = $this->buildFilters();
             $projects = $this->projectModel->all($filters);
         }
 
@@ -108,6 +110,7 @@ class ProjectController
         }
 
         $data['created_by'] = $this->currentUser['id'];
+        $data['status'] = 'planning'; // Force default status to To Do
 
         // Create project
         if ($projectId = $this->projectModel->create($data)) {

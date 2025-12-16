@@ -208,7 +208,7 @@
                     <ul class="pagination justify-content-center mb-0">
                         <?php if ($pagination['current_page'] > 1): ?>
                             <li class="page-item">
-                                <a class="page-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks&page=<?php echo $pagination['current_page'] - 1; ?>">
+                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/AdminController.php', array_merge($_GET, ['page' => $pagination['current_page'] - 1])); ?>">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
@@ -216,13 +216,13 @@
 
                         <?php for ($i = max(1, $pagination['current_page'] - 2); $i <= min($pagination['total_pages'], $pagination['current_page'] + 2); $i++): ?>
                             <li class="page-item <?php echo ($i == $pagination['current_page']) ? 'active' : ''; ?>">
-                                <a class="page-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks&page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/AdminController.php', array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
                             </li>
                         <?php endfor; ?>
 
                         <?php if ($pagination['current_page'] < $pagination['total_pages']): ?>
                             <li class="page-item">
-                                <a class="page-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks&page=<?php echo $pagination['current_page'] + 1; ?>">
+                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/AdminController.php', array_merge($_GET, ['page' => $pagination['current_page'] + 1])); ?>">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>

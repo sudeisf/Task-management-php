@@ -238,6 +238,12 @@ class Task
             $params[] = $filters['deadline_to'];
         }
 
+        if (!empty($filters['search'])) {
+            $sql .= " AND (t.title LIKE ? OR t.description LIKE ?)";
+            $params[] = "%" . $filters['search'] . "%";
+            $params[] = "%" . $filters['search'] . "%";
+        }
+
         $sql .= " ORDER BY t.created_at DESC";
 
         if ($limit) {
@@ -419,6 +425,12 @@ class Task
         if (!empty($filters['deadline_to'])) {
             $sql .= " AND deadline <= ?";
             $params[] = $filters['deadline_to'];
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (title LIKE ? OR description LIKE ?)";
+            $params[] = "%" . $filters['search'] . "%";
+            $params[] = "%" . $filters['search'] . "%";
         }
 
         // Restrict to user's tasks if not admin/manager

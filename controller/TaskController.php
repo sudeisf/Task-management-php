@@ -259,6 +259,16 @@ class TaskController
                     $this->currentUser['id']
                 );
             }
+
+            // Auto-assign user to project
+            if (!empty($data['assigned_to'])) {
+                $this->projectModel->assignUser($data['project_id'], $data['assigned_to'], 'member');
+            }
+            
+            // Auto-update project status
+            if (!empty($data['project_id'])) {
+                $this->projectModel->updateProjectStatus($data['project_id']);
+            }
             
             $_SESSION['success'] = "Task created successfully!";
             header("Location: ?action=show&id=$taskId");
@@ -373,6 +383,16 @@ class TaskController
                 );
             }
             
+            // Auto-assign user to project
+            if (!empty($data['assigned_to'])) {
+                $this->projectModel->assignUser($data['project_id'], $data['assigned_to'], 'member');
+            }
+
+            // Auto-update project status
+            if (!empty($data['project_id'])) {
+                $this->projectModel->updateProjectStatus($data['project_id']);
+            }
+            
             $_SESSION['success'] = "Task updated successfully!";
             header("Location: ?action=show&id=$id");
         } else {
@@ -407,6 +427,10 @@ class TaskController
         }
 
         if ($this->taskModel->delete($id)) {
+            // Auto-update project status
+            if (!empty($task['project_id'])) {
+                $this->projectModel->updateProjectStatus($task['project_id']);
+            }
             $_SESSION['success'] = "Task deleted successfully!";
         } else {
             $_SESSION['error'] = "Failed to delete task.";
