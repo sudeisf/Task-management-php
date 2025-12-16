@@ -11,7 +11,6 @@
 // $tasks - array of tasks
 // $filters - current filter values
 // $pagination - pagination data
-// $categories - available categories
 // $priorities - available priorities
 // $users - available users
 ?>
@@ -63,18 +62,7 @@
                     </select>
                 </div>
 
-                <!-- Category Filter -->
-                <div class="col-md-2">
-                    <label for="category_id" class="form-label">Category</label>
-                    <select name="category_id" id="category_id" class="form-select">
-                        <option value="">All Categories</option>
-                        <?php foreach ($categories as $category): ?>
-                            <option value="<?php echo $category['id']; ?>" <?php echo (isset($_GET['category_id']) && $_GET['category_id'] == $category['id']) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($category['name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+
 
                 <!-- Assigned To Filter -->
                 <div class="col-md-2">
@@ -220,7 +208,7 @@
                     <ul class="pagination justify-content-center mb-0">
                         <?php if ($pagination['current_page'] > 1): ?>
                             <li class="page-item">
-                                <a class="page-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks&page=<?php echo $pagination['current_page'] - 1; ?>">
+                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/AdminController.php', array_merge($_GET, ['page' => $pagination['current_page'] - 1])); ?>">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
@@ -228,13 +216,13 @@
 
                         <?php for ($i = max(1, $pagination['current_page'] - 2); $i <= min($pagination['total_pages'], $pagination['current_page'] + 2); $i++): ?>
                             <li class="page-item <?php echo ($i == $pagination['current_page']) ? 'active' : ''; ?>">
-                                <a class="page-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks&page=<?php echo $i; ?>"><?php echo $i; ?></a>
+                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/AdminController.php', array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
                             </li>
                         <?php endfor; ?>
 
                         <?php if ($pagination['current_page'] < $pagination['total_pages']): ?>
                             <li class="page-item">
-                                <a class="page-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks&page=<?php echo $pagination['current_page'] + 1; ?>">
+                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/AdminController.php', array_merge($_GET, ['page' => $pagination['current_page'] + 1])); ?>">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>

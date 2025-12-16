@@ -75,6 +75,13 @@ switch ($action) {
         $user = $userModel->verify($email, $password);
 
         if ($user) {
+            // Check if user is active
+            if ($user['status'] !== 'active') {
+                $_SESSION['error'] = "Your account is inactive. Please contact administrator.";
+                header("Location: ../views/auth/login.php");
+                exit;
+            }
+
             Auth::login($user);
             // Redirect to dashboard (fixed path)
             header("Location: ../views/dashboard/index.php");

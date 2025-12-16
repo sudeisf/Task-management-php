@@ -243,7 +243,7 @@ class AdminController
         }
 
         // Update user
-        if ($this->userModel->update($userId, $fullName, $email, $roleName)) {
+        if ($this->userModel->update($userId, $fullName, $email, $roleName, $status)) {
             // Change password if requested
             if ($changePassword && !empty($newPassword)) {
                 $this->userModel->changePassword($userId, $newPassword);
@@ -314,10 +314,16 @@ class AdminController
         $perPage = ITEMS_PER_PAGE;
         $offset = ($page - 1) * $perPage;
 
-        // Get all tasks without filters (unless explicitly filtered in admin view)
-        // We can reuse TaskController filters if we want consistent filtering in admin view too
-        $tasks = $this->taskModel->all([], $perPage, $offset);
-        $totalTasks = $this->taskModel->getCount();
+        // Build filters from GET parameters
+        $filters = [];
+        if (!empty($_GET['status'])) $filters['status'] = $_GET['status'];
+        if (!empty($_GET['priority_id'])) $filters['priority_id'] = (int)$_GET['priority_id'];
+        if (!empty($_GET['assigned_to'])) $filters['assigned_to'] = (int)$_GET['assigned_to'];
+        if (!empty($_GET['search'])) $filters['search'] = trim($_GET['search']);
+
+        // Get all tasks with filters
+        $tasks = $this->taskModel->all($filters, $perPage, $offset);
+        $totalTasks = $this->taskModel->getCount($filters);
         $totalPages = ceil($totalTasks / $perPage);
 
         // Get additional data for filters
@@ -408,7 +414,7 @@ class AdminController
         $stats['active_users'] = $activeUsers;
 
         // Task statistics
-        $taskStats = $this->taskModel->getStatistics();
+        $taskStats = $this->taskModel->getStatistics(null, 'admin');
         $stats['total_tasks'] = $taskStats['total'] ?? 0;
         $stats['todo_count'] = $taskStats['todo'] ?? 0;
         $stats['in_progress_count'] = $taskStats['in_progress'] ?? 0;

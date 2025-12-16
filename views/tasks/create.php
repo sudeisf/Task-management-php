@@ -8,7 +8,6 @@
 require_once __DIR__ . '/../layout/header.php';
 
 // Variables passed from controller:
-// $categories - available categories
 // $priorities - available priorities
 // $users - available users for assignment
 // $formData - form data for repopulation
@@ -253,7 +252,6 @@ require_once __DIR__ . '/../layout/header.php';
                         <li>Provide detailed descriptions with specific requirements and acceptance criteria</li>
                         <li>Set realistic deadlines based on task complexity and team capacity</li>
                         <li>Assign tasks to the most appropriate team member for their skills</li>
-                        <li>Use categories to organize and filter tasks more effectively</li>
                     </ul>
                 </div>
             </div>

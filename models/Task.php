@@ -16,15 +16,14 @@ class Task
     public function create($data)
     {
         $sql = "INSERT INTO $this->table
-                (project_id, title, description, category_id, priority_id, status, deadline, created_by, assigned_to)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                (project_id, title, description, priority_id, status, deadline, created_by, assigned_to)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         $this->db->prepare($sql);
         $params = [
             $data['project_id'],
             $data['title'],
             $data['description'] ?? null,
-            $data['category_id'] ?? null,
             $data['priority_id'] ?? 2, // medium by default
             $data['status'] ?? 'todo',
             $data['deadline'] ?? null,
@@ -42,14 +41,13 @@ class Task
     public function update($id, $data)
     {
         $sql = "UPDATE $this->table SET
-                title=?, description=?, category_id=?, priority_id=?, status=?, deadline=?, assigned_to=?
+                title=?, description=?, priority_id=?, status=?, deadline=?, assigned_to=?
                 WHERE id=?";
 
         $this->db->prepare($sql);
         $params = [
             $data['title'],
             $data['description'] ?? null,
-            $data['category_id'] ?? null,
             $data['priority_id'] ?? 2,
             $data['status'] ?? 'todo',
             $data['deadline'] ?? null,
@@ -80,13 +78,11 @@ class Task
     public function find($id)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        proj.name as project_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name
                 FROM $this->table t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN projects proj ON t.project_id = proj.id
                 LEFT JOIN users creator ON t.created_by = creator.id
@@ -102,13 +98,11 @@ class Task
     public function assignedTo($user_id, $filters = [], $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name,
                        proj.name as project_name
                 FROM $this->table t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN projects proj ON t.project_id = proj.id
                 LEFT JOIN users creator ON t.created_by = creator.id
@@ -128,10 +122,7 @@ class Task
             $params[] = $filters['priority_id'];
         }
 
-        if (!empty($filters['category_id'])) {
-            $sql .= " AND t.category_id=?";
-            $params[] = $filters['category_id'];
-        }
+
 
         if (!empty($filters['deadline_from'])) {
             $sql .= " AND t.deadline >= ?";
@@ -170,12 +161,10 @@ class Task
     public function createdBy($user_id, $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name
                 FROM $this->table t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN users creator ON t.created_by = creator.id
                 LEFT JOIN users assignee ON t.assigned_to = assignee.id
@@ -203,13 +192,11 @@ class Task
     public function all($filters = [], $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name,
                        proj.name as project_name
                 FROM $this->table t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN projects proj ON t.project_id = proj.id
                 LEFT JOIN users creator ON t.created_by = creator.id
@@ -229,10 +216,7 @@ class Task
             $params[] = $filters['priority_id'];
         }
 
-        if (!empty($filters['category_id'])) {
-            $sql .= " AND t.category_id=?";
-            $params[] = $filters['category_id'];
-        }
+
 
         if (!empty($filters['assigned_to'])) {
             $sql .= " AND t.assigned_to=?";
@@ -252,6 +236,12 @@ class Task
         if (!empty($filters['deadline_to'])) {
             $sql .= " AND t.deadline <= ?";
             $params[] = $filters['deadline_to'];
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (t.title LIKE ? OR t.description LIKE ?)";
+            $params[] = "%" . $filters['search'] . "%";
+            $params[] = "%" . $filters['search'] . "%";
         }
 
         $sql .= " ORDER BY t.created_at DESC";
@@ -275,12 +265,10 @@ class Task
     public function search($query, $user_id = null, $user_role = null, $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name
                 FROM $this->table t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN users creator ON t.created_by = creator.id
                 LEFT JOIN users assignee ON t.assigned_to = assignee.id
@@ -376,12 +364,10 @@ class Task
     public function getRecent($limit = 5, $user_id = null, $user_role = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name
                 FROM $this->table t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN users creator ON t.created_by = creator.id
                 LEFT JOIN users assignee ON t.assigned_to = assignee.id
@@ -419,10 +405,7 @@ class Task
             $params[] = $filters['priority_id'];
         }
 
-        if (!empty($filters['category_id'])) {
-            $sql .= " AND category_id=?";
-            $params[] = $filters['category_id'];
-        }
+
 
         if (!empty($filters['assigned_to'])) {
             $sql .= " AND assigned_to=?";
@@ -444,6 +427,12 @@ class Task
             $params[] = $filters['deadline_to'];
         }
 
+        if (!empty($filters['search'])) {
+            $sql .= " AND (title LIKE ? OR description LIKE ?)";
+            $params[] = "%" . $filters['search'] . "%";
+            $params[] = "%" . $filters['search'] . "%";
+        }
+
         // Restrict to user's tasks if not admin/manager
         if ($user_role !== 'admin' && $user_role !== 'manager') {
             $sql .= " AND (assigned_to=? OR created_by=?)";
@@ -461,11 +450,9 @@ class Task
     public function getOverdue($user_id = null, $user_role = null, $limit = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name
                 FROM $this->table t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN users creator ON t.created_by = creator.id
                 WHERE t.deadline < CURDATE() AND t.status != 'completed'";
@@ -493,13 +480,11 @@ class Task
     public function getByProject($projectId, $filters = [], $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name,
                        proj.name as project_name
                 FROM $this->table t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN projects proj ON t.project_id = proj.id
                 LEFT JOIN users creator ON t.created_by = creator.id
@@ -557,13 +542,11 @@ class Task
         $placeholders = str_repeat('?,', count($projectIds) - 1) . '?';
         
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name,
                        proj.name as project_name
                 FROM $this->table t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN projects proj ON t.project_id = proj.id
                 LEFT JOIN users creator ON t.created_by = creator.id

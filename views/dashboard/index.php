@@ -135,25 +135,27 @@ require_once __DIR__ . '/../layout/header.php';
             <h3 class="quick-actions-title">Quick Actions</h3>
         </div>
         <div class="quick-actions-grid">
+            <?php if ($userRole !== 'member'): ?>
             <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=create" class="quick-action-btn">
                 <div class="quick-action-icon">
                     <i class="bi bi-plus-circle"></i>
                 </div>
                 <span class="quick-action-label">Create Task</span>
             </a>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index" class="quick-action-btn">
+            <?php endif; ?>
+            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&my_tasks=true" class="quick-action-btn">
                 <div class="quick-action-icon">
                     <i class="bi bi-list-task"></i>
                 </div>
-                <span class="quick-action-label">View Tasks</span>
+                <span class="quick-action-label">View My Tasks</span>
             </a>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=todo" class="quick-action-btn">
+            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=todo&my_tasks=true" class="quick-action-btn">
                 <div class="quick-action-icon">
                     <i class="bi bi-circle"></i>
                 </div>
                 <span class="quick-action-label">To Do Tasks</span>
             </a>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=in_progress" class="quick-action-btn">
+            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=in_progress&my_tasks=true" class="quick-action-btn">
                 <div class="quick-action-icon">
                     <i class="bi bi-play-circle"></i>
                 </div>

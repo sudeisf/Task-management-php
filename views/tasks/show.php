@@ -43,7 +43,7 @@ require_once __DIR__ . '/../layout/header.php';
                 <i class="bi bi-pencil me-2"></i>
                 Edit Task
             </a>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index" class="btn btn-outline-secondary">
+            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&my_tasks=true" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-2"></i>
                 Back to Tasks
             </a>
@@ -80,11 +80,13 @@ require_once __DIR__ . '/../layout/header.php';
                                     <i class="bi bi-copy me-2"></i>
                                     Duplicate Task
                                 </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask()">
-                                    <i class="bi bi-trash me-2"></i>
-                                    Delete Task
-                                </a></li>
+                                <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask()">
+                                        <i class="bi bi-trash me-2"></i>
+                                        Delete Task
+                                    </a></li>
+                                <?php endif; ?>
                             </ul>
                         </div>
                     </div>
@@ -102,20 +104,7 @@ require_once __DIR__ . '/../layout/header.php';
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="task-meta-item">
-                                <label class="text-muted small">Category</label>
-                                <div>
-                                    <?php if ($task['category_name']): ?>
-                                        <span class="badge bg-secondary">
-                                            <?php echo htmlspecialchars($task['category_name']); ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="text-muted">No category</span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
+
                         <div class="col-md-6">
                             <div class="task-meta-item">
                                 <label class="text-muted small">Assigned To</label>

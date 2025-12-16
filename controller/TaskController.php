@@ -259,6 +259,16 @@ class TaskController
                     $this->currentUser['id']
                 );
             }
+
+            // Auto-assign user to project
+            if (!empty($data['assigned_to'])) {
+                $this->projectModel->assignUser($data['project_id'], $data['assigned_to'], 'member');
+            }
+            
+            // Auto-update project status
+            if (!empty($data['project_id'])) {
+                $this->projectModel->updateProjectStatus($data['project_id']);
+            }
             
             $_SESSION['success'] = "Task created successfully!";
             header("Location: ?action=show&id=$taskId");
@@ -373,6 +383,16 @@ class TaskController
                 );
             }
             
+            // Auto-assign user to project
+            if (!empty($data['assigned_to'])) {
+                $this->projectModel->assignUser($data['project_id'], $data['assigned_to'], 'member');
+            }
+
+            // Auto-update project status
+            if (!empty($data['project_id'])) {
+                $this->projectModel->updateProjectStatus($data['project_id']);
+            }
+            
             $_SESSION['success'] = "Task updated successfully!";
             header("Location: ?action=show&id=$id");
         } else {
@@ -407,6 +427,10 @@ class TaskController
         }
 
         if ($this->taskModel->delete($id)) {
+            // Auto-update project status
+            if (!empty($task['project_id'])) {
+                $this->projectModel->updateProjectStatus($task['project_id']);
+            }
             $_SESSION['success'] = "Task deleted successfully!";
         } else {
             $_SESSION['error'] = "Failed to delete task.";
@@ -578,7 +602,7 @@ class TaskController
         $output = fopen('php://output', 'w');
         
         // Header row
-        fputcsv($output, ['ID', 'Title', 'Status', 'Priority', 'Category', 'Assigned To', 'Due Date', 'Created At']);
+        fputcsv($output, ['ID', 'Title', 'Status', 'Priority', 'Assigned To', 'Due Date', 'Created At']);
         
         foreach ($tasks as $task) {
             fputcsv($output, [
@@ -586,7 +610,6 @@ class TaskController
                 $task['title'],
                 ucfirst(str_replace('_', ' ', $task['status'])),
                 ucfirst($task['priority_name']),
-                $task['category_name'],
                 $task['assignee_name'] ?? 'Unassigned',
                 $task['deadline'],
                 $task['created_at']
@@ -730,7 +753,7 @@ class TaskController
         }
 
         // Members can only edit their own tasks or tasks assigned to them
-        return $task['created_by'] == $this->currentUser['id'];
+        return $task['created_by'] == $this->currentUser['id'] || $task['assigned_to'] == $this->currentUser['id'];
     }
 
     private function canDeleteTask($task, $userRole)
@@ -743,8 +766,8 @@ class TaskController
             return true; // Managers can delete all tasks
         }
 
-        // Members can only delete their own created tasks
-        return $task['created_by'] == $this->currentUser['id'];
+        // Members cannot delete tasks
+        return false;
     }
 
     private function canChangeStatus($task, $userRole)

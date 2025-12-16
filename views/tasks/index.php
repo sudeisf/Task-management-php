@@ -11,7 +11,6 @@ require_once __DIR__ . '/../layout/header.php';
 // $tasks - array of tasks
 // $filters - current filter values
 // $pagination - pagination data
-// $categories - available categories
 // $priorities - available priorities
 // $users - available users (for admin)
 ?>
@@ -36,6 +35,9 @@ require_once __DIR__ . '/../layout/header.php';
         <div class="card-body">
             <form method="GET" action="<?php echo BASE_URL; ?>/controller/TaskController.php" class="row g-3">
                 <input type="hidden" name="action" value="index">
+                <?php if (isset($_GET['my_tasks']) && $_GET['my_tasks'] === 'true'): ?>
+                    <input type="hidden" name="my_tasks" value="true">
+                <?php endif; ?>
 
                 <!-- Search -->
                 <div class="col-md-4">
@@ -69,18 +71,7 @@ require_once __DIR__ . '/../layout/header.php';
                     </select>
                 </div>
 
-                <!-- Category Filter -->
-                <div class="col-md-2">
-                    <label for="category_id" class="form-label">Category</label>
-                    <select name="category_id" id="category_id" class="form-select">
-                        <option value="">All Categories</option>
-                        <?php foreach ($categories as $category): ?>
-                            <option value="<?php echo $category['id']; ?>" <?php echo (isset($_GET['category_id']) && $_GET['category_id'] == $category['id']) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($category['name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+
 
                 <!-- Assigned To Filter (for admin/manager) -->
                 <?php if (hasPermission($userRole, 'manage_users')): ?>
@@ -115,7 +106,7 @@ require_once __DIR__ . '/../layout/header.php';
                     <button type="submit" class="btn btn-primary me-2">
                         <i class="bi bi-filter"></i> Apply Filters
                     </button>
-                    <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index" class="btn btn-outline-secondary me-2">
+                    <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index<?php echo (isset($_GET['my_tasks']) && $_GET['my_tasks'] === 'true') ? '&my_tasks=true' : ''; ?>" class="btn btn-outline-secondary me-2">
                         <i class="bi bi-x-circle"></i> Clear Filters
                     </a>
                     <?php if (!empty($tasks)): ?>
@@ -232,11 +223,13 @@ require_once __DIR__ . '/../layout/header.php';
                                                    class="btn btn-sm btn-outline-secondary" title="Edit">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                        onclick="deleteTask(<?php echo $task['id']; ?>, '<?php echo htmlspecialchars(addslashes($task['title'])); ?>')"
-                                                        title="Delete">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
+                                                <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                            onclick="deleteTask(<?php echo $task['id']; ?>, '<?php echo htmlspecialchars(addslashes($task['title'])); ?>')"
+                                                            title="Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -346,7 +339,7 @@ require_once __DIR__ . '/../layout/header.php';
                     <ul class="pagination justify-content-center mb-0">
                         <?php if ($pagination['current_page'] > 1): ?>
                             <li class="page-item">
-                                <a class="page-link" href="<?php echo buildPaginationUrl($pagination['current_page'] - 1); ?>">
+                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/TaskController.php', array_merge($_GET, ['page' => $pagination['current_page'] - 1])); ?>">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
@@ -354,13 +347,13 @@ require_once __DIR__ . '/../layout/header.php';
 
                         <?php for ($i = max(1, $pagination['current_page'] - 2); $i <= min($pagination['total_pages'], $pagination['current_page'] + 2); $i++): ?>
                             <li class="page-item <?php echo ($i == $pagination['current_page']) ? 'active' : ''; ?>">
-                                <a class="page-link" href="<?php echo buildPaginationUrl($i); ?>"><?php echo $i; ?></a>
+                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/TaskController.php', array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
                             </li>
                         <?php endfor; ?>
 
                         <?php if ($pagination['current_page'] < $pagination['total_pages']): ?>
                             <li class="page-item">
-                                <a class="page-link" href="<?php echo buildPaginationUrl($pagination['current_page'] + 1); ?>">
+                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/TaskController.php', array_merge($_GET, ['page' => $pagination['current_page'] + 1])); ?>">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>

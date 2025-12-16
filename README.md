@@ -4,7 +4,7 @@ A comprehensive PHP-based Task Management System designed to help teams facilita
 
 ## Features
 
-*   **Role-Based Access Control (RBAC)**:a
+*   **Role-Based Access Control (RBAC)**:
     *   **Admin**: Full system access, user management, and global oversight.
     *   **Manager**: Create and manage projects, assign tasks, and track team progress.
     *   **Member**: View assigned tasks, update status, and collaborate.

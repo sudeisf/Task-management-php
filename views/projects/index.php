@@ -124,12 +124,14 @@ $currentUser = Auth::user();
                                 ];
                                 $statusLabels = [
                                     'planning' => 'To Do',
+                                    'todo' => 'To Do',
+                                    'active' => 'To Do',
                                     'in_progress' => 'In Progress',
                                     'completed' => 'Completed',
                                     'on_hold' => 'On Hold'
                                 ];
                                 $statusColor = $statusColors[$project['status']] ?? 'secondary';
-                                $statusLabel = $statusLabels[$project['status']] ?? ucfirst($project['status']);
+                                $statusLabel = $statusLabels[$project['status']] ?? 'To Do';
                                 ?>
                                 <span class="badge bg-<?= $statusColor ?>">
                                     <?= $statusLabel ?>
@@ -202,7 +204,7 @@ $currentUser = Auth::user();
                                 <a href="?action=show&id=<?= $project['id'] ?>" class="btn btn-sm btn-outline-primary flex-fill">
                                     <i class="bi bi-eye me-1"></i>View
                                 </a>
-                                <a href="<?= BASE_URL ?>/controller/TaskController.php?project_id=<?= $project['id'] ?>" 
+                                <a href="?action=show&id=<?= $project['id'] ?>" 
                                    class="btn btn-sm btn-outline-secondary flex-fill">
                                     <i class="bi bi-list-check me-1"></i>Tasks
                                 </a>
