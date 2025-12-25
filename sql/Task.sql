@@ -1,53 +1,57 @@
 -- -----------------------------------------------------
--- TASK MANAGEMENT SYSTEM - DATABASE SCHEMA (UPGRADED)
+-- TASK MANAGEMENT SYSTEM - CONSOLIDATED SCHEMA
+-- -----------------------------------------------------
+-- This file contains the complete database schema and
+-- ESSENTIAL SYSTEM DATA (Roles, Priorities, Categories).
 -- -----------------------------------------------------
 
 CREATE DATABASE IF NOT EXISTS task_manager;
 USE task_manager;
 
 -- -----------------------------------------------------
--- ROLES TABLE (More scalable than ENUM)
+-- ROLES TABLE
 -- -----------------------------------------------------
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,     -- admin, manager, member
     description TEXT
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Insert default roles
+-- Insert default roles (REQUIRED)
 INSERT INTO roles (name, description) VALUES
 ('admin', 'Full access to the system'),
 ('manager', 'Manages teams and tasks'),
 ('member', 'Regular user with limited access');
 
 -- -----------------------------------------------------
--- USERS TABLE (Enhanced)
+-- USERS TABLE (Enhanced with avatar)
 -- -----------------------------------------------------
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(120) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role_id INT NOT NULL,                             -- FK instead of ENUM
+    role_id INT NOT NULL,
     profile_picture VARCHAR(255),
+    avatar VARCHAR(255),                  -- Added from add_avatar_column.sql
     phone VARCHAR(20),
     bio TEXT,
     status ENUM('active', 'inactive') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (role_id) REFERENCES roles(id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
--- PRIORITY LEVELS TABLE (Dynamic, instead of ENUM)
+-- PRIORITY LEVELS TABLE
 -- -----------------------------------------------------
-CREATE TABLE priority_levels (
+CREATE TABLE IF NOT EXISTS priority_levels (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL,      -- low, medium, high
     weight INT NOT NULL             -- 1, 2, 3 (makes sorting easy)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Insert default priority levels
+-- Insert default priority levels (REQUIRED)
 INSERT INTO priority_levels (name, weight) VALUES
 ('low', 1),
 ('medium', 2),
@@ -56,18 +60,112 @@ INSERT INTO priority_levels (name, weight) VALUES
 -- -----------------------------------------------------
 -- CATEGORIES TABLE
 -- -----------------------------------------------------
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Insert sample categories (REQUIRED)
+INSERT INTO categories (name, description) VALUES
+('Development', 'Software development tasks'),
+('Design', 'UI/UX and graphic design tasks'),
+('Testing', 'Quality assurance and testing tasks'),
+('Documentation', 'Documentation and knowledge base tasks'),
+('Maintenance', 'System maintenance and updates'),
+('Research', 'Research and analysis tasks');
 
 -- -----------------------------------------------------
--- TASKS TABLE (Enhanced with relationships)
+-- PROJECTS TABLE (From migration_projects.sql)
 -- -----------------------------------------------------
-CREATE TABLE tasks (
+CREATE TABLE IF NOT EXISTS projects (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    status ENUM('active', 'on_hold', 'completed', 'archived', 'planning', 'in_progress') DEFAULT 'active', -- Merged statuses
+    start_date DATE,
+    end_date DATE,
+    created_by INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_status (status),
+    INDEX idx_created_by (created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -----------------------------------------------------
+-- PROJECT USERS (From migration_projects.sql)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS project_users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role_in_project ENUM('manager', 'member') NOT NULL DEFAULT 'member',
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_project_user (project_id, user_id),
+    INDEX idx_project (project_id),
+    INDEX idx_user (user_id),
+    INDEX idx_role (role_in_project)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -----------------------------------------------------
+-- ROLE PERMISSIONS (From migration_projects.sql)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS role_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role_id INT NOT NULL,
+    permission_name VARCHAR(100) NOT NULL,
+    resource_type VARCHAR(50) NOT NULL, -- 'project', 'task', 'user', 'report', etc.
+    can_create BOOLEAN DEFAULT FALSE,
+    can_read BOOLEAN DEFAULT FALSE,
+    can_update BOOLEAN DEFAULT FALSE,
+    can_delete BOOLEAN DEFAULT FALSE,
+    
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_role_permission (role_id, permission_name, resource_type),
+    INDEX idx_role (role_id),
+    INDEX idx_resource (resource_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Insert default permissions (REQUIRED)
+SET @admin_role_id = (SELECT id FROM roles WHERE name = 'admin' LIMIT 1);
+SET @manager_role_id = (SELECT id FROM roles WHERE name = 'manager' LIMIT 1);
+SET @member_role_id = (SELECT id FROM roles WHERE name = 'member' LIMIT 1);
+
+-- Admin Permissions (Full Access)
+INSERT INTO role_permissions (role_id, permission_name, resource_type, can_create, can_read, can_update, can_delete) VALUES
+(@admin_role_id, 'manage_projects', 'project', TRUE, TRUE, TRUE, TRUE),
+(@admin_role_id, 'manage_tasks', 'task', TRUE, TRUE, TRUE, TRUE),
+(@admin_role_id, 'manage_users', 'user', TRUE, TRUE, TRUE, TRUE),
+(@admin_role_id, 'view_reports', 'report', TRUE, TRUE, TRUE, TRUE),
+(@admin_role_id, 'manage_system', 'system', TRUE, TRUE, TRUE, TRUE);
+
+-- Manager Permissions (Project-scoped)
+INSERT INTO role_permissions (role_id, permission_name, resource_type, can_create, can_read, can_update, can_delete) VALUES
+(@manager_role_id, 'view_assigned_projects', 'project', FALSE, TRUE, FALSE, FALSE),
+(@manager_role_id, 'manage_project_tasks', 'task', TRUE, TRUE, TRUE, TRUE),
+(@manager_role_id, 'assign_tasks', 'task', FALSE, TRUE, TRUE, FALSE),
+(@manager_role_id, 'view_team_reports', 'report', FALSE, TRUE, FALSE, FALSE),
+(@manager_role_id, 'manage_comments', 'comment', TRUE, TRUE, TRUE, TRUE);
+
+-- Member Permissions (Task-scoped)
+INSERT INTO role_permissions (role_id, permission_name, resource_type, can_create, can_read, can_update, can_delete) VALUES
+(@member_role_id, 'view_assigned_tasks', 'task', FALSE, TRUE, TRUE, FALSE),
+(@member_role_id, 'update_task_status', 'task', FALSE, TRUE, TRUE, FALSE),
+(@member_role_id, 'add_comments', 'comment', TRUE, TRUE, TRUE, FALSE),
+(@member_role_id, 'upload_files', 'attachment', TRUE, TRUE, FALSE, FALSE);
+
+-- -----------------------------------------------------
+-- TASKS TABLE (Enhanced with project_id)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,                   -- Added from migration_projects.sql (made NOT NULL for strictness)
     title VARCHAR(255) NOT NULL,
     description TEXT,
     category_id INT,
@@ -80,16 +178,18 @@ CREATE TABLE tasks (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
     FOREIGN KEY (priority_id) REFERENCES priority_levels(id),
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL
-);
+    FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_project_id (project_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
 -- COMMENTS TABLE
 -- -----------------------------------------------------
-CREATE TABLE comments (
+CREATE TABLE IF NOT EXISTS comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     task_id INT NOT NULL,
     user_id INT NOT NULL,
@@ -98,12 +198,12 @@ CREATE TABLE comments (
 
     FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
 -- ATTACHMENTS TABLE
 -- -----------------------------------------------------
-CREATE TABLE attachments (
+CREATE TABLE IF NOT EXISTS attachments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     task_id INT NOT NULL,
     uploaded_by INT NOT NULL,
@@ -113,12 +213,12 @@ CREATE TABLE attachments (
 
     FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
     FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
 -- ACTIVITY LOGS TABLE
 -- -----------------------------------------------------
-CREATE TABLE activity_logs (
+CREATE TABLE IF NOT EXISTS activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     task_id INT,
@@ -128,12 +228,12 @@ CREATE TABLE activity_logs (
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
 -- NOTIFICATIONS TABLE
 -- -----------------------------------------------------
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     task_id INT NULL,
@@ -143,21 +243,21 @@ CREATE TABLE notifications (
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
--- TEAMS TABLE (Optional)
+-- TEAMS TABLE (Legacy/Optional - kept for compatibility)
 -- -----------------------------------------------------
-CREATE TABLE teams (
+CREATE TABLE IF NOT EXISTS teams (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
--- TEAM MEMBERS TABLE (Optional)
+-- TEAM MEMBERS TABLE (Legacy/Optional - kept for compatibility)
 -- -----------------------------------------------------
-CREATE TABLE team_members (
+CREATE TABLE IF NOT EXISTS team_members (
     id INT AUTO_INCREMENT PRIMARY KEY,
     team_id INT NOT NULL,
     user_id INT NOT NULL,
@@ -166,57 +266,4 @@ CREATE TABLE team_members (
 
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- -----------------------------------------------------
--- SAMPLE DATA
--- -----------------------------------------------------
-
--- Insert sample categories
-INSERT INTO categories (name, description) VALUES
-('Development', 'Software development tasks'),
-('Design', 'UI/UX and graphic design tasks'),
-('Testing', 'Quality assurance and testing tasks'),
-('Documentation', 'Documentation and knowledge base tasks'),
-('Maintenance', 'System maintenance and updates'),
-('Research', 'Research and analysis tasks');
-
--- Insert sample users (passwords are hashed for 'password123')
-INSERT INTO users (full_name, email, password, role_id, phone, bio) VALUES
-('Admin User', 'admin@taskmanager.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, '+1234567890', 'System administrator'),
-('Manager User', 'manager@taskmanager.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 2, '+1234567891', 'Project manager'),
-('John Doe', 'john@taskmanager.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 3, '+1234567892', 'Frontend developer'),
-('Jane Smith', 'jane@taskmanager.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 3, '+1234567893', 'Backend developer');
-
--- Insert sample tasks
-INSERT INTO tasks (title, description, category_id, priority_id, status, deadline, created_by, assigned_to) VALUES
-('Implement user authentication', 'Complete the login and registration system with proper validation', 1, 3, 'completed', '2024-12-15', 1, 3),
-('Design dashboard layout', 'Create responsive dashboard design with Bootstrap components', 2, 2, 'in_progress', '2024-12-20', 1, 4),
-('Write API documentation', 'Document all REST API endpoints with examples', 4, 1, 'todo', '2024-12-25', 2, 3),
-('Database optimization', 'Optimize database queries and add proper indexing', 1, 2, 'todo', '2024-12-22', 1, 4),
-('User testing phase', 'Conduct comprehensive user testing for new features', 3, 3, 'todo', '2024-12-28', 2, 3);
-
--- Insert sample comments
-INSERT INTO comments (task_id, user_id, comment) VALUES
-(1, 3, 'Authentication system is now fully implemented and tested.'),
-(2, 4, 'Working on the responsive design components.'),
-(2, 1, 'Please make sure to follow the existing design patterns.'),
-(3, 3, 'API documentation structure is ready for review.');
-
--- Insert sample activity logs
-INSERT INTO activity_logs (user_id, task_id, action, details) VALUES
-(1, 1, 'task_completed', 'Marked task as completed'),
-(4, 2, 'task_updated', 'Updated task status to in_progress'),
-(1, 2, 'comment_added', 'Added comment to task'),
-(3, 3, 'task_created', 'Created new documentation task');
-
--- Insert sample notifications
-INSERT INTO notifications (user_id, task_id, message, is_read) VALUES
-(3, 1, 'Your task "Implement user authentication" has been completed', 0),
-(4, 2, 'New task assigned: "Design dashboard layout"', 0),
-(3, 3, 'You have a new comment on task "Write API documentation"', 0),
-(4, 4, 'Task deadline approaching: "Database optimization"', 0);
-
--- -----------------------------------------------------
--- END OF FILE
--- -----------------------------------------------------
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

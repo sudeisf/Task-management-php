@@ -34,6 +34,13 @@ class ProjectController
         $this->userModel = new User($db->getConnection());
         $this->permissionModel = new Permission();
         $this->currentUser = Auth::user();
+
+        // Verify session user actually exists in DB
+        if (!$this->currentUser || !$this->userModel->getById($this->currentUser['id'])) {
+            Auth::logout();
+            header("Location: " . BASE_URL . "/views/auth/login.php");
+            exit;
+        }
     }
 
     // ==================== LIST PROJECTS ====================
@@ -370,7 +377,11 @@ class ProjectController
         $filters = [];
 
         if (!empty($_GET['status'])) {
-            $filters['status'] = $_GET['status'];
+            if ($_GET['status'] === 'planning' || $_GET['status'] === 'todo') {
+                $filters['status'] = ['planning', 'active'];
+            } else {
+                $filters['status'] = $_GET['status'];
+            }
         }
 
         if (!empty($_GET['search'])) {

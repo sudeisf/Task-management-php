@@ -95,6 +95,28 @@ class User
         return $stmt->get_result()->fetch_assoc();
     }
 
+    // ---------------- GET USERS BY ROLE ----------------
+    public function getByRole($roleName)
+    {
+        $sql = "SELECT u.id, u.full_name, u.email, r.name as role, u.status, u.created_at
+                FROM users u
+                JOIN roles r ON u.role_id = r.id
+                WHERE r.name = ?
+                ORDER BY u.full_name";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return [];
+
+        $stmt->bind_param("s", $roleName);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $users = [];
+        while ($row = $result->fetch_assoc()) {
+            $users[] = $row;
+        }
+        return $users;
+    }
+
     // ---------------- GET ALL USERS ----------------
     public function getAll()
     {

@@ -72,8 +72,14 @@ class Project
         
         // Apply filters
         if (!empty($filters['status'])) {
-            $sql .= " AND p.status = ?";
-            $params[] = $filters['status'];
+            if (is_array($filters['status'])) {
+                $placeholders = implode(',', array_fill(0, count($filters['status']), '?'));
+                $sql .= " AND p.status IN ($placeholders)";
+                foreach ($filters['status'] as $s) $params[] = $s;
+            } else {
+                $sql .= " AND p.status = ?";
+                $params[] = $filters['status'];
+            }
         }
         
         if (!empty($filters['search'])) {
@@ -126,8 +132,12 @@ class Project
 
         // Apply filters
         if (!empty($filters['status'])) {
-            $sql .= " AND p.status = ?";
-            $params[] = $filters['status'];
+            if (is_array($filters['status'])) {
+                $placeholders = implode(',', array_fill(0, count($filters['status']), '?'));
+                $sql .= " AND p.status IN ($placeholders)";
+            } else {
+                $sql .= " AND p.status = ?";
+            }
         }
         
         if (!empty($filters['search'])) {
@@ -146,7 +156,13 @@ class Project
         // Fix: Use array_unshift or build array carefully.
         
         $queryParams = [$managerId];
-        if (!empty($filters['status'])) $queryParams[] = $filters['status'];
+        if (!empty($filters['status'])) {
+            if (is_array($filters['status'])) {
+                foreach ($filters['status'] as $s) $queryParams[] = $s;
+            } else {
+                $queryParams[] = $filters['status'];
+            }
+        }
         if (!empty($filters['search'])) {
             $queryParams[] = $searchTerm;
             $queryParams[] = $searchTerm;
@@ -174,9 +190,14 @@ class Project
                 )";
 
         // Apply filters
+        // Apply filters
         if (!empty($filters['status'])) {
-            $sql .= " AND p.status = ?";
-            $params[] = $filters['status'];
+            if (is_array($filters['status'])) {
+                $placeholders = implode(',', array_fill(0, count($filters['status']), '?'));
+                $sql .= " AND p.status IN ($placeholders)";
+            } else {
+                $sql .= " AND p.status = ?";
+            }
         }
         
         if (!empty($filters['search'])) {
@@ -189,7 +210,13 @@ class Project
         $sql .= " GROUP BY p.id ORDER BY p.created_at DESC";
 
         $queryParams = [$memberId];
-        if (!empty($filters['status'])) $queryParams[] = $filters['status'];
+        if (!empty($filters['status'])) {
+            if (is_array($filters['status'])) {
+                foreach ($filters['status'] as $s) $queryParams[] = $s;
+            } else {
+                $queryParams[] = $filters['status'];
+            }
+        }
         if (!empty($filters['search'])) {
             $queryParams[] = $searchTerm;
             $queryParams[] = $searchTerm;
@@ -368,6 +395,50 @@ class Project
             $this->db->execute([]);
             return $this->db->getRow();
         }
+    }
+
+    // Get projects user is assigned to (any role)
+    public function getAssigned($userId, $filters = [])
+    {
+        $sql = "SELECT p.*, u.full_name as creator_name,
+                COUNT(DISTINCT t.id) as total_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
+                COUNT(DISTINCT pu.user_id) as team_size
+                FROM $this->table p
+                LEFT JOIN users u ON p.created_by = u.id
+                LEFT JOIN tasks t ON p.id = t.project_id
+                LEFT JOIN project_users pu ON p.id = pu.project_id
+                WHERE p.id IN (
+                    SELECT project_id FROM project_users 
+                    WHERE user_id = ?
+                )";
+
+        // Apply filters
+        $queryParams = [$userId];
+        
+        if (!empty($filters['status'])) {
+            if (is_array($filters['status'])) {
+                $placeholders = implode(',', array_fill(0, count($filters['status']), '?'));
+                $sql .= " AND p.status IN ($placeholders)";
+                foreach ($filters['status'] as $s) $queryParams[] = $s;
+            } else {
+                $sql .= " AND p.status = ?";
+                $queryParams[] = $filters['status'];
+            }
+        }
+        
+        if (!empty($filters['search'])) {
+            $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
+            $searchTerm = '%' . $filters['search'] . '%';
+            $queryParams[] = $searchTerm;
+            $queryParams[] = $searchTerm;
+        }
+
+        $sql .= " GROUP BY p.id ORDER BY p.created_at DESC";
+        
+        $this->db->prepare($sql);
+        $this->db->execute($queryParams);
+        return $this->db->getRows();
     }
 
     // Role-based dashboard statistics

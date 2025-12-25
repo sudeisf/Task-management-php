@@ -38,6 +38,14 @@ class AdminController
         $this->projectModel = new Project();
         $this->currentUser = Auth::user();
 
+        // Verify session user actually exists in DB
+        if (!$this->currentUser || !$this->userModel->getById($this->currentUser['id'])) {
+            Auth::logout();
+            header("Location: " . BASE_URL . "/views/auth/login.php");
+            exit;
+        }
+
+
         // Check if user is admin
         if (!$this->isAdmin()) {
             $_SESSION['error'] = "Access denied. Admin privileges required.";

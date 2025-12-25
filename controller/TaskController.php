@@ -43,6 +43,13 @@ class TaskController
         $this->projectModel = new Project();
         $this->permissionModel = new Permission();
         $this->currentUser = Auth::user();
+
+        // Verify session user actually exists in DB (handling stale sessions after DB reset)
+        if (!$this->userModel->getById($this->currentUser['id'])) {
+            Auth::logout();
+            header("Location: " . BASE_URL . "/views/auth/login.php");
+            exit;
+        }
     }
 
     // Display tasks list
@@ -168,7 +175,7 @@ class TaskController
             // For backward compatibility, get first project or require selection
             $projects = ($userRole === 'admin') ? 
                 $this->projectModel->all() : 
-                $this->projectModel->getByManager($this->currentUser['id']);
+                $this->projectModel->getAssigned($this->currentUser['id']);
             
             if (empty($projects)) {
                 $_SESSION['error'] = "No projects available. Please create a project first.";
@@ -188,15 +195,30 @@ class TaskController
         
         // Get users for assignment (project team members if in project context)
         if ($projectId) {
-            $users = $this->projectModel->getMembers($projectId);
+            // Even if in project, Manager/Admin can add NEW members by assigning to them
+            // So we fetch ALL members or just project members? 
+            // User requirement: "manager can add member by assigning the task to member"
+            // This implies picking from ALL members.
+            
+            // However, to keep it clean, maybe we list current members first, or just ALL members.
+            // Let's list ALL members for Managers/Admins to allow adding new people.
+            // For regular members creating tasks (if allowed), only show project team.
+            
+            if ($userRole === 'member') {
+                 $users = $this->projectModel->getMembers($projectId);
+            } else {
+                 // Admins and Managers can assign to ANY 'member' in the system
+                 $users = $this->userModel->getByRole('member');
+            }
         } else {
-            $users = ($userRole === 'admin' || $userRole === 'manager') ? $this->userModel->getAll() : null;
+            // Outside project context: List all candidates (Members only)
+            $users = ($userRole === 'admin' || $userRole === 'manager') ? $this->userModel->getByRole('member') : null;
         }
 
         // Get available projects for selection
         $projects = ($userRole === 'admin') ? 
             $this->projectModel->all() : 
-            $this->projectModel->getByManager($this->currentUser['id']);
+            $this->projectModel->getAssigned($this->currentUser['id']);
 
         // Get form data from session if it exists (for validation errors)
         $formData = $_SESSION['form_data'] ?? [];
@@ -710,6 +732,13 @@ class TaskController
         // Validate assigned_to
         if (!empty($data['assigned_to'])) {
             $data['assigned_to'] = (int)$data['assigned_to'];
+            // Verify user exists and is a MEMBER
+            $assignee = $this->userModel->getById($data['assigned_to']);
+            if (!$assignee) {
+                $errors['assigned_to'] = "Selected assignee does not exist.";
+            } elseif ($assignee['role'] !== 'member') {
+                $errors['assigned_to'] = "Tasks can only be assigned to Members.";
+            }
         }
 
         if (!empty($errors)) {
@@ -723,8 +752,8 @@ class TaskController
             'description' => htmlspecialchars(trim($data['description'] ?? '')),
             'priority_id' => $data['priority_id'] ?? 2,
             'status' => !empty($data['status']) ? $data['status'] : 'todo',
-            'deadline' => $data['deadline'] ?? null,
-            'assigned_to' => $data['assigned_to'] ?? null
+            'deadline' => !empty($data['deadline']) ? $data['deadline'] : null,
+            'assigned_to' => !empty($data['assigned_to']) ? $data['assigned_to'] : null
         ];
     }
 
