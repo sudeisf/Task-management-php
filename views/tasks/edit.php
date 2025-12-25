@@ -135,8 +135,13 @@ require_once __DIR__ . '/../layout/header.php';
                                     // Exclude admins from assignment
                                     if ($user['role'] === 'admin') continue;
                                     
-                                    // If current user is a manager, exclude other managers (but allow self-assignment)
-                                    if ($userRole === 'manager' && $user['role'] === 'manager' && $user['id'] != $currentUser['id']) {
+                                    // If current user is a manager, exclude other managers (don't allow self-assignment)
+                                    if ($userRole === 'manager' && $user['role'] === 'manager') {
+                                        continue;
+                                    }
+
+                                    // Strictly block self-assignment for all roles
+                                    if ($user['id'] == $currentUser['id']) {
                                         continue;
                                     }
                                     ?>

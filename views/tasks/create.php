@@ -164,8 +164,13 @@ require_once __DIR__ . '/../layout/header.php';
                                     // Exclude admins from assignment
                                     if ($user['role'] === 'admin') continue;
                                     
-                                    // If current user is a manager, exclude other managers (but allow self-assignment)
-                                    if ($userRole === 'manager' && $user['role'] === 'manager' && $user['id'] != $currentUser['id']) {
+                                    // If current user is a manager, exclude other managers (don't allow self-assignment)
+                                    if ($userRole === 'manager' && $user['role'] === 'manager') {
+                                        continue;
+                                    }
+
+                                    // Strictly block self-assignment for all roles
+                                    if ($user['id'] == $currentUser['id']) {
                                         continue;
                                     }
                                     ?>
@@ -200,9 +205,6 @@ require_once __DIR__ . '/../layout/header.php';
                                 <button type="button" class="btn btn-outline-info btn-sm" onclick="setDueTomorrow()">
                                     <i class="bi bi-calendar-plus"></i> Due Tomorrow
                                 </button>
-                                <button type="button" class="btn btn-outline-success btn-sm" onclick="assignToMe()">
-                                    <i class="bi bi-person-check"></i> Assign to Me
-                                </button>
                             </div>
                         </div>
 
@@ -229,9 +231,9 @@ require_once __DIR__ . '/../layout/header.php';
                                         <i class="bi bi-play-circle me-2"></i>
                                         Create & Mark In Progress
                                     </button></li>
-                                    <li><button type="submit" name="save_and_assign" value="1" class="dropdown-item">
-                                        <i class="bi bi-person-plus me-2"></i>
-                                        Create & Assign to Me
+                                    <li><button type="submit" name="save_and_start" value="1" class="dropdown-item">
+                                        <i class="bi bi-play-circle me-2"></i>
+                                        Create & Mark In Progress
                                     </button></li>
                                 </ul>
                             </div>
@@ -279,13 +281,7 @@ function setDueTomorrow() {
     document.getElementById('deadline').value = tomorrow.toISOString().split('T')[0];
 }
 
-function assignToMe() {
-    // This would need to be set server-side or via JavaScript
-    // For now, we'll assume the current user ID is available
-    <?php if (isset($currentUser)): ?>
-        document.getElementById('assigned_to').value = '<?php echo $currentUser['id']; ?>';
-    <?php endif; ?>
-}
+
 
 // Form validation enhancement
 document.getElementById('create-task-form').addEventListener('submit', function(e) {

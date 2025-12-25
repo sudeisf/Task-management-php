@@ -61,7 +61,11 @@ $pageTitle = 'Edit Project';
                             ?>
                             <select class="form-select" name="managers[]" multiple size="5">
                                 <?php foreach ($users as $user): ?>
-                                    <?php if ($user['role'] === 'manager' || $user['role'] === 'admin'): ?>
+                                    <?php 
+                                    if ($user['role'] === 'manager' || $user['role'] === 'admin'): 
+                                        // Strictly block self-assignment
+                                        if ($user['id'] == $_SESSION['user_id']) continue;
+                                    ?>
                                         <option value="<?= $user['id'] ?>" 
                                                 <?= in_array($user['id'], $currentManagerIds) ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($user['full_name']) ?> (<?= $user['role'] ?>)
