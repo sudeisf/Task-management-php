@@ -108,7 +108,7 @@ if (Auth::check()) {
             >
         </div>
 
-        <!-- Remember Me & Forgot Password -->
+        <!-- Remember Me -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="remember_me" id="rememberMe">
@@ -116,7 +116,6 @@ if (Auth::check()) {
                     Remember me
                 </label>
             </div>
-            <a href="forgetPassword.php" class="text-decoration-none small">Forgot password?</a>
         </div>
 
         <!-- Submit -->

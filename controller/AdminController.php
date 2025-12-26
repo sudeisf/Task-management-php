@@ -57,21 +57,7 @@ class AdminController
     // Admin dashboard
     public function index()
     {
-        // Get system statistics
-        $stats = $this->getSystemStats();
-
-        // Get recent activities
-        $recentActivities = $this->activityModel->getRecent(15);
-
-        // Get tasks by status for dashboard preview
-        $todoTasks = $this->taskModel->all(['status' => 'todo'], 5, 0);
-        $inProgressTasks = $this->taskModel->all(['status' => 'in_progress'], 5, 0);
-        $completedTasks = $this->taskModel->all(['status' => 'completed'], 5, 0);
-
-        // Load admin dashboard view
-        require_once __DIR__ . '/../views/layout/header.php';
-        require_once __DIR__ . '/../views/admin/dashboard.php';
-        require_once __DIR__ . '/../views/layout/footer.php';
+        $this->redirect("?action=users");
     }
 
     // User management
@@ -441,6 +427,12 @@ class AdminController
 
         return $stats;
     }
+
+    private function redirect($url)
+    {
+        header("Location: " . $url);
+        exit;
+    }
 }
 
 // Handle routing
@@ -450,9 +442,7 @@ $id = $_GET['id'] ?? null;
 $controller = new AdminController();
 
 switch ($action) {
-    case 'index':
-        $controller->index();
-        break;
+    case 'index': $controller->users(); break;
 
     case 'users':
         $controller->users();
@@ -502,7 +492,5 @@ switch ($action) {
         $controller->activityLogs();
         break;
 
-    default:
-        $controller->index();
-        break;
+    default: $controller->users(); break;
 }

@@ -19,15 +19,6 @@
             <a href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=index" class="btn btn-outline-secondary me-2">
                 <i class="bi bi-arrow-left"></i> Back to Reports
             </a>
-            <a href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=task_report&format=csv<?php 
-                if (!empty($filters['date_from'])) echo '&date_from=' . urlencode($filters['date_from']);
-                if (!empty($filters['date_to'])) echo '&date_to=' . urlencode($filters['date_to']);
-                if (!empty($filters['status'])) echo '&status=' . urlencode($filters['status']);
-                if (!empty($filters['priority_id'])) echo '&priority_id=' . urlencode($filters['priority_id']);
-                if (!empty($filters['category_id'])) echo '&category_id=' . urlencode($filters['category_id']);
-            ?>" class="btn btn-success">
-                <i class="bi bi-download"></i> Export CSV
-            </a>
         </div>
     </div>
 

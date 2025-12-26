@@ -21,9 +21,6 @@
             <a href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=index" class="btn btn-outline-secondary me-2">
                 <i class="bi bi-arrow-left"></i> Back to Reports
             </a>
-            <a href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=overdue_report&format=csv" class="btn btn-success">
-                <i class="bi bi-download"></i> Export CSV
-            </a>
         </div>
     </div>
 

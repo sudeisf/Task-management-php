@@ -76,27 +76,6 @@ if ($currentUser) {
                             </a>
                         </li>
 
-                        <?php if (hasPermission($userRole, 'manage_users')): ?>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-gear"></i> Admin
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=index">
-                                        <i class="bi bi-speedometer2"></i> System Dashboard
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=users">
-                                        <i class="bi bi-people"></i> Users
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks">
-                                        <i class="bi bi-list-task"></i> All Tasks
-                                    </a></li>
-                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=activity_logs">
-                                        <i class="bi bi-activity"></i> Activity Logs
-                                    </a></li>
-                                </ul>
-                            </li>
-                        <?php endif; ?>
 
                         <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
                             <li class="nav-item">
@@ -161,8 +140,6 @@ if ($currentUser) {
                                 <li><h6 class="dropdown-header"><?php echo htmlspecialchars($currentUser['name']); ?></h6></li>
                                 <li><span class="dropdown-item-text small text-muted"><?php echo getRoleDisplayName($userRole); ?></span></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/ProfileController.php"><i class="bi bi-person"></i> Profile</a></li>
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/ProfileController.php?action=edit"><i class="bi bi-gear"></i> Settings</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AuthController.php?action=logout">
                                     <i class="bi bi-box-arrow-right"></i> Logout
@@ -198,11 +175,6 @@ if ($currentUser) {
                         <ul class="nav flex-column">
                             <?php if ($userRole === 'admin'): ?>
                                 <!-- Admin Sidebar -->
-                                <li class="nav-item">
-                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=index">
-                                        <i class="bi bi-speedometer2"></i> Dashboard
-                                    </a>
-                                </li>
                                 
                                 <!-- Projects Section -->
                                 <li class="nav-item mt-3">
@@ -246,6 +218,11 @@ if ($currentUser) {
                                 <li class="nav-item">
                                     <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=all_tasks">
                                         <i class="bi bi-list-task"></i> All Tasks
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/AdminController.php?action=activity_logs">
+                                        <i class="bi bi-activity"></i> Activity Logs
                                     </a>
                                 </li>
                             <?php else: ?>

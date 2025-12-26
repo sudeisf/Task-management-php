@@ -12,13 +12,12 @@ class Activity
         $this->db = new Database();
     }
 
-    // Log activity
     public function log($user_id, $task_id, $action, $details = null)
     {
-        $sql = "INSERT INTO $this->table (user_id, task_id, action, details) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO $this->table (user_id, task_id, action) VALUES (?, ?, ?)";
 
         $this->db->prepare($sql);
-        return $this->db->execute([$user_id, $task_id, $action, $details]);
+        return $this->db->execute([$user_id, $task_id, $action]);
     }
 
     // Get all activities with pagination

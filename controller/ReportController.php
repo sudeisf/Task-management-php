@@ -84,11 +84,7 @@ class ReportController
             'statistics' => $stats
         ];
 
-        if ($format === 'csv') {
-            $this->exportTaskReportCSV($reportData);
-        } else {
-            $this->showTaskReport($reportData);
-        }
+        $this->showTaskReport($reportData);
     }
 
     // Generate user activity report
@@ -127,44 +123,9 @@ class ReportController
             'statistics' => $stats
         ];
 
-        if ($format === 'csv') {
-            $this->exportUserReportCSV($reportData);
-        } else {
-            $this->showUserReport($reportData);
-        }
+        $this->showUserReport($reportData);
     }
 
-    // Generate productivity report
-    public function generateProductivityReport()
-    {
-        $userRole = $this->getUserRole($this->currentUser['id']);
-        
-        // Check format first
-        $format = $_GET['format'] ?? 'html';
-
-        $filters = [
-            'date_from' => $_GET['date_from'] ?? date('Y-m-d', strtotime('-30 days')),
-            'date_to' => $_GET['date_to'] ?? date('Y-m-d'),
-            'period' => $_GET['period'] ?? 'monthly'
-        ];
-
-        // Get productivity data
-        $productivityData = $this->getProductivityData($filters, $userRole);
-
-        $reportData = [
-            'title' => 'Productivity Report',
-            'generated_at' => date('Y-m-d H:i:s'),
-            'generated_by' => $this->currentUser['name'],
-            'filters' => $filters,
-            'data' => $productivityData
-        ];
-
-        if ($format === 'csv') {
-            $this->exportProductivityReportCSV($reportData);
-        } else {
-            $this->showProductivityReport($reportData);
-        }
-    }
 
     // Generate overdue tasks report
     public function generateOverdueReport()
@@ -184,11 +145,7 @@ class ReportController
             'total_overdue' => is_array($overdueTasks) ? count($overdueTasks) : 0
         ];
 
-        if ($format === 'csv') {
-            $this->exportOverdueReportCSV($reportData);
-        } else {
-            $this->showOverdueReport($reportData);
-        }
+        $this->showOverdueReport($reportData);
     }
 
     // Show task report
@@ -209,14 +166,6 @@ class ReportController
         require_once __DIR__ . '/../views/layout/footer.php';
     }
 
-    // Show productivity report
-    private function showProductivityReport($reportData)
-    {
-        extract($reportData);
-        require_once __DIR__ . '/../views/layout/header.php';
-        require_once __DIR__ . '/../views/reports/productivity_report.php';
-        require_once __DIR__ . '/../views/layout/footer.php';
-    }
 
     // Show overdue report
     private function showOverdueReport($reportData)
@@ -227,182 +176,6 @@ class ReportController
         require_once __DIR__ . '/../views/layout/footer.php';
     }
 
-    // Export task report to CSV
-    private function exportTaskReportCSV($reportData)
-    {
-        // Clean any previous output
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-        
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="task_report_' . date('Y-m-d') . '.csv"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        $output = fopen('php://output', 'w');
-        
-        // Add BOM for Excel UTF-8 support
-        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-
-        // CSV headers
-        fputcsv($output, ['Task ID', 'Title', 'Description', 'Status', 'Priority', 'Category', 'Assigned To', 'Created By', 'Deadline', 'Created At']);
-
-        // CSV data
-        $tasks = $reportData['tasks'] ?? [];
-        if (is_array($tasks) && !empty($tasks)) {
-            foreach ($tasks as $task) {
-                if (!is_array($task)) continue;
-                
-                fputcsv($output, [
-                    $task['id'] ?? '',
-                    $task['title'] ?? '',
-                    $task['description'] ?? '',
-                    $task['status'] ?? '',
-                    $task['priority_name'] ?? '',
-                    $task['category_name'] ?? '',
-                    $task['assignee_name'] ?? '',
-                    $task['creator_name'] ?? '',
-                    $task['deadline'] ?? '',
-                    $task['created_at'] ?? ''
-                ]);
-            }
-        }
-
-        fclose($output);
-        exit;
-    }
-
-    // Export user report to CSV
-    private function exportUserReportCSV($reportData)
-    {
-        // Clean any previous output
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-        
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="user_report_' . date('Y-m-d') . '.csv"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        $output = fopen('php://output', 'w');
-        
-        // Add BOM for Excel UTF-8 support
-        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-
-        // CSV headers
-        fputcsv($output, ['User ID', 'Name', 'Email', 'Role', 'Tasks Created', 'Tasks Assigned', 'Tasks Completed', 'Comments Made', 'Files Uploaded', 'Last Activity']);
-
-        // CSV data
-        $users = $reportData['users'] ?? [];
-        if (is_array($users) && !empty($users)) {
-            foreach ($users as $user) {
-                if (!is_array($user)) continue;
-                
-                fputcsv($output, [
-                    $user['id'] ?? '',
-                    $user['full_name'] ?? '',
-                    $user['email'] ?? '',
-                    $user['role'] ?? '',
-                    $user['tasks_created'] ?? 0,
-                    $user['tasks_assigned'] ?? 0,
-                    $user['tasks_completed'] ?? 0,
-                    $user['comments_count'] ?? 0,
-                    $user['attachments_count'] ?? 0,
-                    $user['last_activity'] ?? ''
-                ]);
-            }
-        }
-
-        fclose($output);
-        exit;
-    }
-
-    // Export productivity report to CSV
-    private function exportProductivityReportCSV($reportData)
-    {
-        // Clean any previous output
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-        
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="productivity_report_' . date('Y-m-d') . '.csv"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        $output = fopen('php://output', 'w');
-        
-        // Add BOM for Excel UTF-8 support
-        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-
-        // CSV headers
-        fputcsv($output, ['Period', 'Tasks Created', 'Tasks Completed', 'Completion Rate', 'Average Tasks per Day']);
-
-        // CSV data
-        $data = $reportData['data'] ?? [];
-        if (is_array($data) && !empty($data)) {
-            foreach ($data as $period => $metrics) {
-                if (!is_array($metrics)) continue;
-                
-                fputcsv($output, [
-                    $period,
-                    $metrics['created'] ?? 0,
-                    $metrics['completed'] ?? 0,
-                    $metrics['completion_rate'] ?? 0,
-                    $metrics['avg_per_day'] ?? 0
-                ]);
-            }
-        }
-
-        fclose($output);
-        exit;
-    }
-
-    // Export overdue report to CSV
-    private function exportOverdueReportCSV($reportData)
-    {
-        // Clean any previous output
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-        
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="overdue_report_' . date('Y-m-d') . '.csv"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        $output = fopen('php://output', 'w');
-        
-        // Add BOM for Excel UTF-8 support
-        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-
-        // CSV headers
-        fputcsv($output, ['Task ID', 'Title', 'Assigned To', 'Created By', 'Deadline', 'Days Overdue']);
-
-        // CSV data
-        $tasks = $reportData['tasks'] ?? [];
-        if (is_array($tasks) && !empty($tasks)) {
-            foreach ($tasks as $task) {
-                if (!is_array($task)) continue;
-                
-                $daysOverdue = floor((time() - strtotime($task['deadline'])) / (60 * 60 * 24));
-
-                fputcsv($output, [
-                    $task['id'] ?? '',
-                    $task['title'] ?? '',
-                    $task['assignee_name'] ?? '',
-                    $task['creator_name'] ?? '',
-                    $task['deadline'] ?? '',
-                    $daysOverdue
-                ]);
-            }
-        }
-
-        fclose($output);
-        exit;
-    }
 
     // Private helper methods
 
@@ -563,73 +336,6 @@ class ReportController
         return $stats;
     }
 
-    private function getProductivityData($filters, $userRole)
-    {
-        $data = [];
-
-        // This is a simplified implementation
-        // In a real application, you'd calculate productivity metrics over time
-
-        $dateFrom = strtotime($filters['date_from']);
-        $dateTo = strtotime($filters['date_to']);
-
-        // Generate sample data (replace with real calculations)
-        $currentDate = $dateFrom;
-        while ($currentDate <= $dateTo) {
-            $dateStr = date('Y-m-d', $currentDate);
-
-            // Get tasks created on this date
-            $createdTasks = $this->getTasksCreatedOnDate($dateStr, $this->currentUser['id'], $userRole);
-
-            // Get tasks completed on this date
-            $completedTasks = $this->getTasksCompletedOnDate($dateStr, $this->currentUser['id'], $userRole);
-
-            $data[$dateStr] = [
-                'created' => $createdTasks,
-                'completed' => $completedTasks,
-                'completion_rate' => $createdTasks > 0 ? round(($completedTasks / $createdTasks) * 100, 1) : 0,
-                'avg_per_day' => 1 // Simplified
-            ];
-
-            $currentDate = strtotime('+1 day', $currentDate);
-        }
-
-        return $data;
-    }
-
-    private function getTasksCreatedOnDate($date, $userId, $userRole)
-    {
-        $sql = "SELECT COUNT(*) as count FROM tasks WHERE DATE(created_at) = ?";
-        $params = [$date];
-
-        if ($userRole !== 'admin' && $userRole !== 'manager') {
-            $sql .= " AND created_by = ?";
-            $params[] = $userId;
-        }
-
-        $db = new Database();
-        $db->prepare($sql);
-        $db->execute($params);
-        $result = $db->getRow();
-        return $result['count'] ?? 0;
-    }
-
-    private function getTasksCompletedOnDate($date, $userId, $userRole)
-    {
-        $sql = "SELECT COUNT(*) as count FROM tasks WHERE DATE(updated_at) = ? AND status = 'completed'";
-        $params = [$date];
-
-        if ($userRole !== 'admin' && $userRole !== 'manager') {
-            $sql .= " AND (assigned_to = ? OR created_by = ?)";
-            $params = array_merge($params, [$userId, $userId]);
-        }
-
-        $db = new Database();
-        $db->prepare($sql);
-        $db->execute($params);
-        $result = $db->getRow();
-        return $result['count'] ?? 0;
-    }
 }
 
 // Handle routing
@@ -650,9 +356,6 @@ switch ($action) {
         $controller->generateUserReport();
         break;
 
-    case 'productivity_report':
-        $controller->generateProductivityReport();
-        break;
 
     case 'overdue_report':
         $controller->generateOverdueReport();
