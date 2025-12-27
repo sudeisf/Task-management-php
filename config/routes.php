@@ -14,7 +14,6 @@ $routes = [
     'login' => 'controller/AuthController.php?action=login',
     'register' => 'controller/AuthController.php?action=register',
     'logout' => 'controller/AuthController.php?action=logout',
-    'forgot-password' => 'controller/AuthController.php?action=forgot_password',
 
     // Dashboard routes
     'dashboard' => 'controller/DashboardController.php?action=index',
@@ -60,7 +59,6 @@ $routes = [
     'reports' => 'controller/ReportController.php?action=index',
     'reports/tasks' => 'controller/ReportController.php?action=task_report',
     'reports/users' => 'controller/ReportController.php?action=user_report',
-    'reports/productivity' => 'controller/ReportController.php?action=productivity_report',
     'reports/overdue' => 'controller/ReportController.php?action=overdue_report',
 ];
 

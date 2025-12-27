@@ -12,6 +12,8 @@ require_once __DIR__ . '/../layout/header.php';
 // $comments - task comments
 // $attachments - task attachments
 // $activities - recent task activities
+
+$userRole = strtolower($userRole ?? 'member');
 ?>
 
 <div class="dashboard-container">
@@ -61,11 +63,18 @@ require_once __DIR__ . '/../layout/header.php';
                         Task Details
                     </h3>
                     <div class="task-actions">
-                        <?php if ($task['status'] !== 'completed'): ?>
-                            <button type="button" class="btn btn-sm btn-outline-success" onclick="quickComplete()">
-                                <i class="bi bi-check-circle me-1"></i>
-                                Complete
-                            </button>
+                        <?php if ($canUpdateStatus): ?>
+                            <?php if ($task['status'] === 'todo'): ?>
+                                <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="quickUpdateStatus('in_progress')">
+                                    <i class="bi bi-play-circle me-1"></i>
+                                    Start Progress
+                                </button>
+                            <?php elseif ($task['status'] === 'in_progress'): ?>
+                                <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="quickUpdateStatus('completed')">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Complete
+                                </button>
+                            <?php endif; ?>
                         <?php endif; ?>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -232,15 +241,31 @@ require_once __DIR__ . '/../layout/header.php';
         <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Attachments -->
-            <?php if (!empty($attachments)): ?>
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-paperclip me-2"></i>
-                            Attachments (<?php echo count($attachments); ?>)
-                        </h5>
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-paperclip me-2"></i>
+                        Attachments (<?php echo count($attachments); ?>)
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#uploadForm">
+                        <i class="bi bi-plus-circle me-1"></i>Add
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Upload Form -->
+                    <div class="collapse mb-3" id="uploadForm">
+                        <div class="p-3 border rounded bg-light">
+                            <form action="<?php echo BASE_URL; ?>/controller/AttachmentController.php?action=upload" method="POST" enctype="multipart/form-data">
+                                <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
+                                <div class="mb-2">
+                                    <input type="file" class="form-control form-control-sm" name="attachment" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Upload</button>
+                            </form>
+                        </div>
                     </div>
-                    <div class="card-body">
+
+                    <?php if (!empty($attachments)): ?>
                         <div class="attachments-list">
                             <?php foreach ($attachments as $attachment): ?>
                                 <div class="attachment-item mb-2 p-2 border rounded">
@@ -255,8 +280,7 @@ require_once __DIR__ . '/../layout/header.php';
                                             </a>
                                             <br>
                                             <small class="text-muted">
-                                                Uploaded by <?php echo htmlspecialchars($attachment['uploader_name']); ?>
-                                                on <?php echo date('M d, Y', strtotime($attachment['created_at'])); ?>
+                                                By <?php echo htmlspecialchars($attachment['uploader_name']); ?>
                                             </small>
                                         </div>
                                         <div class="attachment-actions">
@@ -269,9 +293,11 @@ require_once __DIR__ . '/../layout/header.php';
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                    </div>
+                    <?php else: ?>
+                        <p class="text-muted text-center mb-0">No attachments yet.</p>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
+            </div>
 
 
 
@@ -466,33 +492,72 @@ require_once __DIR__ . '/../layout/header.php';
 
 <script>
 // Quick actions
-function quickComplete() {
-    if (confirm('Mark this task as completed?')) {
-        fetch('<?php echo BASE_URL; ?>/controller/TaskController.php?action=change_status&id=<?php echo $task['id']; ?>&status=completed', {
+function quickUpdateStatus(status) {
+    const statusLabel = status === 'completed' ? 'completed' : 'in progress';
+    if (confirm(`Mark this task as ${statusLabel}?`)) {
+        fetch('<?php echo BASE_URL; ?>/controller/TaskController.php?action=change_status&id=<?php echo $task['id']; ?>', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
+            body: new URLSearchParams({
+                'id': '<?php echo $task['id']; ?>',
+                'status': status,
+                'confirm_update': '1'
+            })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+            return response.text().then(text => {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    // If not JSON, it might be a redirect or error page
+                    location.reload();
+                }
+            });
+        })
         .then(data => {
-            if (data.success) {
+            if (data && data.success) {
+                alert(`Task marked as ${statusLabel}!`);
                 location.reload();
-            } else {
-                alert('Error updating task status');
+            } else if (data && data.message) {
+                alert('Failed to update task status: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error updating task status');
+            // location.reload(); // Fallback to reload if something goes wrong
         });
     }
 }
 
 function deleteTask() {
     if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
-        window.location.href = '<?php echo BASE_URL; ?>/controller/TaskController.php?action=delete&id=<?php echo $task['id']; ?>';
+        createAndSubmitForm('<?php echo BASE_URL; ?>/controller/TaskController.php?action=delete', {
+            'id': '<?php echo $task['id']; ?>'
+        });
     }
+}
+
+function createAndSubmitForm(action, data) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = action;
+    
+    for (const key in data) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = data[key];
+        form.appendChild(input);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
 }
 
 function duplicateTask() {
@@ -501,21 +566,31 @@ function duplicateTask() {
 }
 
 function editComment(commentId) {
-    // Implement comment editing
-    alert('Comment editing feature would be implemented here');
+    const commentText = prompt("Edit your comment:");
+    if (commentText !== null && commentText.trim() !== "") {
+        createAndSubmitForm('<?php echo BASE_URL; ?>/controller/CommentController.php?action=update', {
+            'comment_id': commentId,
+            'task_id': '<?php echo $task['id']; ?>',
+            'comment': commentText
+        });
+    }
 }
 
 function deleteComment(commentId) {
     if (confirm('Are you sure you want to delete this comment?')) {
-        // Implement comment deletion
-        alert('Comment deletion would be implemented here');
+        createAndSubmitForm('<?php echo BASE_URL; ?>/controller/CommentController.php?action=delete', {
+            'comment_id': commentId,
+            'task_id': '<?php echo $task['id']; ?>'
+        });
     }
 }
 
 function deleteAttachment(attachmentId) {
     if (confirm('Are you sure you want to delete this attachment?')) {
-        // Implement attachment deletion
-        alert('Attachment deletion would be implemented here');
+        createAndSubmitForm('<?php echo BASE_URL; ?>/controller/AttachmentController.php?action=delete', {
+            'attachment_id': attachmentId,
+            'task_id': '<?php echo $task['id']; ?>'
+        });
     }
 }
 

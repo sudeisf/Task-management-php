@@ -48,15 +48,19 @@ require_once __DIR__ . '/../layout/header.php';
                 </div>
 
                 <!-- Status Filter -->
-                <div class="col-md-2">
-                    <label for="status" class="form-label">Status</label>
-                    <select name="status" id="status" class="form-select">
-                        <option value="">All Status</option>
-                        <option value="todo" <?php echo (isset($_GET['status']) && $_GET['status'] == 'todo') ? 'selected' : ''; ?>>To Do</option>
-                        <option value="in_progress" <?php echo (isset($_GET['status']) && $_GET['status'] == 'in_progress') ? 'selected' : ''; ?>>In Progress</option>
-                        <option value="completed" <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'selected' : ''; ?>>Completed</option>
-                    </select>
-                </div>
+                <?php if (isset($_GET['status']) && !empty($_GET['status'])): ?>
+                    <input type="hidden" name="status" value="<?php echo htmlspecialchars($_GET['status']); ?>">
+                <?php else: ?>
+                    <div class="col-md-2">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="todo" <?php echo (isset($_GET['status']) && $_GET['status'] == 'todo') ? 'selected' : ''; ?>>To Do</option>
+                            <option value="in_progress" <?php echo (isset($_GET['status']) && $_GET['status'] == 'in_progress') ? 'selected' : ''; ?>>In Progress</option>
+                            <option value="completed" <?php echo (isset($_GET['status']) && $_GET['status'] == 'completed') ? 'selected' : ''; ?>>Completed</option>
+                        </select>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Priority Filter -->
                 <div class="col-md-2">
@@ -109,11 +113,6 @@ require_once __DIR__ . '/../layout/header.php';
                     <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index<?php echo (isset($_GET['my_tasks']) && $_GET['my_tasks'] === 'true') ? '&my_tasks=true' : ''; ?>" class="btn btn-outline-secondary me-2">
                         <i class="bi bi-x-circle"></i> Clear Filters
                     </a>
-                    <?php if (!empty($tasks)): ?>
-                        <button type="button" class="btn btn-outline-success" onclick="exportTasks()">
-                            <i class="bi bi-download"></i> Export CSV
-                        </button>
-                    <?php endif; ?>
                 </div>
             </form>
         </div>
@@ -124,7 +123,7 @@ require_once __DIR__ . '/../layout/header.php';
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title mb-0">
                 <i class="bi bi-list-task me-2"></i>
-                Tasks (<?php echo $pagination['total'] ?? count($tasks); ?>)
+                Tasks (<?php echo $totalTasks ?? count($tasks); ?>)
             </h3>
 
             <!-- View Toggle -->
@@ -306,15 +305,20 @@ require_once __DIR__ . '/../layout/header.php';
                 <div class="bulk-actions mt-3 d-none">
                     <div class="d-flex align-items-center gap-2">
                         <span class="text-muted">Selected tasks:</span>
-                        <button type="button" class="btn btn-sm btn-outline-success" onclick="bulkUpdateStatus('completed')">
-                            <i class="bi bi-check-circle"></i> Mark Complete
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="bulkUpdateStatus('in_progress')">
-                            <i class="bi bi-play-circle"></i> Mark In Progress
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkDelete()">
-                            <i class="bi bi-trash"></i> Delete
-                        </button>
+                        <?php if ($userRole === 'member'): ?>
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="bulkUpdateStatus('completed')">
+                                <i class="bi bi-check-circle"></i> Mark Complete
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="bulkUpdateStatus('in_progress')">
+                                <i class="bi bi-play-circle"></i> Mark In Progress
+                            </button>
+                        <?php endif; ?>
+                        
+                        <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkDelete()">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php else: ?>
@@ -474,12 +478,6 @@ function bulkDelete() {
     }
 }
 
-// Export tasks
-function exportTasks() {
-    const params = new URLSearchParams(window.location.search);
-    params.set('export', 'csv');
-    window.location.href = '<?php echo BASE_URL; ?>/controller/TaskController.php?' + params.toString();
-}
 
 // Helper function for pagination URLs
 function buildPaginationUrl(page) {

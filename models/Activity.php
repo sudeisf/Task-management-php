@@ -14,10 +14,10 @@ class Activity
 
     public function log($user_id, $task_id, $action, $details = null)
     {
-        $sql = "INSERT INTO $this->table (user_id, task_id, action) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO $this->table (user_id, task_id, action, details) VALUES (?, ?, ?, ?)";
 
         $this->db->prepare($sql);
-        return $this->db->execute([$user_id, $task_id, $action]);
+        return $this->db->execute([$user_id, $task_id, $action, $details]);
     }
 
     // Get all activities with pagination
@@ -73,7 +73,6 @@ class Activity
         $this->db->execute($params);
         return $this->db->getRows();
     }
-
     // Get activities for a specific user
     public function getByUser($user_id, $limit = null, $offset = null)
     {
@@ -100,31 +99,6 @@ class Activity
         return $this->db->getRows();
     }
 
-    // Get activities for a specific task
-    public function getByTask($task_id, $limit = null, $offset = null)
-    {
-        $sql = "SELECT a.*, u.full_name, u.email
-                FROM $this->table a
-                LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.task_id = ?
-                ORDER BY a.created_at DESC";
-
-        $params = [$task_id];
-
-        if ($limit) {
-            $sql .= " LIMIT ?";
-            $params[] = $limit;
-        }
-
-        if ($offset) {
-            $sql .= " OFFSET ?";
-            $params[] = $offset;
-        }
-
-        $this->db->prepare($sql);
-        $this->db->execute($params);
-        return $this->db->getRows();
-    }
 
     // Get recent activities
     public function getRecent($limit = 10, $user_id = null, $user_role = null)
@@ -151,79 +125,6 @@ class Activity
         return $this->db->getRows();
     }
 
-    // Get activity statistics
-    public function getStatistics($user_id = null, $user_role = null, $period = '30')
-    {
-        $stats = [
-            'total_activities' => 0,
-            'today_activities' => 0,
-            'week_activities' => 0,
-            'by_action' => [],
-            'by_user' => []
-        ];
-
-        // Base query
-        $baseSql = "SELECT COUNT(*) as count FROM $this->table WHERE created_at >= DATE_SUB(NOW(), INTERVAL {$period} DAY)";
-        $params = [];
-
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
-            $baseSql .= " AND user_id = ?";
-            $params = [$user_id];
-        }
-
-        // Total activities
-        $this->db->prepare($baseSql);
-        $this->db->execute($params);
-        $result = $this->db->getRow();
-        $stats['total_activities'] = $result['count'] ?? 0;
-
-        // Today's activities
-        $todaySql = $baseSql . " AND DATE(created_at) = CURDATE()";
-        $this->db->prepare($todaySql);
-        $this->db->execute($params);
-        $result = $this->db->getRow();
-        $stats['today_activities'] = $result['count'] ?? 0;
-
-        // This week's activities
-        $weekSql = $baseSql . " AND YEARWEEK(created_at) = YEARWEEK(CURDATE())";
-        $this->db->prepare($weekSql);
-        $this->db->execute($params);
-        $result = $this->db->getRow();
-        $stats['week_activities'] = $result['count'] ?? 0;
-
-        // Activities by action type
-        $actionSql = "SELECT action, COUNT(*) as count FROM $this->table WHERE created_at >= DATE_SUB(NOW(), INTERVAL {$period} DAY)";
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
-            $actionSql .= " AND user_id = ?";
-        }
-        $actionSql .= " GROUP BY action ORDER BY count DESC";
-
-        $this->db->prepare($actionSql);
-        $this->db->execute($params);
-        $result = $this->db->getResult();
-        while ($row = $result->fetch_assoc()) {
-            $stats['by_action'][$row['action']] = $row['count'];
-        }
-
-        // Most active users (only for admin/manager)
-        if ($user_role === 'admin' || $user_role === 'manager') {
-            $userSql = "SELECT u.full_name, COUNT(a.id) as count
-                        FROM $this->table a
-                        LEFT JOIN users u ON a.user_id = u.id
-                        WHERE a.created_at >= DATE_SUB(NOW(), INTERVAL {$period} DAY)
-                        GROUP BY a.user_id, u.full_name
-                        ORDER BY count DESC LIMIT 10";
-
-            $this->db->prepare($userSql);
-            $this->db->execute();
-            $result = $this->db->getResult();
-            while ($row = $result->fetch_assoc()) {
-                $stats['by_user'][$row['full_name']] = $row['count'];
-            }
-        }
-
-        return $stats;
-    }
 
     // Get activity count
     public function getCount($filters = [])
@@ -297,31 +198,6 @@ class Activity
         return $this->db->getRows();
     }
 
-    // Get activity feed for dashboard
-    public function getActivityFeed($user_id = null, $user_role = null, $limit = 20)
-    {
-        $sql = "SELECT a.*, u.full_name, u.email, u.profile_picture,
-                       t.title as task_title, t.status as task_status
-                FROM $this->table a
-                LEFT JOIN users u ON a.user_id = u.id
-                LEFT JOIN tasks t ON a.task_id = t.id
-                WHERE 1=1";
-
-        $params = [];
-
-        // Restrict to user's tasks and activities if not admin/manager
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
-            $sql .= " AND (a.user_id = ? OR (t.assigned_to = ? OR t.created_by = ?))";
-            $params = [$user_id, $user_id, $user_id];
-        }
-
-        $sql .= " ORDER BY a.created_at DESC LIMIT ?";
-        $params[] = $limit;
-
-        $this->db->prepare($sql);
-        $this->db->execute($params);
-        return $this->db->getRows();
-    }
 
     // Get action types for filtering
     public function getActionTypes()
@@ -345,11 +221,4 @@ class Activity
         return $actions;
     }
 
-    // Clean old activities (for maintenance)
-    public function cleanOldActivities($days = 365)
-    {
-        $sql = "DELETE FROM $this->table WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
-        $this->db->prepare($sql);
-        return $this->db->execute([$days]);
-    }
 }

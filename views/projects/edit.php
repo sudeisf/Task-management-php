@@ -14,7 +14,7 @@ $pageTitle = 'Edit Project';
                     <h4 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Project</h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="?action=update&id=<?= $project['id'] ?>">
+                    <form method="POST" action="?action=update&id=<?= $project['id'] ?>" enctype="multipart/form-data">
                         <!-- Project Name -->
                         <div class="mb-3">
                             <label for="name" class="form-label">Project Name <span class="text-danger">*</span></label>
@@ -70,6 +70,13 @@ $pageTitle = 'Edit Project';
                                 <?php endforeach; ?>
                             </select>
                             <small class="text-muted">Hold Ctrl/Cmd to select multiple managers</small>
+                        </div>
+
+                        <!-- Attachment -->
+                        <div class="mb-4">
+                            <label for="attachment" class="form-label">Add Attachment (Optional)</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment">
+                            <div class="form-text">Allowed formats: jpg, png, pdf, doc, txt, zip. Max size: 5MB.</div>
                         </div>
 
                         <!-- Buttons -->

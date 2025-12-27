@@ -71,10 +71,42 @@ $pageTitle = $project['name'];
 
     <!-- Team Members -->
     <div class="card mb-4">
-        <div class="card-header bg-light">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="bi bi-people me-2"></i>Team Members</h5>
+            <?php if ($userRole === 'admin' && isset($users)): ?>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#addMemberForm">
+                    <i class="bi bi-person-plus me-1"></i>Add Member
+                </button>
+            <?php endif; ?>
         </div>
         <div class="card-body">
+            <?php if ($userRole === 'admin' && isset($users)): ?>
+                <!-- Add Member Form -->
+                <div class="collapse mb-4" id="addMemberForm">
+                    <div class="p-3 border rounded bg-light">
+                        <form method="POST" action="?action=assign_user&id=<?= $project['id'] ?>" class="row g-3 align-items-end">
+                            <div class="col-md-9">
+                                <label for="user_id" class="form-label small">Select User</label>
+                                <select name="user_id" id="user_id" class="form-select" required>
+                                    <option value="">Choose user...</option>
+                                    <?php foreach ($users as $u): ?>
+                                        <option value="<?= $u['id'] ?>">
+                                            <?= htmlspecialchars($u['full_name']) ?> (<?= ucfirst($u['role']) ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text small">Project role (Manager/Member) is assigned automatically based on system role.</div>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-plus-circle me-1"></i>Assign
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <?php if (empty($teamMembers)): ?>
                 <p class="text-muted">No team members assigned yet.</p>
             <?php else: ?>
@@ -118,6 +150,72 @@ $pageTitle = $project['name'];
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Project Attachments -->
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-paperclip me-2"></i>Project Attachments</h5>
+            <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#uploadForm">
+                    <i class="bi bi-plus-circle me-1"></i>Add Attachment
+                </button>
+            <?php endif; ?>
+        </div>
+        <div class="card-body">
+            <!-- Upload Form (Collapsed by default) -->
+            <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
+            <div class="collapse mb-4" id="uploadForm">
+                <div class="p-3 border rounded bg-light">
+                    <form action="<?= BASE_URL ?>/controller/AttachmentController.php?action=upload" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="project_id" value="<?= $project['id'] ?>">
+                        <div class="mb-3">
+                            <label for="attachment" class="form-label">Select File</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">Upload File</button>
+                    </form>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <?php if (empty($attachments)): ?>
+                <p class="text-muted text-center py-3">No attachments for this project yet.</p>
+            <?php else: ?>
+                <div class="row row-cols-1 row-cols-md-3 g-3">
+                    <?php foreach ($attachments as $attachment): ?>
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-light">
+                                <div class="card-body d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <i class="bi bi-file-earmark-text fs-3 text-primary"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3 overflow-hidden">
+                                        <h6 class="mb-0 text-truncate">
+                                            <a href="<?= BASE_URL ?>/controller/AttachmentController.php?action=download&id=<?= $attachment['id'] ?>" class="text-decoration-none">
+                                                <?= htmlspecialchars($attachment['file_name']) ?>
+                                            </a>
+                                        </h6>
+                                        <small class="text-muted">By <?= htmlspecialchars($attachment['uploader_name']) ?></small>
+                                    </div>
+                                    <?php if ($userRole === 'admin'): ?>
+                                    <div class="flex-shrink-0 ms-2">
+                                        <form method="POST" action="<?= BASE_URL ?>/controller/AttachmentController.php?action=delete" onsubmit="return confirm('Delete this attachment?')">
+                                            <input type="hidden" name="attachment_id" value="<?= $attachment['id'] ?>">
+                                            <input type="hidden" name="project_id" value="<?= $project['id'] ?>">
+                                            <button type="submit" class="btn btn-link text-danger p-0">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             <?php endif; ?>
         </div>

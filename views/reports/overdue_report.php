@@ -14,7 +14,7 @@
             </h1>
             <p class="dashboard-subtitle">
                 Generated on <?php echo date('M d, Y H:i', strtotime($generated_at)); ?> 
-                by <?php echo htmlspecialchars($generated_by); ?>
+                by <?php echo htmlspecialchars($generated_by ?? ''); ?>
             </p>
         </div>
         <div>
@@ -75,11 +75,11 @@
                                     <td><?php echo $task['id']; ?></td>
                                     <td>
                                         <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>" class="text-danger fw-bold">
-                                            <?php echo htmlspecialchars($task['title']); ?>
+                                            <?php echo htmlspecialchars($task['title'] ?? ''); ?>
                                         </a>
                                         <?php if (!empty($task['description'])): ?>
                                             <br><small class="text-muted">
-                                                <?php echo htmlspecialchars(substr($task['description'], 0, 50)); ?>
+                                                <?php echo htmlspecialchars(substr($task['description'] ?? '', 0, 50)); ?>
                                                 <?php echo strlen($task['description']) > 50 ? '...' : ''; ?>
                                             </small>
                                         <?php endif; ?>
@@ -87,7 +87,7 @@
                                     <td>
                                         <?php if (!empty($task['assignee_name'])): ?>
                                             <i class="bi bi-person-circle me-1"></i>
-                                            <?php echo htmlspecialchars($task['assignee_name']); ?>
+                                            <?php echo htmlspecialchars($task['assignee_name'] ?? ''); ?>
                                         <?php else: ?>
                                             <span class="text-muted">Unassigned</span>
                                         <?php endif; ?>

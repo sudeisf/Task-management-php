@@ -14,7 +14,7 @@ $pageTitle = 'Create Project';
                     <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Project</h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="?action=store">
+                    <form method="POST" action="?action=store" enctype="multipart/form-data">
                         <!-- Project Name -->
                         <div class="mb-3">
                             <label for="name" class="form-label">Project Name <span class="text-danger">*</span></label>
@@ -27,28 +27,34 @@ $pageTitle = 'Create Project';
                             <textarea class="form-control" id="description" name="description" rows="4"></textarea>
                         </div>
 
-                        <!-- Status -->
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status" name="status">
-                                <option value="active" selected>Active</option>
-                                <option value="on_hold">On Hold</option>
-                                <option value="completed">Completed</option>
-                                <option value="archived">Archived</option>
-                            </select>
-                        </div>
-
                         <!-- Dates -->
+                        <?php $today = date('Y-m-d'); ?>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date">
+                                <input type="date" class="form-control" id="start_date" name="start_date" min="<?= $today ?>">
+                                <small class="text-muted">Cannot be in the past</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date">
+                                <input type="date" class="form-control" id="end_date" name="end_date" min="<?= $today ?>">
+                                <small class="text-muted">Cannot be in the past or before start date</small>
                             </div>
                         </div>
+
+<script>
+// Update end_date min value when start_date changes
+document.getElementById('start_date').addEventListener('change', function() {
+    const endDateInput = document.getElementById('end_date');
+    if (this.value) {
+        endDateInput.min = this.value;
+        // Clear end_date if it's before the new start_date
+        if (endDateInput.value && endDateInput.value < this.value) {
+            endDateInput.value = '';
+        }
+    }
+});
+</script>
 
                         <!-- Assign Managers -->
                         <div class="mb-3">
@@ -63,6 +69,13 @@ $pageTitle = 'Create Project';
                                 <?php endforeach; ?>
                             </select>
                             <small class="text-muted">Hold Ctrl/Cmd to select multiple managers</small>
+                        </div>
+
+                        <!-- Attachments -->
+                        <div class="mb-3">
+                            <label for="attachment" class="form-label">Attachments</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment">
+                            <small class="text-muted">You can attach a file (e.g., project proposal, guidelines)</small>
                         </div>
 
                         <!-- Buttons -->

@@ -320,28 +320,7 @@ function isAjaxRequest()
            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 }
 
-/**
- * Get client IP address
- */
-function getClientIP()
-{
-    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-        return $_SERVER['HTTP_CLIENT_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        return $_SERVER['HTTP_X_FORWARDED_FOR'];
-    } else {
-        return $_SERVER['REMOTE_ADDR'];
-    }
-}
 
-/**
- * Validate date format
- */
-function isValidDate($date, $format = 'Y-m-d')
-{
-    $d = DateTime::createFromFormat($format, $date);
-    return $d && $d->format($format) === $date;
-}
 
 /**
  * Calculate percentage
@@ -455,6 +434,10 @@ function getActivityIcon($type)
 {
     $icons = [
         'task_assigned' => 'person-check',
+        'task_assignment' => 'person-check', // New
+        'project_assignment' => 'briefcase', // New
+        'task_overdue' => 'exclamation-circle', // New
+        'project_overdue' => 'exclamation-triangle', // New
         'task_completed' => 'check-circle',
         'task_updated' => 'pencil',
         'task_created' => 'plus-circle',
@@ -467,4 +450,30 @@ function getActivityIcon($type)
     ];
     
     return $icons[$type] ?? 'bell';
+}
+
+/**
+ * Get file icon based on extension
+ */
+function getFileIcon($filename)
+{
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $icons = [
+        'pdf' => 'bi-file-earmark-pdf',
+        'doc' => 'bi-file-earmark-word',
+        'docx' => 'bi-file-earmark-word',
+        'xls' => 'bi-file-earmark-excel',
+        'xlsx' => 'bi-file-earmark-excel',
+        'ppt' => 'bi-file-earmark-ppt',
+        'pptx' => 'bi-file-earmark-ppt',
+        'txt' => 'bi-file-earmark-text',
+        'jpg' => 'bi-file-earmark-image',
+        'jpeg' => 'bi-file-earmark-image',
+        'png' => 'bi-file-earmark-image',
+        'gif' => 'bi-file-earmark-image',
+        'zip' => 'bi-file-earmark-zip',
+        'rar' => 'bi-file-earmark-zip'
+    ];
+
+    return $icons[$ext] ?? 'bi-file-earmark';
 }

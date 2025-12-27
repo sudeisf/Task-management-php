@@ -124,6 +124,16 @@
             >
         </div>
 
+        <!-- Role Selection -->
+        <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select name="role" class="form-select" required>
+                <option value="member" selected>Member</option>
+                <option value="manager">Manager</option>
+            </select>
+            <div class="form-text">Choose 'Manager' if you plan to create and manage projects.</div>
+        </div>
+
         <!-- Submit -->
         <button type="submit" class="btn btn-black-shadow w-100 mt-2">
             Register

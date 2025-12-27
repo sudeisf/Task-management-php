@@ -248,7 +248,7 @@ class Permission
     {
         $userRole = $this->getUserRole($userId);
         
-        // Admins can update any task status
+        // Admins can always update status
         if ($userRole === 'admin') {
             return true;
         }
@@ -266,12 +266,12 @@ class Permission
             return false;
         }
         
-        // Managers can update status of tasks in their projects
+        // Managers can update status for tasks in their projects
         if ($userRole === 'manager') {
             return $this->isProjectManager($userId, $task['project_id']);
         }
         
-        // Members can update status of their assigned tasks
+        // Members can update status only for their assigned tasks
         if ($userRole === 'member') {
             return $task['assigned_to'] == $userId;
         }
@@ -291,7 +291,7 @@ class Permission
         $this->db->execute([$userId]);
         $result = $this->db->getRow();
         
-        return $result['name'] ?? null;
+        return strtolower($result['name'] ?? 'member');
     }
 
     /**

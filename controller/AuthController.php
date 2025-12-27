@@ -18,6 +18,7 @@ switch ($action) {
         $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'] ?? '';
         $confirm = $_POST['confirm_password'] ?? '';
+        $role = $_POST['role'] ?? 'member';
 
         // Validate
         if (!$fullName || !$email || !$password || !$confirm) {
@@ -38,6 +39,11 @@ switch ($action) {
             exit;
         }
 
+        // Validate Role
+        if (!in_array($role, ['member', 'manager'])) {
+            $role = 'member'; // Safe default
+        }
+
         // Password strength
         $passwordErrors = [];
         if (strlen($password) < 8) $passwordErrors[] = "at least 8 characters";
@@ -52,7 +58,7 @@ switch ($action) {
             exit;
         }
 
-        if ($userModel->create($fullName, $email, $password)) {
+        if ($userModel->create($fullName, $email, $password, $role)) {
             $_SESSION['success'] = "Registration successful! You can now log in.";
             header("Location: ../views/auth/login.php");
         } else {
@@ -84,7 +90,7 @@ switch ($action) {
 
             Auth::login($user);
             // Redirect to dashboard (fixed path)
-            header("Location: ../views/dashboard/index.php");
+            header("Location: ../controller/DashboardController.php?action=index");
         } else {
             $_SESSION['error'] = "Invalid email or password.";
             header("Location: ../views/auth/login.php");

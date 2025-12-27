@@ -9,7 +9,7 @@ class Auth
         Session::start();
         Session::set("user_id", $user['id']);
         Session::set("user_name", $user['full_name']); 
-        Session::set("user_role", $user['role_name'] ?? 'member');
+        Session::set("user_role", strtolower($user['role_name'] ?? 'member'));
         Session::set("user_avatar", $user['avatar'] ?? null);
         Session::set("last_activity", time());
     }

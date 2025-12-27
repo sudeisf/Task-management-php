@@ -12,7 +12,7 @@
             <h1 class="dashboard-title"><?php echo $title ?? 'Task Report'; ?></h1>
             <p class="dashboard-subtitle">
                 Generated on <?php echo date('M d, Y H:i', strtotime($generated_at)); ?> 
-                by <?php echo htmlspecialchars($generated_by); ?>
+                by <?php echo htmlspecialchars($generated_by ?? ''); ?>
             </p>
         </div>
         <div>
@@ -154,7 +154,7 @@
                                     <td><?php echo $task['id']; ?></td>
                                     <td>
                                         <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>">
-                                            <?php echo htmlspecialchars($task['title']); ?>
+                                            <?php echo htmlspecialchars($task['title'] ?? ''); ?>
                                         </a>
                                     </td>
                                     <td>

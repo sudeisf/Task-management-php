@@ -255,7 +255,7 @@ class Uploader
             return [
                 'size' => filesize($fullPath),
                 'modified' => filemtime($fullPath),
-                'type' => mime_content_type($fullPath),
+                'type' => function_exists('mime_content_type') ? mime_content_type($fullPath) : 'application/octet-stream',
                 'extension' => $this->getFileExtension($filePath)
             ];
         }

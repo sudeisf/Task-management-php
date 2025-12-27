@@ -12,7 +12,7 @@
             <h1 class="dashboard-title"><?php echo $title ?? 'User Activity Report'; ?></h1>
             <p class="dashboard-subtitle">
                 Generated on <?php echo date('M d, Y H:i', strtotime($generated_at)); ?> 
-                by <?php echo htmlspecialchars($generated_by); ?>
+                by <?php echo htmlspecialchars($generated_by ?? ''); ?>
             </p>
         </div>
         <div>
@@ -84,9 +84,9 @@
                             <?php foreach ($users as $user): ?>
                                 <tr>
                                     <td>
-                                        <strong><?php echo htmlspecialchars($user['full_name']); ?></strong>
+                                        <strong><?php echo htmlspecialchars($user['full_name'] ?? ''); ?></strong>
                                     </td>
-                                    <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($user['email'] ?? ''); ?></td>
                                     <td>
                                         <span class="badge bg-secondary">
                                             <?php echo ucfirst($user['role'] ?? 'Member'); ?>

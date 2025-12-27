@@ -38,7 +38,7 @@ require_once __DIR__ . '/../layout/header.php';
                     </h3>
                 </div>
                 <div class="card-body">
-                    <form action="<?php echo BASE_URL; ?>/controller/TaskController.php?action=store" method="POST" id="create-task-form">
+                    <form action="<?php echo BASE_URL; ?>/controller/TaskController.php?action=store" method="POST" id="create-task-form" enctype="multipart/form-data">
                         <!-- Project Selection -->
                         <?php if (isset($project) && $project): ?>
                             <!-- Project is pre-selected -->
@@ -124,32 +124,29 @@ require_once __DIR__ . '/../layout/header.php';
                             </div>
                         </div>
 
-                        <!-- Status and Deadline Row -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="status" class="form-label">
-                                    Status <span class="text-danger">*</span>
-                                </label>
-                                <select class="form-select <?php echo isset($errors['status']) ? 'is-invalid' : ''; ?>"
-                                        id="status" name="status" required>
-                                    <option value="todo" <?php echo (isset($formData['status']) && $formData['status'] == 'todo') ? 'selected' : 'selected'; ?>>To Do</option>
-                                    <option value="in_progress" <?php echo (isset($formData['status']) && $formData['status'] == 'in_progress') ? 'selected' : ''; ?>>In Progress</option>
-                                    <option value="completed" <?php echo (isset($formData['status']) && $formData['status'] == 'completed') ? 'selected' : ''; ?>>Completed</option>
-                                </select>
-                                <?php if (isset($errors['status'])): ?>
-                                    <div class="invalid-feedback"><?php echo $errors['status']; ?></div>
+                        <!-- Deadline -->
+                        <?php 
+                        $today = date('Y-m-d');
+                        $projectEndDate = null;
+                        if (isset($project) && !empty($project['end_date'])) {
+                            $projectEndDate = date('Y-m-d', strtotime($project['end_date']));
+                        }
+                        ?>
+                        <div class="mb-3">
+                            <label for="deadline" class="form-label">Deadline</label>
+                            <input type="date" class="form-control <?php echo isset($errors['deadline']) ? 'is-invalid' : ''; ?>"
+                                   id="deadline" name="deadline"
+                                   min="<?= $today ?>"
+                                   <?php if ($projectEndDate): ?>max="<?= $projectEndDate ?>"<?php endif; ?>
+                                   value="<?php echo htmlspecialchars($formData['deadline'] ?? ''); ?>">
+                            <?php if (isset($errors['deadline'])): ?>
+                                <div class="invalid-feedback"><?php echo $errors['deadline']; ?></div>
+                            <?php endif; ?>
+                            <div class="form-text">
+                                Cannot be in the past.
+                                <?php if ($projectEndDate): ?>
+                                    <br><strong>Project deadline:</strong> <?= date('M d, Y', strtotime($projectEndDate)) ?>
                                 <?php endif; ?>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label for="deadline" class="form-label">Deadline</label>
-                                <input type="date" class="form-control <?php echo isset($errors['deadline']) ? 'is-invalid' : ''; ?>"
-                                       id="deadline" name="deadline"
-                                       value="<?php echo htmlspecialchars($formData['deadline'] ?? ''); ?>">
-                                <?php if (isset($errors['deadline'])): ?>
-                                    <div class="invalid-feedback"><?php echo $errors['deadline']; ?></div>
-                                <?php endif; ?>
-                                <div class="form-text">Leave empty if no specific deadline.</div>
                             </div>
                         </div>
 
@@ -185,6 +182,13 @@ require_once __DIR__ . '/../layout/header.php';
                                     Select a team member to assign this task to.
                                 <?php endif; ?>
                             </div>
+                        </div>
+
+                        <!-- Attachments -->
+                        <div class="mb-4">
+                            <label for="attachment" class="form-label">Attachments</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment">
+                            <small class="text-muted">Attach relevant files to this task.</small>
                         </div>
 
                         <!-- Quick Actions -->
@@ -335,6 +339,48 @@ document.querySelectorAll('input, textarea, select').forEach(element => {
     element.addEventListener('input', autoSaveDraft);
     element.addEventListener('change', autoSaveDraft);
 });
+
+// Project deadlines data for dynamic deadline validation
+<?php if (isset($projects) && is_array($projects)): ?>
+const projectDeadlines = {
+    <?php foreach ($projects as $proj): ?>
+        <?php if (!empty($proj['end_date'])): ?>
+        '<?= $proj['id'] ?>': '<?= date('Y-m-d', strtotime($proj['end_date'])) ?>',
+        <?php endif; ?>
+    <?php endforeach; ?>
+};
+
+// Update deadline max when project changes
+const projectSelect = document.getElementById('project_id');
+if (projectSelect) {
+    projectSelect.addEventListener('change', function() {
+        const deadlineInput = document.getElementById('deadline');
+        const projectId = this.value;
+        
+        if (projectId && projectDeadlines[projectId]) {
+            deadlineInput.max = projectDeadlines[projectId];
+            // Clear deadline if it exceeds project deadline
+            if (deadlineInput.value && deadlineInput.value > projectDeadlines[projectId]) {
+                deadlineInput.value = '';
+                alert('Deadline was cleared because it exceeded the project deadline.');
+            }
+            // Update help text
+            const helpText = deadlineInput.parentElement.querySelector('.form-text');
+            if (helpText) {
+                const date = new Date(projectDeadlines[projectId]);
+                helpText.innerHTML = 'Cannot be in the past.<br><strong>Project deadline:</strong> ' + 
+                    date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            }
+        } else {
+            deadlineInput.removeAttribute('max');
+            const helpText = deadlineInput.parentElement.querySelector('.form-text');
+            if (helpText) {
+                helpText.innerHTML = 'Cannot be in the past.';
+            }
+        }
+    });
+}
+<?php endif; ?>
 </script>
 
 <style>

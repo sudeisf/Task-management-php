@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../core/Auth.php';
 require_once __DIR__ . '/../../config/constants.php';
 
 if (Auth::check()) {
-    header("Location: " . BASE_URL . "/views/dashboard/index.php");
+    header("Location: " . BASE_URL . "/controller/DashboardController.php?action=index");
     exit;
 }
 ?>
