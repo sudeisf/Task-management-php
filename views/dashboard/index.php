@@ -178,9 +178,12 @@ require_once __DIR__ . '/../layout/header.php';
                 <?php if (!empty($recentTasks)): ?>
                     <?php foreach ($recentTasks as $task): ?>
                         <div class="task-item">
-                            <div class="task-checkbox <?php echo ($task['status'] === 'completed') ? 'checked' : ''; ?>"
+                            <?php 
+                            $canToggle = ($userRole === 'member' && $task['assigned_to'] == $currentUser['id']);
+                            ?>
+                            <div class="task-checkbox <?php echo ($task['status'] === 'completed') ? 'checked' : ''; ?> <?php echo !$canToggle ? 'readonly' : ''; ?>"
                                  data-task-id="<?php echo $task['id']; ?>"
-                                 onclick="toggleTaskStatus(<?php echo $task['id']; ?>)">
+                                 <?php echo $canToggle ? 'onclick="toggleTaskStatus(' . $task['id'] . ')"' : ''; ?>>
                             </div>
                             <div class="task-content">
                                 <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>"

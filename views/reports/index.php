@@ -25,7 +25,7 @@
                     </div>
                     <h5 class="card-title">Task Report</h5>
                     <p class="card-text text-muted">
-                        Generate comprehensive reports on tasks with customizable filters for status, priority, category, and date range.
+                        Generate comprehensive reports on tasks with customizable filters for status, priority, and date range.
                     </p>
                     <a href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=task_report" class="btn btn-primary">
                         <i class="bi bi-file-earmark-text me-2"></i>Generate Report
@@ -54,23 +54,6 @@
         </div>
         <?php endif; ?>
 
-        <!-- Productivity Report Card -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card h-100 report-card">
-                <div class="card-body">
-                    <div class="report-icon mb-3">
-                        <i class="bi bi-graph-up"></i>
-                    </div>
-                    <h5 class="card-title">Productivity Report</h5>
-                    <p class="card-text text-muted">
-                        Track productivity trends over time with metrics on task creation, completion rates, and daily averages.
-                    </p>
-                    <a href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=productivity_report" class="btn btn-primary">
-                        <i class="bi bi-file-earmark-bar-graph me-2"></i>Generate Report
-                    </a>
-                </div>
-            </div>
-        </div>
 
         <!-- Overdue Tasks Report Card -->
         <div class="col-md-6 col-lg-4">
@@ -103,17 +86,10 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Export Options</h6>
-                            <p class="text-muted small">
-                                All reports can be exported to CSV format for further analysis in spreadsheet applications.
-                                Simply click the "Export CSV" button on any report page.
-                            </p>
-                        </div>
-                        <div class="col-md-6">
                             <h6>Filtering</h6>
                             <p class="text-muted small">
                                 Use the filter options on each report page to customize the data displayed.
-                                Filters include date ranges, status, priority, categories, and user assignments.
+                                Filters include date ranges, status, priority, and user assignments.
                             </p>
                         </div>
                     </div>

@@ -1,320 +1,93 @@
 <?php
 
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../core/Session.php';
-require_once __DIR__ . '/../core/Auth.php';
+require_once __DIR__ . '/../core/Controller.php';
+require_once __DIR__ . '/../services/CommentService.php';
 require_once __DIR__ . '/../models/Comment.php';
-require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/Activity.php';
+require_once __DIR__ . '/../models/Task.php';
 
-Session::start();
-
-// Check authentication
-if (!Auth::check()) {
-    header("Location: ../views/auth/login.php");
-    exit;
-}
-
-class CommentController
+class CommentController extends Controller
 {
+    private $commentService;
     private $commentModel;
-    private $taskModel;
     private $activityModel;
-    private $currentUser;
 
     public function __construct()
     {
+        parent::__construct();
+        $this->commentService = new CommentService();
         $this->commentModel = new Comment();
-        $this->taskModel = new Task();
         $this->activityModel = new Activity();
-        $this->currentUser = Auth::user();
     }
 
-    // Store new comment
     public function store()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: ?action=index");
-            exit;
-        }
+        $taskId = $this->post('task_id');
+        $text = $this->post('comment');
+        if (!$taskId || empty($text)) $this->errorRedirect("Missing data", "../controller/TaskController.php?action=show&id=$taskId");
 
-        $task_id = (int)($_POST['task_id'] ?? 0);
-        $comment_text = trim($_POST['comment'] ?? '');
+        $res = $this->commentService->handleCreate($taskId, $this->currentUser['id'], $text);
+        if (isset($res['error'])) $this->errorRedirect($res['error'], "../controller/TaskController.php?action=show&id=$taskId");
 
-        if (!$task_id || empty($comment_text)) {
-            $_SESSION['error'] = "Task ID and comment are required.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        // Check if task exists and user has access
-        $task = $this->taskModel->find($task_id);
-        if (!$task) {
-            $_SESSION['error'] = "Task not found.";
-            header("Location: ../controller/TaskController.php?action=index");
-            exit;
-        }
-
-        $userRole = $this->getUserRole($this->currentUser['id']);
-
-        if (!$this->canCommentOnTask($task, $userRole)) {
-            $_SESSION['error'] = "You don't have permission to comment on this task.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        // Validate comment length
-        if (strlen($comment_text) > 1000) {
-            $_SESSION['error'] = "Comment must be less than 1000 characters.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        // Create comment
-        $commentData = [
-            'task_id' => $task_id,
-            'user_id' => $this->currentUser['id'],
-            'comment' => htmlspecialchars($comment_text, ENT_QUOTES, 'UTF-8')
-        ];
-
-        if ($newCommentId = $this->commentModel->create($commentData)) {
-            // Log activity
-            $this->activityModel->log(
-                $this->currentUser['id'],
-                $task_id,
-                'comment_added',
-                "Added comment to task: " . substr($comment_text, 0, 50) . "..."
-            );
-
-            // Create notification for task assignee if not the commenter
-            if ($task['assigned_to'] && $task['assigned_to'] != $this->currentUser['id']) {
-                $this->createNotification(
-                    $task['assigned_to'],
-                    $task_id,
-                    "New comment on task: {$task['title']}"
-                );
-            }
-
-            // Create notification for task creator if not the commenter
-            if ($task['created_by'] != $this->currentUser['id']) {
-                $this->createNotification(
-                    $task['created_by'],
-                    $task_id,
-                    "New comment on your task: {$task['title']}"
-                );
-            }
-
-            $_SESSION['success'] = "Comment added successfully!";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id#comment-$newCommentId");
-        } else {
-            $_SESSION['error'] = "Failed to add comment.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-        }
-        exit;
+        $this->activityModel->log($this->currentUser['id'], $taskId, 'comment_added', "Added comment");
+        $this->successRedirect("Comment added", "../controller/TaskController.php?action=show&id=$taskId#comment-".$res['id']);
     }
 
-    // Update comment
     public function update()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: ?action=index");
-            exit;
+        $id = $this->post('comment_id');
+        $taskId = $this->post('task_id');
+        $text = $this->post('comment');
+        if (!$this->commentModel->canModify($id, $this->currentUser['id'], $this->currentUser['role'])) {
+            $this->errorRedirect("Denied", "../controller/TaskController.php?action=show&id=$taskId");
         }
 
-        $comment_id = (int)($_POST['comment_id'] ?? 0);
-        $task_id = (int)($_POST['task_id'] ?? 0);
-        $comment_text = trim($_POST['comment'] ?? '');
-
-        if (!$comment_id || !$task_id || empty($comment_text)) {
-            $_SESSION['error'] = "Comment ID, task ID, and comment text are required.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
+        if ($this->commentModel->update($id, htmlspecialchars($text, ENT_QUOTES, 'UTF-8'), $this->currentUser['id'])) {
+            $this->activityModel->log($this->currentUser['id'], $taskId, 'comment_updated', "Updated comment");
+            $this->successRedirect("Updated", "../controller/TaskController.php?action=show&id=$taskId");
         }
-
-        $userRole = $this->getUserRole($this->currentUser['id']);
-
-        if (!$this->commentModel->canModify($comment_id, $this->currentUser['id'], $userRole)) {
-            $_SESSION['error'] = "You don't have permission to edit this comment.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        // Validate comment length
-        if (strlen($comment_text) > 1000) {
-            $_SESSION['error'] = "Comment must be less than 1000 characters.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        if ($this->commentModel->update($comment_id, htmlspecialchars($comment_text, ENT_QUOTES, 'UTF-8'), $this->currentUser['id'])) {
-            // Log activity
-            $this->activityModel->log(
-                $this->currentUser['id'],
-                $task_id,
-                'comment_updated',
-                "Updated comment on task"
-            );
-
-            $_SESSION['success'] = "Comment updated successfully!";
-        } else {
-            $_SESSION['error'] = "Failed to update comment.";
-        }
-
-        header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-        exit;
+        $this->errorRedirect("Failed", "../controller/TaskController.php?action=show&id=$taskId");
     }
 
-    // Delete comment
     public function delete()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: ?action=index");
-            exit;
+        $id = $this->post('comment_id');
+        $taskId = $this->post('task_id');
+        if (!$this->commentModel->canModify($id, $this->currentUser['id'], $this->currentUser['role'])) {
+            $this->errorRedirect("Denied", "../controller/TaskController.php?action=show&id=$taskId");
         }
 
-        $comment_id = (int)($_POST['comment_id'] ?? 0);
-        $task_id = (int)($_POST['task_id'] ?? 0);
-
-        if (!$comment_id || !$task_id) {
-            $_SESSION['error'] = "Comment ID and task ID are required.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
+        if ($this->commentModel->delete($id, ($this->currentUser['role'] === 'admin' || $this->currentUser['role'] === 'manager') ? null : $this->currentUser['id'])) {
+            $this->activityModel->log($this->currentUser['id'], $taskId, 'comment_deleted', "Deleted comment");
+            $this->successRedirect("Deleted", "../controller/TaskController.php?action=show&id=$taskId");
         }
-
-        $userRole = $this->getUserRole($this->currentUser['id']);
-
-        if (!$this->commentModel->canModify($comment_id, $this->currentUser['id'], $userRole)) {
-            $_SESSION['error'] = "You don't have permission to delete this comment.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        if ($this->commentModel->delete($comment_id, $userRole === 'admin' || $userRole === 'manager' ? null : $this->currentUser['id'])) {
-            // Log activity
-            $this->activityModel->log(
-                $this->currentUser['id'],
-                $task_id,
-                'comment_deleted',
-                "Deleted comment from task"
-            );
-
-            $_SESSION['success'] = "Comment deleted successfully!";
-        } else {
-            $_SESSION['error'] = "Failed to delete comment.";
-        }
-
-        header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-        exit;
+        $this->errorRedirect("Failed", "../controller/TaskController.php?action=show&id=$taskId");
     }
 
-    // Get comments for a task (AJAX endpoint)
-    public function getComments()
+    public function get_comments()
     {
         header('Content-Type: application/json');
-
-        $task_id = (int)($_GET['task_id'] ?? 0);
-
-        if (!$task_id) {
-            echo json_encode(['error' => 'Task ID is required']);
-            exit;
-        }
-
-        // Check if task exists and user has access
-        $task = $this->taskModel->find($task_id);
-        if (!$task) {
-            echo json_encode(['error' => 'Task not found']);
-            exit;
-        }
-
-        $userRole = $this->getUserRole($this->currentUser['id']);
-
-        if (!$this->canCommentOnTask($task, $userRole)) {
-            echo json_encode(['error' => 'Access denied']);
-            exit;
-        }
-
-        $comments = $this->commentModel->getByTask($task_id);
-        $commentsArray = [];
-
-        while ($comment = $comments->fetch_assoc()) {
-            $commentsArray[] = [
-                'id' => $comment['id'],
-                'comment' => $comment['comment'],
-                'created_at' => $comment['created_at'],
-                'user' => [
-                    'id' => $comment['user_id'],
-                    'name' => $comment['full_name'] ?? 'Unknown User',
-                    'email' => $comment['email'] ?? '',
-                    'avatar' => $comment['profile_picture'] ?? null
-                ],
-                'can_edit' => $this->commentModel->canModify($comment['id'], $this->currentUser['id'], $userRole)
+        $taskId = $this->query('task_id');
+        $comments = $this->commentModel->getByTask($taskId);
+        $res = [];
+        while ($c = $comments->fetch_assoc()) {
+            $res[] = [
+                'id' => $c['id'], 'comment' => $c['comment'], 'created_at' => $c['created_at'],
+                'user_name' => $c['full_name'] ?? 'Unknown',
+                'can_edit' => $this->commentModel->canModify($c['id'], $this->currentUser['id'], $this->currentUser['role'])
             ];
         }
-
-        echo json_encode(['comments' => $commentsArray]);
-        exit;
-    }
-
-    // Private helper methods
-
-    private function getUserRole($userId)
-    {
-        // This is a simplified version - in real app you'd cache this
-        $sql = "SELECT r.name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?";
-        $db = new Database();
-        $db->prepare($sql);
-        $db->execute([$userId]);
-        $result = $db->getRow();
-        return $result['name'] ?? 'member';
-    }
-
-    private function canCommentOnTask($task, $userRole)
-    {
-        if ($userRole === 'admin' || $userRole === 'manager') {
-            return true;
-        }
-
-        return $task['assigned_to'] == $this->currentUser['id'] ||
-               $task['created_by'] == $this->currentUser['id'];
-    }
-
-    private function createNotification($user_id, $task_id, $message)
-    {
-        require_once __DIR__ . '/../models/Notification.php';
-        $notificationModel = new Notification();
-        
-        return $notificationModel->create([
-            'user_id' => $user_id,
-            'task_id' => $task_id,
-            'message' => $message,
-            'is_read' => 0
-        ]);
+        echo json_encode(['comments' => $res]); exit;
     }
 }
 
-// Handle routing
 $action = $_GET['action'] ?? 'index';
-
 $controller = new CommentController();
 
-switch ($action) {
-    case 'store':
-        $controller->store();
-        break;
+$methodName = str_replace(' ', '', lcfirst(ucwords(str_replace('_', ' ', $action))));
 
-    case 'update':
-        $controller->update();
-        break;
-
-    case 'delete':
-        $controller->delete();
-        break;
-
-    case 'get_comments':
-        $controller->getComments();
-        break;
-
-    default:
-        header("Location: ../controller/TaskController.php?action=index");
-        break;
+if (method_exists($controller, $methodName)) {
+    $controller->$methodName();
+} else {
+    header("Location: ../controller/TaskController.php");
 }

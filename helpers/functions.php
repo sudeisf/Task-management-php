@@ -320,28 +320,7 @@ function isAjaxRequest()
            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 }
 
-/**
- * Get client IP address
- */
-function getClientIP()
-{
-    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-        return $_SERVER['HTTP_CLIENT_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        return $_SERVER['HTTP_X_FORWARDED_FOR'];
-    } else {
-        return $_SERVER['REMOTE_ADDR'];
-    }
-}
 
-/**
- * Validate date format
- */
-function isValidDate($date, $format = 'Y-m-d')
-{
-    $d = DateTime::createFromFormat($format, $date);
-    return $d && $d->format($format) === $date;
-}
 
 /**
  * Calculate percentage
@@ -449,22 +428,107 @@ function baseUrl()
 }
 
 /**
- * Get activity icon based on notification type
+ * Get activity icon based on notification type or action string
  */
-function getActivityIcon($type)
+function getActivityIcon($action)
 {
+    $action = strtolower($action);
+    
+    // Exact match for type codes
     $icons = [
-        'task_assigned' => 'person-check',
-        'task_completed' => 'check-circle',
-        'task_updated' => 'pencil',
-        'task_created' => 'plus-circle',
-        'comment_added' => 'chat',
-        'project_created' => 'folder-plus',
-        'project_updated' => 'folder',
-        'user_registered' => 'person-plus',
-        'status_changed' => 'arrow-repeat',
-        'deadline_approaching' => 'clock',
+        'task_assigned' => 'bi-person-check',
+        'task_assignment' => 'bi-person-check',
+        'project_assignment' => 'bi-briefcase',
+        'task_overdue' => 'bi-exclamation-circle',
+        'project_overdue' => 'bi-exclamation-triangle',
+        'task_completed' => 'bi-check-circle',
+        'task_updated' => 'bi-pencil',
+        'task_created' => 'bi-plus-circle',
+        'comment_added' => 'bi-chat',
+        'project_created' => 'bi-folder-plus',
+        'project_updated' => 'bi-folder',
+        'user_registered' => 'bi-person-plus',
+        'status_changed' => 'bi-arrow-repeat',
+        'deadline_approaching' => 'bi-clock',
+        'attachment_uploaded' => 'bi-paperclip'
     ];
     
-    return $icons[$type] ?? 'bell';
+    if (isset($icons[$action])) {
+        return $icons[$action];
+    }
+    
+    // Partial matches for action strings
+    if (strpos($action, 'created') !== false) return 'bi-plus-circle';
+    if (strpos($action, 'updated') !== false) return 'bi-pencil';
+    if (strpos($action, 'completed') !== false) return 'bi-check-circle';
+    if (strpos($action, 'comment') !== false) return 'bi-chat';
+    if (strpos($action, 'attachment') !== false) return 'bi-paperclip';
+    
+    return 'bi-bell';
+}
+
+/**
+ * Get activity type for CSS classes (task, comment, user, etc.)
+ */
+function getActivityType($action)
+{
+    $action = strtolower($action);
+    if (strpos($action, 'task') !== false) return 'task';
+    if (strpos($action, 'comment') !== false) return 'comment';
+    if (strpos($action, 'attachment') !== false) return 'attachment';
+    if (strpos($action, 'user') !== false) return 'user';
+    if (strpos($action, 'project') !== false) return 'project';
+    return 'task';
+}
+
+/**
+ * Alias for getActivityType (used in some views)
+ */
+function getActivityTypeClass($action)
+{
+    return getActivityType($action);
+}
+
+/**
+ * Get display text for activity action
+ */
+function getActivityActionText($action)
+{
+    $actions = [
+        'task_created' => 'created task',
+        'task_updated' => 'updated task',
+        'task_completed' => 'completed task',
+        'comment_added' => 'added comment to',
+        'attachment_uploaded' => 'uploaded attachment to',
+        'project_created' => 'created project',
+        'project_updated' => 'updated project'
+    ];
+    
+    return $actions[$action] ?? str_replace('_', ' ', $action);
+}
+
+/**
+ * Get file icon based on extension
+ */
+function getFileIcon($filename)
+{
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $icons = [
+        'pdf' => 'bi-file-earmark-pdf',
+        'doc' => 'bi-file-earmark-word',
+        'docx' => 'bi-file-earmark-word',
+        'xls' => 'bi-file-earmark-excel',
+        'xlsx' => 'bi-file-earmark-excel',
+        'ppt' => 'bi-file-earmark-ppt',
+        'pptx' => 'bi-file-earmark-ppt',
+        'txt' => 'bi-file-earmark-text',
+        'jpg' => 'bi-file-earmark-image',
+        'jpeg' => 'bi-file-earmark-image',
+        'png' => 'bi-file-earmark-image',
+        'gif' => 'bi-file-earmark-image',
+        'zip' => 'bi-file-earmark-zip',
+        'rar' => 'bi-file-earmark-zip'
+    ];
+
+    return $icons[$ext] ?? 'bi-file-earmark';
 }

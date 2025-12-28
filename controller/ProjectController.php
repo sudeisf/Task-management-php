@@ -1,510 +1,226 @@
 <?php
 
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../core/Session.php';
-require_once __DIR__ . '/../core/Auth.php';
-require_once __DIR__ . '/../core/Database.php';
+require_once __DIR__ . '/../core/Controller.php';
+require_once __DIR__ . '/../services/ProjectService.php';
 require_once __DIR__ . '/../models/Project.php';
 require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Permission.php';
-require_once __DIR__ . '/../helpers/functions.php';
+require_once __DIR__ . '/../models/Activity.php';
+require_once __DIR__ . '/../services/AttachmentService.php';
+require_once __DIR__ . '/../models/Attachment.php';
 
-Session::start();
-
-// Check authentication
-if (!Auth::check()) {
-    header("Location: ../views/auth/login.php");
-    exit;
-}
-
-class ProjectController
+class ProjectController extends Controller
 {
+    private $projectService;
     private $projectModel;
     private $taskModel;
     private $userModel;
     private $permissionModel;
-    private $currentUser;
+    private $attachmentService;
 
     public function __construct()
     {
-        $db = new Database();
+        parent::__construct();
+        $this->projectService = new ProjectService();
         $this->projectModel = new Project();
         $this->taskModel = new Task();
-        $this->userModel = new User($db->getConnection());
+        $this->userModel = new User(require __DIR__ . '/../config/db.php');
         $this->permissionModel = new Permission();
-        $this->currentUser = Auth::user();
-
-        // Verify session user actually exists in DB
-        if (!$this->currentUser || !$this->userModel->getById($this->currentUser['id'])) {
-            Auth::logout();
-            header("Location: " . BASE_URL . "/views/auth/login.php");
-            exit;
-        }
+        $this->attachmentService = new AttachmentService();
     }
 
-    // ==================== LIST PROJECTS ====================
-    
     public function index()
     {
-        $userRole = $this->getUserRole();
-        
-        // Build filters for all roles
         $filters = $this->buildFilters();
-        
-        // Check permission
-        if ($userRole === 'member') {
-            // Members see projects through their tasks
-            $projects = $this->projectModel->getByMember($this->currentUser['id'], $filters);
-        } elseif ($userRole === 'manager') {
-            // Managers see assigned projects
-            $projects = $this->projectModel->getByManager($this->currentUser['id'], $filters);
-        } else {
-            // Admins see all projects
-            $projects = $this->projectModel->all($filters);
-        }
-
-        // Extract data for view
-        extract([
-            'projects' => $projects,
-            'userRole' => $userRole
-        ]);
-
-        require_once __DIR__ . '/../views/layout/header.php';
-        require_once __DIR__ . '/../views/projects/index.php';
-        require_once __DIR__ . '/../views/layout/footer.php';
+        $projects = $this->projectService->getProjectsByRole($this->currentUser['id'], $this->currentUser['role'], $filters);
+        $this->view('projects/index', ['projects' => $projects, 'userRole' => $this->currentUser['role']]);
     }
 
-    // ==================== CREATE PROJECT ====================
-    
     public function create()
     {
-        // Only admins can create projects
-        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) {
-            setFlashMessage('error', 'You do not have permission to create projects.');
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
+        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) $this->errorRedirect("No permission");
+        
+        $usersResult = $this->userModel->getAll();
+        $users = [];
+        while ($u = $usersResult->fetch_assoc()) {
+            $users[] = $u;
         }
-
-        // Get users for assignment
-        $users = $this->userModel->getAll();
-
-        require_once __DIR__ . '/../views/layout/header.php';
-        require_once __DIR__ . '/../views/projects/create.php';
-        require_once __DIR__ . '/../views/layout/footer.php';
+        
+        $this->view('projects/create', [
+            'users' => $users,
+            'formData' => $_SESSION['form_data'] ?? [],
+            'errors' => $_SESSION['errors'] ?? []
+        ]);
+        unset($_SESSION['form_data'], $_SESSION['errors']);
     }
 
     public function store()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
+        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) $this->errorRedirect("No permission");
+        if (!$val['data']) {
+            $_SESSION['errors'] = $val['errors'];
+            $_SESSION['form_data'] = $_POST;
+            $this->redirect("?action=create");
         }
 
-        // Only admins can create projects
-        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) {
-            setFlashMessage('error', 'You do not have permission to create projects.');
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
-        }
-
-        // Validate input
-        $data = $this->validateProjectData($_POST);
-
-        if (!$data) {
-            redirect(BASE_URL . '/controller/ProjectController.php?action=create');
-            return;
-        }
-
+        $data = $val['data'];
         $data['created_by'] = $this->currentUser['id'];
-        $data['status'] = 'planning'; // Force default status to To Do
-
-        // Create project
+        
         if ($projectId = $this->projectModel->create($data)) {
-            // Assign managers if specified
+            // Assign managers
             if (!empty($_POST['managers'])) {
-                foreach ($_POST['managers'] as $managerId) {
-                    $this->projectModel->assignUser($projectId, $managerId, 'manager');
+                foreach ($_POST['managers'] as $mid) $this->projectModel->assignUser($projectId, $mid, 'manager');
+            }
+
+            // Handle file upload
+            if (isset($_FILES['attachment']) && !empty($_FILES['attachment']['name'])) {
+                $res = $this->attachmentService->handleProjectUpload($_FILES['attachment'], $projectId, $this->currentUser['id'], $this->currentUser['role']);
+                if (isset($res['error'])) {
+                    // Log error but don't fail project creation, just warn user
+                    $this->setFlashMessage('warning', "Project created but file upload failed: " . $res['error']);
+                } else {
+                    (new Activity())->log($this->currentUser['id'], null, 'file_uploaded_to_project', "Uploaded file for project ID: $projectId");
                 }
             }
 
-            setFlashMessage('success', 'Project created successfully!');
-            redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $projectId);
-        } else {
-            setFlashMessage('error', 'Failed to create project.');
-            redirect(BASE_URL . '/controller/ProjectController.php?action=create');
+            $this->successRedirect("Project created", "?action=show&id=$projectId");
         }
+        $this->errorRedirect("Failed to create", "?action=create");
     }
 
-    // ==================== VIEW PROJECT ====================
-    
     public function show($id)
     {
         $project = $this->projectModel->find($id);
+        if (!$project) $this->errorRedirect("Not found");
+        if (!$this->projectModel->hasAccess($id, $this->currentUser['id'], $this->currentUser['role'])) $this->errorRedirect("No access");
 
-        if (!$project) {
-            setFlashMessage('error', 'Project not found.');
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
-        }
-
-        $userRole = $this->getUserRole();
-
-        // Check access
-        if (!$this->projectModel->hasAccess($id, $this->currentUser['id'], $userRole)) {
-            setFlashMessage('error', 'You do not have access to this project.');
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
-        }
-
-        // Get project team
-        $teamMembers = $this->projectModel->getTeamMembers($id);
-        
-        // Get project statistics
-        $statistics = $this->projectModel->getStatistics($id);
-
-        // Get project tasks
-        // Assuming getByProject returns array of tasks. 
-        // We might want to add filters here later from $_GET
-        $tasks = $this->taskModel->getByProject($id);
-
-        // Extract data for view
-        extract([
+        $viewData = [
             'project' => $project,
-            'teamMembers' => $teamMembers,
-            'statistics' => $statistics,
-            'tasks' => $tasks,
-            'userRole' => $userRole
-        ]);
+            'teamMembers' => $this->projectModel->getTeamMembers($id),
+            'statistics' => $this->projectModel->getStatistics($id),
+            'tasks' => $this->taskModel->getByProject($id),
+            'attachments' => (new Attachment())->getByProject($id),
+            'userRole' => $this->currentUser['role']
+        ];
 
-        require_once __DIR__ . '/../views/layout/header.php';
-        require_once __DIR__ . '/../views/projects/show.php';
-        require_once __DIR__ . '/../views/layout/footer.php';
+        if ($this->currentUser['role'] === 'admin') {
+            $usersResult = $this->userModel->getAll();
+            $users = [];
+            while ($u = $usersResult->fetch_assoc()) {
+                $users[] = $u;
+            }
+            $viewData['users'] = $users;
+        }
+
+        $this->view('projects/show', $viewData);
     }
 
-    // ==================== EDIT PROJECT ====================
-    
     public function edit($id)
     {
-        // Only admins can edit projects
-        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) {
-            setFlashMessage('error', 'You do not have permission to edit projects.');
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
-        }
-
+        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) $this->errorRedirect("No permission");
         $project = $this->projectModel->find($id);
+        if (!$project) $this->errorRedirect("Not found");
 
-        if (!$project) {
-            setFlashMessage('error', 'Project not found.');
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
+        $usersResult = $this->userModel->getAll();
+        $users = [];
+        while ($u = $usersResult->fetch_assoc()) {
+            $users[] = $u;
         }
 
-        // Get users for assignment
-        $users = $this->userModel->getAll();
-        $currentManagers = $this->projectModel->getManagers($id);
-
-        extract([
+        $this->view('projects/edit', [
             'project' => $project,
             'users' => $users,
-            'currentManagers' => $currentManagers
+            'currentManagers' => $this->projectModel->getManagers($id)
         ]);
-
-        require_once __DIR__ . '/../views/layout/header.php';
-        require_once __DIR__ . '/../views/projects/edit.php';
-        require_once __DIR__ . '/../views/layout/footer.php';
     }
 
     public function update($id)
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
-        }
-
-        // Only admins can update projects
-        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) {
-            setFlashMessage('error', 'You do not have permission to update projects.');
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
-        }
-
+        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) $this->errorRedirect("No permission");
         $project = $this->projectModel->find($id);
+        if (!$project) $this->errorRedirect("Not found");
 
-        if (!$project) {
-            setFlashMessage('error', 'Project not found.');
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
-        }
+        $val = $this->projectService->validateProject($_POST);
+        if (!$val['data']) $this->errorRedirect("Validation failed", "?action=edit&id=$id");
 
-        // Validate input
-        $data = $this->validateProjectData($_POST);
-
-        if (!$data) {
-            redirect(BASE_URL . '/controller/ProjectController.php?action=edit&id=' . $id);
-            return;
-        }
-
-        // Update project
-        if ($this->projectModel->update($id, $data)) {
-            // Update managers
-            // First, remove all current managers
+        if ($this->projectModel->update($id, $val['data'])) {
             $currentManagers = $this->projectModel->getManagers($id);
-            foreach ($currentManagers as $manager) {
-                $this->projectModel->removeUser($id, $manager['id']);
+            foreach ($currentManagers as $m) $this->projectModel->removeUser($id, $m['id']);
+            if (!empty($_POST['managers'])) {
+                foreach ($_POST['managers'] as $mid) $this->projectModel->assignUser($id, $mid, 'manager');
             }
 
-            // Then add new managers
-            if (!empty($_POST['managers'])) {
-                foreach ($_POST['managers'] as $managerId) {
-                    $this->projectModel->assignUser($id, $managerId, 'manager');
+            // Handle file upload
+            if (isset($_FILES['attachment']) && !empty($_FILES['attachment']['name'])) {
+                $res = $this->attachmentService->handleProjectUpload($_FILES['attachment'], $id, $this->currentUser['id'], $this->currentUser['role']);
+                if (isset($res['error'])) {
+                    $this->setFlashMessage('warning', "Project updated but file upload failed: " . $res['error']);
+                } else {
+                    (new Activity())->log($this->currentUser['id'], null, 'file_uploaded_to_project', "Uploaded file for project ID: $id");
                 }
             }
 
-            setFlashMessage('success', 'Project updated successfully!');
-            redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $id);
-        } else {
-            setFlashMessage('error', 'Failed to update project.');
-            redirect(BASE_URL . '/controller/ProjectController.php?action=edit&id=' . $id);
+            $this->successRedirect("Updated", "?action=show&id=$id");
         }
+        $this->errorRedirect("Failed", "?action=edit&id=$id");
     }
 
-    // ==================== DELETE PROJECT ====================
-    
     public function delete($id)
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
-        }
-
-        // Only admins can delete projects
-        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) {
-            setFlashMessage('error', 'You do not have permission to delete projects.');
-            redirect(BASE_URL . '/controller/ProjectController.php');
-            return;
-        }
-
-        if ($this->projectModel->delete($id)) {
-            setFlashMessage('success', 'Project deleted successfully!');
-        } else {
-            setFlashMessage('error', 'Failed to delete project.');
-        }
-
-        redirect(BASE_URL . '/controller/ProjectController.php');
+        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) $this->errorRedirect("No permission");
+        if ($this->projectModel->delete($id)) $this->successRedirect("Deleted", "?action=index");
+        $this->errorRedirect("Failed");
     }
 
-    // ==================== TEAM MANAGEMENT ====================
-    
     public function assignUser($projectId)
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $projectId);
-            return;
+        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) $this->errorRedirect("No permission", "?action=show&id=$projectId");
+        $userId = $this->post('user_id');
+        if (!$userId) $this->errorRedirect("User ID required", "?action=show&id=$projectId");
+        
+        // Enforce: Project role must match Global role
+        $user = $this->userModel->getById($userId);
+        if (!$user) $this->errorRedirect("User not found", "?action=show&id=$projectId");
+        
+        $globalRole = strtolower($user['role']);
+        $projectRole = ($globalRole === 'admin' || $globalRole === 'manager') ? 'manager' : 'member';
+        
+        if ($this->projectModel->assignUser($projectId, $userId, $projectRole)) {
+            $this->successRedirect("User assigned as " . ucfirst($projectRole), "?action=show&id=$projectId");
         }
-
-        // Only admins can assign users
-        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) {
-            setFlashMessage('error', 'You do not have permission to assign users.');
-            redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $projectId);
-            return;
-        }
-
-        $userId = $_POST['user_id'] ?? null;
-        $role = $_POST['role'] ?? 'member';
-
-        if (!$userId) {
-            setFlashMessage('error', 'User ID is required.');
-            redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $projectId);
-            return;
-        }
-
-        if ($this->projectModel->assignUser($projectId, $userId, $role)) {
-            setFlashMessage('success', 'User assigned to project successfully!');
-        } else {
-            setFlashMessage('error', 'Failed to assign user to project.');
-        }
-
-        redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $projectId);
+        $this->errorRedirect("Failed to assign user", "?action=show&id=$projectId");
     }
 
     public function removeUser($projectId)
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $projectId);
-            return;
-        }
+        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) $this->errorRedirect("No permission", "?action=show&id=$projectId");
+        $userId = $this->post('user_id');
+        if (!$userId) $this->errorRedirect("User ID required", "?action=show&id=$projectId");
 
-        // Only admins can remove users
-        if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) {
-            setFlashMessage('error', 'You do not have permission to remove users.');
-            redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $projectId);
-            return;
-        }
-
-        $userId = $_POST['user_id'] ?? null;
-
-        if (!$userId) {
-            setFlashMessage('error', 'User ID is required.');
-            redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $projectId);
-            return;
-        }
-
-        if ($this->projectModel->removeUser($projectId, $userId)) {
-            setFlashMessage('success', 'User removed from project successfully!');
-        } else {
-            setFlashMessage('error', 'Failed to remove user from project.');
-        }
-
-        redirect(BASE_URL . '/controller/ProjectController.php?action=show&id=' . $projectId);
-    }
-
-    // ==================== HELPER METHODS ====================
-    
-    private function getUserRole()
-    {
-        $sql = "SELECT r.name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?";
-        $db = new Database();
-        $db->prepare($sql);
-        $db->execute([$this->currentUser['id']]);
-        $result = $db->getRow();
-        return $result['name'] ?? 'member';
+        if ($this->projectModel->removeUser($projectId, $userId)) $this->successRedirect("User removed", "?action=show&id=$projectId");
+        $this->errorRedirect("Failed", "?action=show&id=$projectId");
     }
 
     private function buildFilters()
     {
         $filters = [];
-
-        if (!empty($_GET['status'])) {
-            if ($_GET['status'] === 'planning' || $_GET['status'] === 'todo') {
-                $filters['status'] = ['planning', 'active'];
-            } else {
-                $filters['status'] = $_GET['status'];
-            }
+        if ($status = $this->query('status')) {
+            $filters['status'] = ($status === 'planning' || $status === 'todo') ? ['planning', 'active'] : $status;
         }
-
-        if (!empty($_GET['search'])) {
-            $filters['search'] = trim($_GET['search']);
-        }
-
+        if ($search = $this->query('search')) $filters['search'] = trim($search);
         return $filters;
-    }
-
-    private function validateProjectData($data)
-    {
-        $errors = [];
-
-        // Required fields
-        if (empty(trim($data['name'] ?? ''))) {
-            $errors[] = 'Project name is required.';
-        }
-
-        // Name length
-        if (strlen($data['name'] ?? '') > 255) {
-            $errors[] = 'Project name must be less than 255 characters.';
-        }
-
-        // Validate dates if provided
-        if (!empty($data['start_date'])) {
-            $startDate = date('Y-m-d', strtotime($data['start_date']));
-            if ($startDate === '1970-01-01' || $startDate === false) {
-                $errors[] = 'Invalid start date.';
-            }
-            $data['start_date'] = $startDate;
-        }
-
-        if (!empty($data['end_date'])) {
-            $endDate = date('Y-m-d', strtotime($data['end_date']));
-            if ($endDate === '1970-01-01' || $endDate === false) {
-                $errors[] = 'Invalid end date.';
-            }
-            $data['end_date'] = $endDate;
-        }
-
-        if (!empty($errors)) {
-            setFlashMessage('error', implode('<br>', $errors));
-            return false;
-        }
-
-        return [
-            'name' => sanitize($data['name']),
-            'description' => sanitize($data['description'] ?? ''),
-            'status' => $data['status'] ?? 'active',
-            'start_date' => $data['start_date'] ?? null,
-            'end_date' => $data['end_date'] ?? null
-        ];
     }
 }
 
-// Handle routing
 $action = $_GET['action'] ?? 'index';
 $id = $_GET['id'] ?? null;
-
 $controller = new ProjectController();
 
-switch ($action) {
-    case 'index':
-        $controller->index();
-        break;
+$methodName = str_replace(' ', '', lcfirst(ucwords(str_replace('_', ' ', $action))));
 
-    case 'create':
-        $controller->create();
-        break;
-
-    case 'store':
-        $controller->store();
-        break;
-
-    case 'show':
-        if ($id) {
-            $controller->show($id);
-        } else {
-            redirect(BASE_URL . '/controller/ProjectController.php');
-        }
-        break;
-
-    case 'edit':
-        if ($id) {
-            $controller->edit($id);
-        } else {
-            redirect(BASE_URL . '/controller/ProjectController.php');
-        }
-        break;
-
-    case 'update':
-        if ($id) {
-            $controller->update($id);
-        } else {
-            redirect(BASE_URL . '/controller/ProjectController.php');
-        }
-        break;
-
-    case 'delete':
-        if ($id) {
-            $controller->delete($id);
-        } else {
-            redirect(BASE_URL . '/controller/ProjectController.php');
-        }
-        break;
-
-    case 'assign_user':
-        if ($id) {
-            $controller->assignUser($id);
-        } else {
-            redirect(BASE_URL . '/controller/ProjectController.php');
-        }
-        break;
-
-    case 'remove_user':
-        if ($id) {
-            $controller->removeUser($id);
-        } else {
-            redirect(BASE_URL . '/controller/ProjectController.php');
-        }
-        break;
-
-    default:
-        $controller->index();
-        break;
+if (method_exists($controller, $methodName)) {
+    $controller->$methodName($id);
+} else {
+    $controller->index();
 }

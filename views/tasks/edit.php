@@ -47,7 +47,7 @@ require_once __DIR__ . '/../layout/header.php';
                     </span>
                 </div>
                 <div class="card-body">
-                    <form action="<?php echo BASE_URL; ?>/controller/TaskController.php?action=update&id=<?php echo $task['id']; ?>" method="POST" id="edit-task-form">
+                    <form action="<?php echo BASE_URL; ?>/controller/TaskController.php?action=update&id=<?php echo $task['id']; ?>" method="POST" id="edit-task-form" enctype="multipart/form-data">
                         <input type="hidden" name="project_id" value="<?php echo $task['project_id']; ?>">
                         <!-- Title -->
                         <div class="mb-3">
@@ -102,12 +102,19 @@ require_once __DIR__ . '/../layout/header.php';
                                 <label for="status" class="form-label">
                                     Status <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select <?php echo isset($errors['status']) ? 'is-invalid' : ''; ?>"
-                                        id="status" name="status" required>
-                                    <option value="todo" <?php echo (($task['status'] ?? $_POST['status'] ?? '') == 'todo') ? 'selected' : ''; ?>>To Do</option>
-                                    <option value="in_progress" <?php echo (($task['status'] ?? $_POST['status'] ?? '') == 'in_progress') ? 'selected' : ''; ?>>In Progress</option>
-                                    <option value="completed" <?php echo (($task['status'] ?? $_POST['status'] ?? '') == 'completed') ? 'selected' : ''; ?>>Completed</option>
-                                </select>
+                                <?php if ($canUpdateStatus): ?>
+                                    <select class="form-select <?php echo isset($errors['status']) ? 'is-invalid' : ''; ?>"
+                                            id="status" name="status" required>
+                                        <option value="todo" <?php echo (($task['status'] ?? $_POST['status'] ?? '') == 'todo') ? 'selected' : ''; ?>>To Do</option>
+                                        <option value="in_progress" <?php echo (($task['status'] ?? $_POST['status'] ?? '') == 'in_progress') ? 'selected' : ''; ?>>In Progress</option>
+                                        <option value="completed" <?php echo (($task['status'] ?? $_POST['status'] ?? '') == 'completed') ? 'selected' : ''; ?>>Completed</option>
+                                    </select>
+                                <?php else: ?>
+                                    <select class="form-select" disabled>
+                                        <option selected><?php echo ucfirst(str_replace('_', ' ', $task['status'])); ?></option>
+                                    </select>
+                                    <input type="hidden" name="status" value="<?php echo $task['status']; ?>">
+                                <?php endif; ?>
                                 <?php if (isset($errors['status'])): ?>
                                     <div class="invalid-feedback"><?php echo $errors['status']; ?></div>
                                 <?php endif; ?>
@@ -170,25 +177,34 @@ require_once __DIR__ . '/../layout/header.php';
                             </div>
                         </div>
 
-                        <!-- Quick Status Updates -->
-                        <div class="mb-4">
-                            <label class="form-label">Quick Status Updates</label>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <button type="button" class="btn btn-outline-success btn-sm" onclick="markCompleted()">
-                                    <i class="bi bi-check-circle"></i> Mark Completed
-                                </button>
-                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="markInProgress()">
-                                    <i class="bi bi-play-circle"></i> Mark In Progress
-                                </button>
-                                <button type="button" class="btn btn-outline-warning btn-sm" onclick="markTodo()">
-                                    <i class="bi bi-circle"></i> Mark To Do
-                                </button>
-                                <?php if ($task['status'] !== 'completed'): ?>
-                                    <button type="button" class="btn btn-outline-info btn-sm" onclick="setDueToday()">
-                                        <i class="bi bi-calendar-event"></i> Due Today
+                        <?php if ($canUpdateStatus): ?>
+                            <!-- Quick Status Updates -->
+                            <div class="mb-4">
+                                <label class="form-label">Quick Status Updates</label>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-outline-success btn-sm" onclick="markCompleted()">
+                                        <i class="bi bi-check-circle"></i> Mark Completed
                                     </button>
-                                <?php endif; ?>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="markInProgress()">
+                                        <i class="bi bi-play-circle"></i> Mark In Progress
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="markTodo()">
+                                        <i class="bi bi-circle"></i> Mark To Do
+                                    </button>
+                                    <?php if ($task['status'] !== 'completed'): ?>
+                                        <button type="button" class="btn btn-outline-info btn-sm" onclick="setDueToday()">
+                                            <i class="bi bi-calendar-event"></i> Due Today
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
                             </div>
+                        <?php endif; ?>
+
+                        <!-- Attachment -->
+                        <div class="mb-4">
+                            <label for="attachment" class="form-label">Add Attachment (Optional)</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment">
+                            <div class="form-text">Allowed formats: jpg, png, pdf, doc, txt, zip. Max size: 5MB.</div>
                         </div>
 
                         <!-- Form Actions -->

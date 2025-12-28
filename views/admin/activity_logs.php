@@ -34,8 +34,6 @@ $pageTitle = 'Activity Logs';
                                 <th>Time</th>
                                 <th>User</th>
                                 <th>Action</th>
-                                <th>Description</th>
-                                <th>IP Address</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -72,14 +70,6 @@ $pageTitle = 'Activity Logs';
                                         <span class="badge bg-<?= $actionColor ?>">
                                             <?= htmlspecialchars(str_replace('_', ' ', ucfirst($activity['action']))) ?>
                                         </span>
-                                    </td>
-                                    <td>
-                                        <?= htmlspecialchars($activity['description'] ?? '') ?>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted font-monospace">
-                                            <?= htmlspecialchars($activity['ip_address'] ?? 'N/A') ?>
-                                        </small>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

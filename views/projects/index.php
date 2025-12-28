@@ -57,23 +57,30 @@ $currentUser = Auth::user();
                 </div>
 
                 <!-- Status Filter -->
-                <div class="col-md-4">
-                    <select class="form-select" name="status">
-                        <option value="">All Statuses</option>
-                        <option value="planning" <?= (isset($_GET['status']) && $_GET['status'] === 'planning') ? 'selected' : '' ?>>
-                            To Do
-                        </option>
-                        <option value="in_progress" <?= (isset($_GET['status']) && $_GET['status'] === 'in_progress') ? 'selected' : '' ?>>
-                            In Progress
-                        </option>
-                        <option value="completed" <?= (isset($_GET['status']) && $_GET['status'] === 'completed') ? 'selected' : '' ?>>
-                            Completed
-                        </option>
-                        <option value="on_hold" <?= (isset($_GET['status']) && $_GET['status'] === 'on_hold') ? 'selected' : '' ?>>
-                            On Hold
-                        </option>
-                    </select>
-                </div>
+                <?php if (isset($_GET['status']) && !empty($_GET['status'])): ?>
+                    <input type="hidden" name="status" value="<?= htmlspecialchars($_GET['status']) ?>">
+                    <?php if (isset($_GET['search'])): // If status is hidden, search can take more space ?>
+                        <div class="col-md-0 d-none"></div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="col-md-4">
+                        <select class="form-select" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="planning" <?= (isset($_GET['status']) && $_GET['status'] === 'planning') ? 'selected' : '' ?>>
+                                To Do
+                            </option>
+                            <option value="in_progress" <?= (isset($_GET['status']) && $_GET['status'] === 'in_progress') ? 'selected' : '' ?>>
+                                In Progress
+                            </option>
+                            <option value="completed" <?= (isset($_GET['status']) && $_GET['status'] === 'completed') ? 'selected' : '' ?>>
+                                Completed
+                            </option>
+                            <option value="on_hold" <?= (isset($_GET['status']) && $_GET['status'] === 'on_hold') ? 'selected' : '' ?>>
+                                On Hold
+                            </option>
+                        </select>
+                    </div>
+                <?php endif; ?>
 
                 <!-- Filter Buttons -->
                 <div class="col-md-2">

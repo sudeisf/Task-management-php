@@ -10,7 +10,6 @@ require_once __DIR__ . '/../layout/header.php';
 // Assuming these variables are passed from the controller
 // $stats - dashboard statistics
 // $priorityDistribution - priority distribution data
-// $categoryStats - category statistics
 // $monthlyStats - monthly task completion stats
 ?>
 

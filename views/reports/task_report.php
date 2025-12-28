@@ -12,21 +12,12 @@
             <h1 class="dashboard-title"><?php echo $title ?? 'Task Report'; ?></h1>
             <p class="dashboard-subtitle">
                 Generated on <?php echo date('M d, Y H:i', strtotime($generated_at)); ?> 
-                by <?php echo htmlspecialchars($generated_by); ?>
+                by <?php echo htmlspecialchars($generated_by ?? ''); ?>
             </p>
         </div>
         <div>
             <a href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=index" class="btn btn-outline-secondary me-2">
                 <i class="bi bi-arrow-left"></i> Back to Reports
-            </a>
-            <a href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=task_report&format=csv<?php 
-                if (!empty($filters['date_from'])) echo '&date_from=' . urlencode($filters['date_from']);
-                if (!empty($filters['date_to'])) echo '&date_to=' . urlencode($filters['date_to']);
-                if (!empty($filters['status'])) echo '&status=' . urlencode($filters['status']);
-                if (!empty($filters['priority_id'])) echo '&priority_id=' . urlencode($filters['priority_id']);
-                if (!empty($filters['category_id'])) echo '&category_id=' . urlencode($filters['category_id']);
-            ?>" class="btn btn-success">
-                <i class="bi bi-download"></i> Export CSV
             </a>
         </div>
     </div>
@@ -151,7 +142,6 @@
                                 <th>Title</th>
                                 <th>Status</th>
                                 <th>Priority</th>
-                                <th>Category</th>
                                 <th>Assigned To</th>
                                 <th>Deadline</th>
                                 <th>Created</th>
@@ -163,7 +153,7 @@
                                     <td><?php echo $task['id']; ?></td>
                                     <td>
                                         <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>">
-                                            <?php echo htmlspecialchars($task['title']); ?>
+                                            <?php echo htmlspecialchars($task['title'] ?? ''); ?>
                                         </a>
                                     </td>
                                     <td>
@@ -176,7 +166,6 @@
                                             <?php echo ucfirst($task['priority_name'] ?? 'N/A'); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo htmlspecialchars($task['category_name'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($task['assignee_name'] ?? 'Unassigned'); ?></td>
                                     <td>
                                         <?php if ($task['deadline']): ?>

@@ -105,6 +105,15 @@ class Validator
     }
 
     /**
+     * Not numeric validation (fails if value is strictly numeric)
+     */
+    private function validateNotNumeric($field, $value)
+    {
+        if (is_null($value) || $value === '') return true;
+        return !is_numeric($value);
+    }
+
+    /**
      * Integer validation
      */
     private function validateInteger($field, $value)
@@ -304,6 +313,7 @@ class Validator
             'max' => 'The :field field may not be greater than :param characters.',
             'length' => 'The :field field must be exactly :param characters.',
             'numeric' => 'The :field field must be a number.',
+            'not_numeric' => 'The :field field cannot be purely numeric.',
             'integer' => 'The :field field must be an integer.',
             'alpha' => 'The :field field may only contain letters.',
             'alpha_num' => 'The :field field may only contain letters and numbers.',

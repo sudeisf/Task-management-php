@@ -145,37 +145,6 @@ class User
         return $stmt->execute();
     }
 
-    // Update user profile (flexible for profile updates)
-    public function updateProfile($id, $data)
-    {
-        $fields = [];
-        $values = [];
-        $types = '';
-
-        foreach ($data as $key => $value) {
-            $fields[] = "$key=?";
-            $values[] = $value;
-            $types .= 's'; // Default to string for safety
-        }
-
-        // Add ID to values
-        $values[] = $id;
-        $types .= 'i';
-
-        $sql = "UPDATE $this->table SET " . implode(', ', $fields) . " WHERE id=?";
-        $stmt = $this->conn->prepare($sql);
-        
-        if (!$stmt) return false;
-
-        // Convert to references for bind_param
-        $bindParams[] = &$types;
-        for ($i = 0; $i < count($values); $i++) {
-            $bindParams[] = &$values[$i];
-        }
-
-        call_user_func_array([$stmt, 'bind_param'], $bindParams);
-        return $stmt->execute();
-    }
 
     // ---------------- CHANGE PASSWORD ----------------
     public function changePassword($id, $newPassword)

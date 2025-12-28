@@ -1,4 +1,9 @@
-<?php session_start(); ?>
+<?php 
+session_start(); 
+$errors = $_SESSION['errors'] ?? [];
+$formData = $_SESSION['form_data'] ?? [];
+unset($_SESSION['errors'], $_SESSION['form_data']);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,10 +87,14 @@
             <input 
                 type="text" 
                 name="full_name" 
-                class="form-control" 
+                class="form-control <?php echo isset($errors['full_name']) ? 'is-invalid' : ''; ?>" 
                 placeholder="Your full name"
+                value="<?php echo htmlspecialchars($formData['full_name'] ?? ''); ?>"
                 required
             >
+            <?php if (isset($errors['full_name'])): ?>
+                <div class="invalid-feedback"><?php echo $errors['full_name'][0]; ?></div>
+            <?php endif; ?>
         </div>
 
         <!-- Email -->
@@ -94,10 +103,14 @@
             <input 
                 type="email" 
                 name="email" 
-                class="form-control" 
+                class="form-control <?php echo isset($errors['email']) ? 'is-invalid' : ''; ?>" 
                 placeholder="name@example.com"
+                value="<?php echo htmlspecialchars($formData['email'] ?? ''); ?>"
                 required
             >
+            <?php if (isset($errors['email'])): ?>
+                <div class="invalid-feedback"><?php echo $errors['email'][0]; ?></div>
+            <?php endif; ?>
         </div>
 
         <!-- Password -->
@@ -106,10 +119,13 @@
             <input 
                 type="password" 
                 name="password" 
-                class="form-control"
+                class="form-control <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>"
                 placeholder="••••••••••"
                 required
             >
+            <?php if (isset($errors['password'])): ?>
+                <div class="invalid-feedback"><?php echo $errors['password'][0]; ?></div>
+            <?php endif; ?>
         </div>
 
         <!-- Confirm Password -->
@@ -122,6 +138,19 @@
                 placeholder="••••••••••"
                 required
             >
+        </div>
+
+        <!-- Role Selection -->
+        <div class="mb-3">
+            <label class="form-label">Role</label>
+            <select name="role" class="form-select <?php echo isset($errors['role']) ? 'is-invalid' : ''; ?>" required>
+                <option value="member" <?php echo (isset($formData['role']) && $formData['role'] === 'member') ? 'selected' : ''; ?>>Member</option>
+                <option value="manager" <?php echo (isset($formData['role']) && $formData['role'] === 'manager') ? 'selected' : ''; ?>>Manager</option>
+            </select>
+            <?php if (isset($errors['role'])): ?>
+                <div class="invalid-feedback"><?php echo $errors['role'][0]; ?></div>
+            <?php endif; ?>
+            <div class="form-text">Choose 'Manager' if you plan to create and manage projects.</div>
         </div>
 
         <!-- Submit -->

@@ -15,12 +15,10 @@ class Search
     public function searchTasks($query, $filters = [], $user_id = null, $user_role = null, $limit = null, $offset = null)
     {
         $sql = "SELECT t.*,
-                       c.name as category_name,
                        p.name as priority_name,
                        creator.full_name as creator_name,
                        assignee.full_name as assignee_name
                 FROM tasks t
-                LEFT JOIN categories c ON t.category_id = c.id
                 LEFT JOIN priority_levels p ON t.priority_id = p.id
                 LEFT JOIN users creator ON t.created_by = creator.id
                 LEFT JOIN users assignee ON t.assigned_to = assignee.id
@@ -30,9 +28,9 @@ class Search
 
         // Text search
         if (!empty($query)) {
-            $sql .= " AND (t.title LIKE ? OR t.description LIKE ? OR c.name LIKE ? OR creator.full_name LIKE ? OR assignee.full_name LIKE ?)";
+            $sql .= " AND (t.title LIKE ? OR t.description LIKE ? OR creator.full_name LIKE ? OR assignee.full_name LIKE ?)";
             $searchTerm = "%$query%";
-            $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm]);
+            $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm, $searchTerm]);
         }
 
         // Apply filters
@@ -44,11 +42,6 @@ class Search
         if (!empty($filters['priority_id'])) {
             $sql .= " AND t.priority_id = ?";
             $params[] = $filters['priority_id'];
-        }
-
-        if (!empty($filters['category_id'])) {
-            $sql .= " AND t.category_id = ?";
-            $params[] = $filters['category_id'];
         }
 
         if (!empty($filters['assigned_to'])) {
@@ -166,18 +159,6 @@ class Search
             }
         }
 
-        // Category suggestions
-        if ($type === 'all' || $type === 'categories') {
-            $sql = "SELECT DISTINCT name as suggestion, 'category' as type FROM categories WHERE name LIKE ? ORDER BY name LIMIT ?";
-            $this->db->prepare($sql);
-            $this->db->execute([$searchTerm, $limit]);
-            $result = $this->db->getResult();
-
-            while ($row = $result->fetch_assoc()) {
-                $suggestions[] = $row;
-            }
-        }
-
         return $suggestions;
     }
 
@@ -187,8 +168,7 @@ class Search
         $stats = [
             'total_results' => 0,
             'by_status' => [],
-            'by_priority' => [],
-            'by_category' => []
+            'by_priority' => []
         ];
 
         if (empty($query)) {
@@ -231,20 +211,6 @@ class Search
             $stats['by_priority'][$row['name']] = $row['count'];
         }
 
-        // Results by category
-        $sql = "SELECT c.name, COUNT(t.id) as count
-                FROM tasks t
-                LEFT JOIN categories c ON t.category_id = c.id
-                WHERE (t.title LIKE ? OR t.description LIKE ?)
-                GROUP BY c.id, c.name";
-        $this->db->prepare($sql);
-        $this->db->execute(["%$query%", "%$query%"]);
-        $result = $this->db->getResult();
-        while ($row = $result->fetch_assoc()) {
-            $categoryName = $row['name'] ?: 'Uncategorized';
-            $stats['by_category'][$categoryName] = $row['count'];
-        }
-
         return $stats;
     }
 
@@ -273,7 +239,6 @@ class Search
         $options = [
             'statuses' => ['todo', 'in_progress', 'completed'],
             'priorities' => [],
-            'categories' => [],
             'users' => []
         ];
 
@@ -284,15 +249,6 @@ class Search
         $result = $this->db->getResult();
         while ($row = $result->fetch_assoc()) {
             $options['priorities'][] = $row;
-        }
-
-        // Get categories
-        $sql = "SELECT id, name FROM categories ORDER BY name ASC";
-        $this->db->prepare($sql);
-        $this->db->execute();
-        $result = $this->db->getResult();
-        while ($row = $result->fetch_assoc()) {
-            $options['categories'][] = $row;
         }
 
         // Get users (only for admin/manager)

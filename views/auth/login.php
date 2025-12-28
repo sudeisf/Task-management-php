@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../core/Auth.php';
 require_once __DIR__ . '/../../config/constants.php';
 
 if (Auth::check()) {
-    header("Location: " . BASE_URL . "/views/dashboard/index.php");
+    header("Location: " . BASE_URL . "/controller/DashboardController.php?action=index");
     exit;
 }
 ?>
@@ -108,7 +108,7 @@ if (Auth::check()) {
             >
         </div>
 
-        <!-- Remember Me & Forgot Password -->
+        <!-- Remember Me -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="remember_me" id="rememberMe">
@@ -116,7 +116,6 @@ if (Auth::check()) {
                     Remember me
                 </label>
             </div>
-            <a href="forgetPassword.php" class="text-decoration-none small">Forgot password?</a>
         </div>
 
         <!-- Submit -->

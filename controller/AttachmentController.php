@@ -1,330 +1,131 @@
 <?php
 
-require_once __DIR__ . '/../config/constants.php';
-require_once __DIR__ . '/../core/Session.php';
-require_once __DIR__ . '/../core/Auth.php';
-require_once __DIR__ . '/../core/Uploader.php';
+require_once __DIR__ . '/../core/Controller.php';
+require_once __DIR__ . '/../services/AttachmentService.php';
 require_once __DIR__ . '/../models/Attachment.php';
-require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/Activity.php';
+require_once __DIR__ . '/../models/Task.php';
+require_once __DIR__ . '/../core/Uploader.php';
 
-Session::start();
-
-// Check authentication
-if (!Auth::check()) {
-    header("Location: ../views/auth/login.php");
-    exit;
-}
-
-class AttachmentController
+class AttachmentController extends Controller
 {
+    private $attachmentService;
     private $attachmentModel;
-    private $taskModel;
     private $activityModel;
-    private $uploader;
-    private $currentUser;
 
     public function __construct()
     {
+        parent::__construct();
+        $this->attachmentService = new AttachmentService();
         $this->attachmentModel = new Attachment();
-        $this->taskModel = new Task();
         $this->activityModel = new Activity();
-        $this->uploader = new Uploader();
-        $this->currentUser = Auth::user();
     }
 
-    // Upload attachment
     public function upload()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: ../controller/TaskController.php?action=index");
-            exit;
-        }
+        $taskId = $this->post('task_id');
+        $projectId = $this->post('project_id');
 
-        $task_id = (int)($_POST['task_id'] ?? 0);
-
-        if (!$task_id) {
-            $_SESSION['error'] = "Task ID is required.";
-            header("Location: ../controller/TaskController.php?action=index");
-            exit;
-        }
-
-        // Check if task exists and user has access
-        $task = $this->taskModel->find($task_id);
-        if (!$task) {
-            $_SESSION['error'] = "Task not found.";
-            header("Location: ../controller/TaskController.php?action=index");
-            exit;
-        }
-
-        $userRole = $this->getUserRole($this->currentUser['id']);
-
-        if (!$this->canUploadToTask($task, $userRole)) {
-            $_SESSION['error'] = "You don't have permission to upload files to this task.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        // Check if file was uploaded
-        if (!isset($_FILES['attachment']) || $_FILES['attachment']['error'] === UPLOAD_ERR_NO_FILE) {
-            $_SESSION['error'] = "No file was selected for upload.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        // Upload file
-        $uploadResult = $this->uploader->uploadFile($_FILES['attachment']);
-
-        if (!$uploadResult) {
-            $errors = $this->uploader->getErrors();
-            $_SESSION['error'] = implode(" ", $errors);
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        // Save attachment to database
-        $attachmentData = [
-            'task_id' => $task_id,
-            'uploaded_by' => $this->currentUser['id'],
-            'file_path' => $uploadResult['file_path'],
-            'file_name' => $uploadResult['original_name']
-        ];
-
-        if ($this->attachmentModel->create($attachmentData)) {
-            // Log activity
-            $this->activityModel->log(
-                $this->currentUser['id'],
-                'file_uploaded',
-                $task_id,
-                "Uploaded file: {$uploadResult['original_name']}"
-            );
-
-            $_SESSION['success'] = "File uploaded successfully!";
+        if ($taskId) {
+            $res = $this->attachmentService->handleUpload($_FILES['attachment'] ?? null, $taskId, $this->currentUser['id'], $this->currentUser['role']);
+            if (isset($res['error'])) $this->errorRedirect($res['error'], "../controller/TaskController.php?action=show&id=$taskId");
+            $this->activityModel->log($this->currentUser['id'], $taskId, 'file_uploaded', "Uploaded: " . $res['original_name']);
+            $this->successRedirect("Uploaded", "../controller/TaskController.php?action=show&id=$taskId");
+        } elseif ($projectId) {
+            $res = $this->attachmentService->handleProjectUpload($_FILES['attachment'] ?? null, $projectId, $this->currentUser['id'], $this->currentUser['role']);
+            if (isset($res['error'])) $this->errorRedirect($res['error'], "../controller/ProjectController.php?action=show&id=$projectId");
+            $this->activityModel->log($this->currentUser['id'], null, 'file_uploaded_to_project', "Uploaded: " . $res['original_name'] . " to project $projectId");
+            $this->successRedirect("Uploaded", "../controller/ProjectController.php?action=show&id=$projectId");
         } else {
-            // Delete uploaded file if database save failed
-            $this->uploader->deleteFile($uploadResult['file_path']);
-            $_SESSION['error'] = "Failed to save attachment information.";
+            $this->errorRedirect("Target ID required");
         }
-
-        header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-        exit;
     }
 
-    // Download attachment
     public function download()
     {
-        $attachment_id = (int)($_GET['id'] ?? 0);
+        $id = $this->query('id');
+        $a = $this->attachmentModel->find($id);
+        if (!$a) $this->errorRedirect("Not found");
 
-        if (!$attachment_id) {
-            $_SESSION['error'] = "Attachment ID is required.";
-            header("Location: ../controller/TaskController.php?action=index");
-            exit;
-        }
+        // Simple access check (could be moved to service if more complex)
+        $t = (new Task())->find($a['task_id']);
+        if (!$this->attachmentService->canAccessTask($t, $this->currentUser['id'], $this->currentUser['role'])) $this->errorRedirect("Denied");
 
-        $attachment = $this->attachmentModel->find($attachment_id);
+        $path = UPLOAD_PATH . '/' . $a['file_path'];
+        if (!file_exists($path)) $this->errorRedirect("File missing");
 
-        if (!$attachment) {
-            $_SESSION['error'] = "Attachment not found.";
-            header("Location: ../controller/TaskController.php?action=index");
-            exit;
-        }
-
-        $userRole = $this->getUserRole($this->currentUser['id']);
-
-        if (!$this->canDownloadAttachment($attachment, $userRole)) {
-            $_SESSION['error'] = "You don't have permission to download this file.";
-            header("Location: ../controller/TaskController.php?action=show&id={$attachment['task_id']}");
-            exit;
-        }
-
-        $filePath = UPLOAD_PATH . '/' . $attachment['file_path'];
-
-        if (!file_exists($filePath)) {
-            $_SESSION['error'] = "File not found on server.";
-            header("Location: ../controller/TaskController.php?action=show&id={$attachment['task_id']}");
-            exit;
-        }
-
-        // Set headers for download
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . $attachment['file_name'] . '"');
-        header('Content-Length: ' . filesize($filePath));
+        $mime = function_exists('mime_content_type') ? mime_content_type($path) : 'application/octet-stream';
+        
+        // Clear any previous output (e.g. notices/whitespace)
+        if (ob_get_level()) ob_end_clean();
+        
+        header('Content-Description: File Transfer');
+        header('Content-Type: ' . $mime);
+        header('Content-Disposition: attachment; filename="' . basename($a['file_name']) . '"');
+        header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
-
-        // Clear output buffer
-        ob_clean();
-        flush();
-
-        // Output file
-        readfile($filePath);
+        header('Content-Length: ' . filesize($path));
+        readfile($path);
         exit;
     }
 
-    // Delete attachment
     public function delete()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: ../controller/TaskController.php?action=index");
-            exit;
+        $id = $this->post('attachment_id');
+        $taskId = $this->post('task_id');
+        $projectId = $this->post('project_id');
+        
+        $a = $this->attachmentModel->find($id);
+        if (!$a || !$this->attachmentModel->canDelete($a, $this->currentUser['id'], $this->currentUser['role'])) {
+            $redirect = $projectId ? "../controller/ProjectController.php?action=show&id=$projectId" : "../controller/TaskController.php?action=show&id=$taskId";
+            $this->errorRedirect("Denied/Not found", $redirect);
         }
 
-        $attachment_id = (int)($_POST['attachment_id'] ?? 0);
-        $task_id = (int)($_POST['task_id'] ?? 0);
+        $isProject = !empty($a['project_id']);
+        $targetId = $isProject ? $a['project_id'] : $a['task_id'];
+        $redirect = $isProject ? "../controller/ProjectController.php?action=show&id=$targetId" : "../controller/TaskController.php?action=show&id=$targetId";
 
-        if (!$attachment_id || !$task_id) {
-            $_SESSION['error'] = "Attachment ID and task ID are required.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
+        if ($this->attachmentModel->delete($id, $this->currentUser['id'], $this->currentUser['role'])) {
+            $action = $isProject ? 'file_deleted_from_project' : 'file_deleted';
+            $this->activityModel->log($this->currentUser['id'], $isProject ? null : $targetId, $action, "Deleted: " . $a['file_name']);
+            $this->successRedirect("Deleted", $redirect);
         }
-
-        $attachment = $this->attachmentModel->find($attachment_id);
-
-        if (!$attachment) {
-            $_SESSION['error'] = "Attachment not found.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        $userRole = $this->getUserRole($this->currentUser['id']);
-
-        if (!$this->attachmentModel->canDelete($attachment, $this->currentUser['id'], $userRole)) {
-            $_SESSION['error'] = "You don't have permission to delete this attachment.";
-            header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-            exit;
-        }
-
-        if ($this->attachmentModel->delete($attachment_id, $this->currentUser['id'], $userRole)) {
-            // Log activity
-            $this->activityModel->log(
-                $this->currentUser['id'],
-                'file_deleted',
-                $task_id,
-                "Deleted file: {$attachment['file_name']}"
-            );
-
-            $_SESSION['success'] = "Attachment deleted successfully!";
-        } else {
-            $_SESSION['error'] = "Failed to delete attachment.";
-        }
-
-        header("Location: ../controller/TaskController.php?action=show&id=$task_id");
-        exit;
+        $this->errorRedirect("Failed", $redirect);
     }
 
-    // Get attachments for a task (AJAX endpoint)
-    public function getAttachments()
+    public function get_attachments()
     {
         header('Content-Type: application/json');
-
-        $task_id = (int)($_GET['task_id'] ?? 0);
-
-        if (!$task_id) {
-            echo json_encode(['error' => 'Task ID is required']);
-            exit;
+        $taskId = $this->query('task_id');
+        $t = (new Task())->find($taskId);
+        if (!$t || !$this->attachmentService->canAccessTask($t, $this->currentUser['id'], $this->currentUser['role'])) {
+            echo json_encode(['error' => 'Denied']); exit;
         }
 
-        // Check if task exists and user has access
-        $task = $this->taskModel->find($task_id);
-        if (!$task) {
-            echo json_encode(['error' => 'Task not found']);
-            exit;
-        }
-
-        $userRole = $this->getUserRole($this->currentUser['id']);
-
-        if (!$this->canUploadToTask($task, $userRole)) {
-            echo json_encode(['error' => 'Access denied']);
-            exit;
-        }
-
-        $attachments = $this->attachmentModel->getByTask($task_id);
-        $attachmentsArray = [];
-
-        foreach ($attachments as $attachment) {
-            $fileInfo = $this->uploader->getFileInfo($attachment['file_path']);
-
-            $attachmentsArray[] = [
-                'id' => $attachment['id'],
-                'file_name' => $attachment['file_name'],
-                'file_path' => $attachment['file_path'],
-                'created_at' => $attachment['created_at'],
-                'file_size' => $fileInfo ? $fileInfo['size'] : 0,
-                'file_type' => $fileInfo ? $fileInfo['type'] : 'unknown',
-                'extension' => $fileInfo ? $fileInfo['extension'] : 'unknown',
-                'icon_class' => $this->attachmentModel->getFileIconClass($attachment['file_path']),
-                'uploader' => [
-                    'id' => $attachment['uploaded_by'],
-                    'name' => $attachment['uploader_name'] ?? 'Unknown User'
-                ],
-                'can_delete' => ($userRole === 'admin' || $userRole === 'manager' ||
-                               $attachment['uploaded_by'] == $this->currentUser['id'])
+        $list = $this->attachmentModel->getByTask($taskId);
+        $res = [];
+        $uploader = new Uploader();
+        foreach ($list as $a) {
+            $info = $uploader->getFileInfo($a['file_path']);
+            $res[] = [
+                'id' => $a['id'], 'file_name' => $a['file_name'], 'created_at' => $a['created_at'],
+                'file_size' => $info['size'] ?? 0, 'icon_class' => $this->attachmentModel->getFileIconClass($a['file_path']),
+                'uploader_name' => $a['uploader_name'] ?? 'System',
+                'can_delete' => ($this->currentUser['role'] === 'admin' || $this->currentUser['role'] === 'manager' || $a['uploaded_by'] == $this->currentUser['id'])
             ];
         }
-
-        echo json_encode(['attachments' => $attachmentsArray]);
-        exit;
-    }
-
-    // Private helper methods
-
-    private function getUserRole($userId)
-    {
-        // This is a simplified version - in real app you'd cache this
-        $sql = "SELECT r.name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?";
-        $db = new Database();
-        $db->prepare($sql);
-        $db->execute([$userId]);
-        $result = $db->getRow();
-        return $result['name'] ?? 'member';
-    }
-
-    private function canUploadToTask($task, $userRole)
-    {
-        if ($userRole === 'admin' || $userRole === 'manager') {
-            return true;
-        }
-
-        return $task['assigned_to'] == $this->currentUser['id'] ||
-               $task['created_by'] == $this->currentUser['id'];
-    }
-
-    private function canDownloadAttachment($attachment, $userRole)
-    {
-        if ($userRole === 'admin' || $userRole === 'manager') {
-            return true;
-        }
-
-        // Users can download attachments from tasks they're assigned to or created
-        $task = $this->taskModel->find($attachment['task_id']);
-        return $task && ($task['assigned_to'] == $this->currentUser['id'] ||
-                        $task['created_by'] == $this->currentUser['id']);
+        echo json_encode(['attachments' => $res]); exit;
     }
 }
 
-// Handle routing
 $action = $_GET['action'] ?? 'index';
-
 $controller = new AttachmentController();
 
-switch ($action) {
-    case 'upload':
-        $controller->upload();
-        break;
+$methodName = str_replace(' ', '', lcfirst(ucwords(str_replace('_', ' ', $action))));
 
-    case 'download':
-        $controller->download();
-        break;
-
-    case 'delete':
-        $controller->delete();
-        break;
-
-    case 'get_attachments':
-        $controller->getAttachments();
-        break;
-
-    default:
-        header("Location: ../controller/TaskController.php?action=index");
-        break;
+if (method_exists($controller, $methodName)) {
+    $controller->$methodName();
+} else {
+    header("Location: ../controller/TaskController.php");
 }

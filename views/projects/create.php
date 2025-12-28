@@ -14,41 +14,63 @@ $pageTitle = 'Create Project';
                     <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Project</h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="?action=store">
+                    <form method="POST" action="?action=store" enctype="multipart/form-data">
                         <!-- Project Name -->
                         <div class="mb-3">
                             <label for="name" class="form-label">Project Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" name="name" required>
+                            <input type="text" class="form-control <?php echo isset($errors['name']) ? 'is-invalid' : ''; ?>" 
+                                   id="name" name="name" value="<?php echo htmlspecialchars($formData['name'] ?? ''); ?>" required>
+                            <?php if (isset($errors['name'])): ?>
+                                <div class="invalid-feedback"><?php echo $errors['name'][0]; ?></div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Description -->
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="4"></textarea>
-                        </div>
-
-                        <!-- Status -->
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status" name="status">
-                                <option value="active" selected>Active</option>
-                                <option value="on_hold">On Hold</option>
-                                <option value="completed">Completed</option>
-                                <option value="archived">Archived</option>
-                            </select>
+                            <textarea class="form-control <?php echo isset($errors['description']) ? 'is-invalid' : ''; ?>" 
+                                      id="description" name="description" rows="4"><?php echo htmlspecialchars($formData['description'] ?? ''); ?></textarea>
+                            <?php if (isset($errors['description'])): ?>
+                                <div class="invalid-feedback"><?php echo $errors['description'][0]; ?></div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Dates -->
+                        <?php $today = date('Y-m-d'); ?>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date">
+                                <input type="date" class="form-control <?php echo isset($errors['start_date']) ? 'is-invalid' : ''; ?>" 
+                                       id="start_date" name="start_date" min="<?= $today ?>" value="<?php echo htmlspecialchars($formData['start_date'] ?? ''); ?>">
+                                <small class="text-muted">Cannot be in the past</small>
+                                <?php if (isset($errors['start_date'])): ?>
+                                    <div class="invalid-feedback"><?php echo $errors['start_date'][0]; ?></div>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date">
+                                <input type="date" class="form-control <?php echo isset($errors['end_date']) ? 'is-invalid' : ''; ?>" 
+                                       id="end_date" name="end_date" min="<?= $today ?>" value="<?php echo htmlspecialchars($formData['end_date'] ?? ''); ?>">
+                                <small class="text-muted">Cannot be in the past or before start date</small>
+                                <?php if (isset($errors['end_date'])): ?>
+                                    <div class="invalid-feedback"><?php echo $errors['end_date'][0]; ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
+
+<script>
+// Update end_date min value when start_date changes
+document.getElementById('start_date').addEventListener('change', function() {
+    const endDateInput = document.getElementById('end_date');
+    if (this.value) {
+        endDateInput.min = this.value;
+        // Clear end_date if it's before the new start_date
+        if (endDateInput.value && endDateInput.value < this.value) {
+            endDateInput.value = '';
+        }
+    }
+});
+</script>
 
                         <!-- Assign Managers -->
                         <div class="mb-3">
@@ -67,6 +89,13 @@ $pageTitle = 'Create Project';
                                 <?php endforeach; ?>
                             </select>
                             <small class="text-muted">Hold Ctrl/Cmd to select multiple managers</small>
+                        </div>
+
+                        <!-- Attachments -->
+                        <div class="mb-3">
+                            <label for="attachment" class="form-label">Attachments</label>
+                            <input type="file" class="form-control" id="attachment" name="attachment">
+                            <small class="text-muted">You can attach a file (e.g., project proposal, guidelines)</small>
                         </div>
 
                         <!-- Buttons -->

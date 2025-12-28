@@ -95,7 +95,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title mb-0">
                 <i class="bi bi-list-task me-2"></i>
-                Tasks (<?php echo $pagination['total'] ?? count($tasks); ?>)
+                Tasks (<?php echo $totalTasks; ?>)
             </h3>
         </div>
 
@@ -202,27 +202,39 @@
         </div>
 
         <!-- Pagination -->
-        <?php if (isset($pagination) && $pagination['total_pages'] > 1): ?>
+        <?php if ($totalPages > 1): ?>
             <div class="card-footer">
                 <nav aria-label="Tasks pagination">
                     <ul class="pagination justify-content-center mb-0">
-                        <?php if ($pagination['current_page'] > 1): ?>
+                        <?php if ($page > 1): ?>
                             <li class="page-item">
-                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/AdminController.php', array_merge($_GET, ['page' => $pagination['current_page'] - 1])); ?>">
+                                <a class="page-link" href="<?php 
+                                    $currentParams = $_GET;
+                                    $currentParams['page'] = $page - 1;
+                                    echo BASE_URL . '/controller/AdminController.php?' . http_build_query($currentParams); 
+                                ?>">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </li>
                         <?php endif; ?>
 
-                        <?php for ($i = max(1, $pagination['current_page'] - 2); $i <= min($pagination['total_pages'], $pagination['current_page'] + 2); $i++): ?>
-                            <li class="page-item <?php echo ($i == $pagination['current_page']) ? 'active' : ''; ?>">
-                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/AdminController.php', array_merge($_GET, ['page' => $i])); ?>"><?php echo $i; ?></a>
+                        <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
+                            <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
+                                <a class="page-link" href="<?php 
+                                    $currentParams = $_GET;
+                                    $currentParams['page'] = $i;
+                                    echo BASE_URL . '/controller/AdminController.php?' . http_build_query($currentParams); 
+                                ?>"><?php echo $i; ?></a>
                             </li>
                         <?php endfor; ?>
 
-                        <?php if ($pagination['current_page'] < $pagination['total_pages']): ?>
+                        <?php if ($page < $totalPages): ?>
                             <li class="page-item">
-                                <a class="page-link" href="<?php echo buildUrl(BASE_URL . '/controller/AdminController.php', array_merge($_GET, ['page' => $pagination['current_page'] + 1])); ?>">
+                                <a class="page-link" href="<?php 
+                                    $currentParams = $_GET;
+                                    $currentParams['page'] = $page + 1;
+                                    echo BASE_URL . '/controller/AdminController.php?' . http_build_query($currentParams); 
+                                ?>">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </li>

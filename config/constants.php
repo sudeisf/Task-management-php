@@ -14,8 +14,8 @@ define('BASE_URL', 'http://localhost:8000');
 
 // File Upload Configuration
 define('UPLOAD_PATH', __DIR__ . '/../public/uploads/');
-define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
-define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt', 'zip']);
+define('MAX_FILE_SIZE', 100 * 1024 * 1024); // 100MB
+define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'txt', 'zip', 'mp4', 'mov', 'avi', 'mkv', 'mp3', 'wav']);
 
 // Pagination Configuration
 define('ITEMS_PER_PAGE', 10);

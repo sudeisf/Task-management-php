@@ -2,7 +2,7 @@
 -- TASK MANAGEMENT SYSTEM - CONSOLIDATED SCHEMA
 -- -----------------------------------------------------
 -- This file contains the complete database schema and
--- ESSENTIAL SYSTEM DATA (Roles, Priorities, Categories).
+-- ESSENTIAL SYSTEM DATA (Roles, Priorities).
 -- -----------------------------------------------------
 
 CREATE DATABASE IF NOT EXISTS task_manager;
@@ -56,25 +56,6 @@ INSERT INTO priority_levels (name, weight) VALUES
 ('low', 1),
 ('medium', 2),
 ('high', 3);
-
--- -----------------------------------------------------
--- CATEGORIES TABLE
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS categories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Insert sample categories (REQUIRED)
-INSERT INTO categories (name, description) VALUES
-('Development', 'Software development tasks'),
-('Design', 'UI/UX and graphic design tasks'),
-('Testing', 'Quality assurance and testing tasks'),
-('Documentation', 'Documentation and knowledge base tasks'),
-('Maintenance', 'System maintenance and updates'),
-('Research', 'Research and analysis tasks');
 
 -- -----------------------------------------------------
 -- PROJECTS TABLE (From migration_projects.sql)
@@ -168,7 +149,6 @@ CREATE TABLE IF NOT EXISTS tasks (
     project_id INT NOT NULL,                   -- Added from migration_projects.sql (made NOT NULL for strictness)
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    category_id INT,
     priority_id INT DEFAULT 2,               -- medium by default
     status ENUM('todo', 'in_progress', 'completed') DEFAULT 'todo',
     deadline DATE,
@@ -179,7 +159,6 @@ CREATE TABLE IF NOT EXISTS tasks (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
     FOREIGN KEY (priority_id) REFERENCES priority_levels(id),
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
@@ -205,12 +184,14 @@ CREATE TABLE IF NOT EXISTS comments (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS attachments (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    task_id INT NOT NULL,
+    project_id INT NULL,
+    task_id INT NULL,
     uploaded_by INT NOT NULL,
     file_path VARCHAR(255) NOT NULL,
     file_name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
     FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
     FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -15,12 +15,13 @@ class Attachment
     // Create new attachment
     public function create($data)
     {
-        $sql = "INSERT INTO $this->table (task_id, uploaded_by, file_path, file_name)
-                VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO $this->table (project_id, task_id, uploaded_by, file_path, file_name)
+                VALUES (?, ?, ?, ?, ?)";
 
         $this->db->prepare($sql);
         $params = [
-            $data['task_id'],
+            $data['project_id'] ?? null,
+            $data['task_id'] ?? null,
             $data['uploaded_by'],
             $data['file_path'],
             $data['file_name'] ?? null
@@ -36,10 +37,11 @@ class Attachment
     // Get attachment by ID
     public function find($id)
     {
-        $sql = "SELECT a.*, u.full_name as uploader_name, t.title as task_title
+        $sql = "SELECT a.*, u.full_name as uploader_name, t.title as task_title, p.name as project_name
                 FROM $this->table a
                 LEFT JOIN users u ON a.uploaded_by = u.id
                 LEFT JOIN tasks t ON a.task_id = t.id
+                LEFT JOIN projects p ON a.project_id = p.id
                 WHERE a.id = ?";
 
         $this->db->prepare($sql);
@@ -57,6 +59,32 @@ class Attachment
                 ORDER BY a.created_at DESC";
 
         $params = [$task_id];
+
+        if ($limit) {
+            $sql .= " LIMIT ?";
+            $params[] = $limit;
+        }
+
+        if ($offset) {
+            $sql .= " OFFSET ?";
+            $params[] = $offset;
+        }
+
+        $this->db->prepare($sql);
+        $this->db->execute($params);
+        return $this->db->getRows();
+    }
+
+    // Get attachments by project ID
+    public function getByProject($project_id, $limit = null, $offset = null)
+    {
+        $sql = "SELECT a.*, u.full_name as uploader_name, u.email
+                FROM $this->table a
+                LEFT JOIN users u ON a.uploaded_by = u.id
+                WHERE a.project_id = ?
+                ORDER BY a.created_at DESC";
+
+        $params = [$project_id];
 
         if ($limit) {
             $sql .= " LIMIT ?";

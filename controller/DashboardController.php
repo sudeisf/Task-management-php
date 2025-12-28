@@ -7,6 +7,8 @@ require_once __DIR__ . '/../models/Task.php';
 require_once __DIR__ . '/../models/Activity.php';
 require_once __DIR__ . '/../models/Dashboard.php';
 require_once __DIR__ . '/../models/Project.php';
+require_once __DIR__ . '/../models/Notification.php';
+require_once __DIR__ . '/../helpers/functions.php';
 
 Session::start();
 
@@ -22,6 +24,7 @@ class DashboardController
     private $activityModel;
     private $dashboardModel;
     private $projectModel;
+    private $notificationModel;
     private $currentUser;
 
     public function __construct()
@@ -30,6 +33,7 @@ class DashboardController
         $this->activityModel = new Activity();
         $this->dashboardModel = new Dashboard();
         $this->projectModel = new Project();
+        $this->notificationModel = new Notification();
         $this->currentUser = Auth::user();
     }
 
@@ -66,6 +70,10 @@ class DashboardController
 
         // Get overdue tasks
         $overdueTasks = $this->taskModel->getOverdue($this->currentUser['id'], $userRole, 5);
+
+        // Check and create overdue notifications (only once per day per item)
+        $this->notificationModel->checkAndNotifyOverdueTasks($this->currentUser['id'], $userRole);
+        $this->notificationModel->checkAndNotifyOverdueProjects($this->currentUser['id'], $userRole);
 
         // Get priority distribution
         $priorityStats = $this->taskModel->getPriorityDistribution($this->currentUser['id'], $userRole);

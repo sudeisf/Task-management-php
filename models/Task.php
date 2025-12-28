@@ -37,7 +37,7 @@ class Task
         return false;
     }
 
-    // Update task with enhanced fields
+    // Update task with enhanced fieldsF
     public function update($id, $data)
     {
         $sql = "UPDATE $this->table SET
@@ -189,7 +189,8 @@ class Task
     }
 
     // Get all tasks (admin/manager view)
-    public function all($filters = [], $limit = null, $offset = null)
+    // Get all tasks (with optional role filters)
+    public function all($filters = [], $limit = null, $offset = null, $user_id = null, $user_role = null)
     {
         $sql = "SELECT t.*,
                        p.name as priority_name,
@@ -216,8 +217,6 @@ class Task
             $params[] = $filters['priority_id'];
         }
 
-
-
         if (!empty($filters['assigned_to'])) {
             $sql .= " AND t.assigned_to=?";
             $params[] = $filters['assigned_to'];
@@ -228,20 +227,27 @@ class Task
             $params[] = $filters['created_by'];
         }
 
-        if (!empty($filters['deadline_from'])) {
+        if (!empty($filters['deadline_from']) || !empty($filters['date_from'])) {
             $sql .= " AND t.deadline >= ?";
-            $params[] = $filters['deadline_from'];
+            $params[] = $filters['deadline_from'] ?? $filters['date_from'];
         }
 
-        if (!empty($filters['deadline_to'])) {
+        if (!empty($filters['deadline_to']) || !empty($filters['date_to'])) {
             $sql .= " AND t.deadline <= ?";
-            $params[] = $filters['deadline_to'];
+            $params[] = $filters['deadline_to'] ?? $filters['date_to'];
         }
 
         if (!empty($filters['search'])) {
             $sql .= " AND (t.title LIKE ? OR t.description LIKE ?)";
             $params[] = "%" . $filters['search'] . "%";
             $params[] = "%" . $filters['search'] . "%";
+        }
+
+        // Role-based restrictions
+        if ($user_id && $user_role && !in_array($user_role, ['admin', 'manager'])) {
+            $sql .= " AND (t.assigned_to=? OR t.created_by=?)";
+            $params[] = $user_id;
+            $params[] = $user_id;
         }
 
         $sql .= " ORDER BY t.created_at DESC";
