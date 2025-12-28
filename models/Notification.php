@@ -107,7 +107,6 @@ class Notification
 
         $this->db->prepare($sql);
         $this->db->execute($params);
-        $this->db->execute($params);
         $rows = $this->db->getRows();
         
         if (!$hasNewColumns && !empty($rows)) {
@@ -147,7 +146,6 @@ class Notification
         }
 
         $this->db->prepare($sql);
-        $this->db->execute([$id]);
         $this->db->execute([$id]);
         $row = $this->db->getRow();
 

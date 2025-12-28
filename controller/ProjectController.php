@@ -9,6 +9,7 @@ require_once __DIR__ . '/../models/Permission.php';
 require_once __DIR__ . '/../models/Activity.php';
 require_once __DIR__ . '/../services/AttachmentService.php';
 require_once __DIR__ . '/../models/Attachment.php';
+require_once __DIR__ . '/../models/Notification.php';
 
 class ProjectController extends Controller
 {
@@ -18,6 +19,7 @@ class ProjectController extends Controller
     private $userModel;
     private $permissionModel;
     private $attachmentService;
+    private $notificationModel;
 
     public function __construct()
     {
@@ -28,6 +30,7 @@ class ProjectController extends Controller
         $this->userModel = new User(require __DIR__ . '/../config/db.php');
         $this->permissionModel = new Permission();
         $this->attachmentService = new AttachmentService();
+        $this->notificationModel = new Notification();
     }
 
     public function index()
@@ -72,7 +75,12 @@ class ProjectController extends Controller
         if ($projectId = $this->projectModel->create($data)) {
             // Assign managers
             if (!empty($_POST['managers'])) {
-                foreach ($_POST['managers'] as $mid) $this->projectModel->assignUser($projectId, $mid, 'manager');
+                foreach ($_POST['managers'] as $mid) {
+                    $this->projectModel->assignUser($projectId, $mid, 'manager');
+                    if ($mid != $this->currentUser['id']) {
+                        $this->notificationModel->createProjectAssignmentNotification($projectId, $mid, $this->currentUser['id']);
+                    }
+                }
             }
 
             // Handle file upload
@@ -153,7 +161,20 @@ class ProjectController extends Controller
             $currentManagers = $this->projectModel->getManagers($id);
             foreach ($currentManagers as $m) $this->projectModel->removeUser($id, $m['id']);
             if (!empty($_POST['managers'])) {
-                foreach ($_POST['managers'] as $mid) $this->projectModel->assignUser($id, $mid, 'manager');
+                foreach ($_POST['managers'] as $mid) {
+                    $this->projectModel->assignUser($id, $mid, 'manager');
+                    // Notify if it's a new manager
+                    $isAlreadyManager = false;
+                    foreach ($currentManagers as $cm) {
+                        if ($cm['id'] == $mid) {
+                            $isAlreadyManager = true;
+                            break;
+                        }
+                    }
+                    if (!$isAlreadyManager && $mid != $this->currentUser['id']) {
+                        $this->notificationModel->createProjectAssignmentNotification($id, $mid, $this->currentUser['id']);
+                    }
+                }
             }
 
             // Handle file upload
@@ -192,6 +213,21 @@ class ProjectController extends Controller
         $projectRole = ($globalRole === 'admin' || $globalRole === 'manager') ? 'manager' : 'member';
         
         if ($this->projectModel->assignUser($projectId, $userId, $projectRole)) {
+            if ($userId != $this->currentUser['id']) {
+                if ($projectRole === 'manager') {
+                    $this->notificationModel->createProjectAssignmentNotification($projectId, $userId, $this->currentUser['id']);
+                } else {
+                    // For member, we use a generic message or create a helper if needed
+                    // Notification model currently has createTaskAssignmentNotification but not a generic project membership one for non-managers
+                    // Let's use create directly for now or add a method.
+                    $this->notificationModel->create([
+                        'user_id' => $userId,
+                        'project_id' => $projectId,
+                        'type' => 'project_assignment',
+                        'message' => "👥 You have been added to project: '" . $this->projectModel->find($projectId)['name'] . "'"
+                    ]);
+                }
+            }
             $this->successRedirect("User assigned as " . ucfirst($projectRole), "?action=show&id=$projectId");
         }
         $this->errorRedirect("Failed to assign user", "?action=show&id=$projectId");
