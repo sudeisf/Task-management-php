@@ -126,20 +126,12 @@ if ($currentUser) {
                         <!-- User Menu -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                                <?php if (!empty($currentUser['avatar'])): ?>
-                                    <img src="<?php echo BASE_URL; ?>/public/uploads/avatars/<?php echo htmlspecialchars($currentUser['avatar']); ?>" 
-                                         alt="Profile" 
-                                         class="rounded-circle me-2" 
-                                         style="width: 32px; height: 32px; object-fit: cover;">
-                                <?php else: ?>
-                                    <i class="bi bi-person-circle me-2"></i>
-                                <?php endif; ?>
+                                <i class="bi bi-person-circle me-2"></i>
                                 <?php echo htmlspecialchars($currentUser['name']); ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" style="z-index: 2001;">
                                 <li><h6 class="dropdown-header"><?php echo htmlspecialchars($currentUser['name']); ?></h6></li>
                                 <li><span class="dropdown-item-text small text-muted"><?php echo getRoleDisplayName($userRole); ?></span></li>
-                                <li><hr class="dropdown-divider"></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AuthController.php?action=logout">
                                     <i class="bi bi-box-arrow-right"></i> Logout
@@ -152,18 +144,6 @@ if ($currentUser) {
         </div>
     </nav>
 
-    <!-- Flash Messages -->
-    <?php
-    $flashMessage = getFlashMessage();
-    if ($flashMessage):
-    ?>
-    <div class="container-fluid mt-3">
-        <div class="alert alert-<?php echo $flashMessage['type'] === 'error' ? 'danger' : $flashMessage['type']; ?> alert-dismissible fade show" role="alert">
-            <?php echo htmlspecialchars($flashMessage['message']); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    </div>
-    <?php endif; ?>
 
     <!-- Main Content Container -->
     <div class="container-fluid">
@@ -308,6 +288,25 @@ if ($currentUser) {
 
                 <!-- Main content area -->
                 <main class="col-md-10 ms-sm-auto px-md-4">
+                    <!-- Flash Messages & Validation Errors -->
+                    <?php
+                    $flashMessage = getFlashMessage();
+                    if ($flashMessage):
+                    ?>
+                    <div class="mt-3">
+                        <div class="alert alert-<?php echo $flashMessage['type'] === 'error' ? 'danger' : $flashMessage['type']; ?> alert-dismissible fade show" role="alert">
+                            <?php echo htmlspecialchars($flashMessage['message']); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php
+                    if (isset($_SESSION['errors']) && !empty($_SESSION['errors'])):
+                        echo '<div class="mt-3">' . displayValidationErrors($_SESSION['errors']) . '</div>';
+                        unset($_SESSION['errors']);
+                    endif;
+                    ?>
                     <!-- Breadcrumb -->
                     <?php
                     $currentRoute = $_GET['action'] ?? 'index';
@@ -332,4 +331,23 @@ if ($currentUser) {
             <?php else: ?>
                 <!-- Full width for auth pages -->
                 <main class="col-12">
+                    <!-- Flash Messages & Validation Errors -->
+                    <?php
+                    $flashMessage = getFlashMessage();
+                    if ($flashMessage):
+                    ?>
+                    <div class="mt-3">
+                        <div class="alert alert-<?php echo $flashMessage['type'] === 'error' ? 'danger' : $flashMessage['type']; ?> alert-dismissible fade show" role="alert">
+                            <?php echo htmlspecialchars($flashMessage['message']); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php
+                    if (isset($_SESSION['errors']) && !empty($_SESSION['errors'])):
+                        echo '<div class="mt-3">' . displayValidationErrors($_SESSION['errors']) . '</div>';
+                        unset($_SESSION['errors']);
+                    endif;
+                    ?>
             <?php endif; ?>

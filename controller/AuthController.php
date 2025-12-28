@@ -24,7 +24,14 @@ switch ($action) {
             'role' => 'in:member,manager'
         ];
 
-        if (!$validator->validate($_POST, $rules)) {
+        $labels = [
+            'full_name' => 'Full Name',
+            'email' => 'Email Address',
+            'password' => 'Password',
+            'role' => 'Role'
+        ];
+
+        if (!$validator->validate($_POST, $rules, $labels)) {
             $_SESSION['errors'] = $validator->getErrors();
             $_SESSION['form_data'] = $_POST;
             header("Location: ../views/auth/register.php");

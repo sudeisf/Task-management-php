@@ -45,7 +45,7 @@ $userRole = strtolower($userRole ?? 'member');
                 <i class="bi bi-pencil me-2"></i>
                 Edit Task
             </a>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&my_tasks=true" class="btn btn-outline-secondary">
+            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index<?php echo ($userRole !== 'admin') ? '&my_tasks=true' : ''; ?>" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-2"></i>
                 Back to Tasks
             </a>
@@ -62,7 +62,7 @@ $userRole = strtolower($userRole ?? 'member');
                         <i class="bi bi-info-circle me-2"></i>
                         Task Details
                     </h3>
-                    <div class="task-actions">
+                    <div class="task-details-actions">
                         <?php if ($canUpdateStatus): ?>
                             <?php if ($task['status'] === 'todo'): ?>
                                 <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="quickUpdateStatus('in_progress')">
@@ -76,28 +76,6 @@ $userRole = strtolower($userRole ?? 'member');
                                 </button>
                             <?php endif; ?>
                         <?php endif; ?>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=edit&id=<?php echo $task['id']; ?>">
-                                    <i class="bi bi-pencil me-2"></i>
-                                    Edit Task
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="duplicateTask()">
-                                    <i class="bi bi-copy me-2"></i>
-                                    Duplicate Task
-                                </a></li>
-                                <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteTask()">
-                                        <i class="bi bi-trash me-2"></i>
-                                        Delete Task
-                                    </a></li>
-                                <?php endif; ?>
-                            </ul>
-                        </div>
                     </div>
                 </div>
                 <div class="card-body">
@@ -358,14 +336,6 @@ $userRole = strtolower($userRole ?? 'member');
 </div>
 
 <style>
-.task-actions {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.card:hover .task-actions {
-    opacity: 1;
-}
 
 .task-meta-item {
     margin-bottom: 1rem;
@@ -535,13 +505,6 @@ function quickUpdateStatus(status) {
     }
 }
 
-function deleteTask() {
-    if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
-        createAndSubmitForm('<?php echo BASE_URL; ?>/controller/TaskController.php?action=delete', {
-            'id': '<?php echo $task['id']; ?>'
-        });
-    }
-}
 
 function createAndSubmitForm(action, data) {
     const form = document.createElement('form');
@@ -560,10 +523,6 @@ function createAndSubmitForm(action, data) {
     form.submit();
 }
 
-function duplicateTask() {
-    // Implement task duplication logic
-    alert('Task duplication feature would be implemented here');
-}
 
 function editComment(commentId) {
     const commentText = prompt("Edit your comment:");

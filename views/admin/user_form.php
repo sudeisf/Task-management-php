@@ -6,6 +6,10 @@
 
 $pageTitle = isset($user) ? 'Edit User' : 'Create User';
 $isEdit = isset($user);
+
+$errors = $_SESSION['errors'] ?? [];
+$formData = $_SESSION['form_data'] ?? [];
+unset($_SESSION['errors'], $_SESSION['form_data']);
 ?>
 
 <div class="container-fluid py-4">

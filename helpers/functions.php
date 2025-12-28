@@ -304,6 +304,30 @@ function getFlashMessage($type = null)
 }
 
 /**
+ * Display validation error summary
+ */
+function displayValidationErrors($errors)
+{
+    if (empty($errors)) return '';
+
+    $output = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
+    $output .= '<h6><i class="bi bi-exclamation-triangle me-2"></i>Please fix the following errors:</h6>';
+    $output .= '<ul class="mb-0 small">';
+    
+    foreach ($errors as $field => $fieldErrors) {
+        foreach ($fieldErrors as $error) {
+            $output .= '<li>' . htmlspecialchars($error) . '</li>';
+        }
+    }
+    
+    $output .= '</ul>';
+    $output .= '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    $output .= '</div>';
+
+    return $output;
+}
+
+/**
  * Set flash message
  */
 function setFlashMessage($message, $type = 'info')

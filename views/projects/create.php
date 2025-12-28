@@ -39,18 +39,18 @@ $pageTitle = 'Create Project';
                         <?php $today = date('Y-m-d'); ?>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="start_date" class="form-label">Start Date</label>
+                                <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control <?php echo isset($errors['start_date']) ? 'is-invalid' : ''; ?>" 
-                                       id="start_date" name="start_date" min="<?= $today ?>" value="<?php echo htmlspecialchars($formData['start_date'] ?? ''); ?>">
+                                       id="start_date" name="start_date" min="<?= $today ?>" value="<?php echo htmlspecialchars($formData['start_date'] ?? ''); ?>" required>
                                 <small class="text-muted">Cannot be in the past</small>
                                 <?php if (isset($errors['start_date'])): ?>
                                     <div class="invalid-feedback"><?php echo $errors['start_date'][0]; ?></div>
                                 <?php endif; ?>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="end_date" class="form-label">End Date</label>
+                                <label for="end_date" class="form-label">End Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control <?php echo isset($errors['end_date']) ? 'is-invalid' : ''; ?>" 
-                                       id="end_date" name="end_date" min="<?= $today ?>" value="<?php echo htmlspecialchars($formData['end_date'] ?? ''); ?>">
+                                       id="end_date" name="end_date" min="<?= $today ?>" value="<?php echo htmlspecialchars($formData['end_date'] ?? ''); ?>" required>
                                 <small class="text-muted">Cannot be in the past or before start date</small>
                                 <?php if (isset($errors['end_date'])): ?>
                                     <div class="invalid-feedback"><?php echo $errors['end_date'][0]; ?></div>

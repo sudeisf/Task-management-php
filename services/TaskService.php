@@ -46,8 +46,8 @@ class TaskService
         }
 
         if ($userRole === 'admin') {
-            $tasks = $this->taskModel->all($filters, $perPage, $offset);
-            $total = $this->taskModel->getCount($filters);
+            $tasks = $this->taskModel->all($filters, $perPage, $offset, $userId, $userRole);
+            $total = $this->taskModel->getCount($filters, $userId, $userRole);
             return [$tasks, $total];
         }
 
@@ -70,14 +70,24 @@ class TaskService
             'project_id' => 'required|integer|exists:projects,id',
             'title' => 'required|not_numeric|min:3|max:255',
             'description' => 'max:1000',
-            'priority_id' => 'required|integer|in:1,2,3'
+            'priority_id' => 'required|integer|in:1,2,3',
+            'deadline' => 'required|date'
         ];
 
         if (!empty($data['assigned_to'])) {
             $rules['assigned_to'] = 'integer|exists:users,id';
         }
 
-        if (!$validator->validate($data, $rules)) {
+        $labels = [
+            'project_id' => 'Project',
+            'title' => 'Task Title',
+            'description' => 'Description',
+            'priority_id' => 'Priority',
+            'assigned_to' => 'Assigned User',
+            'deadline' => 'Deadline'
+        ];
+
+        if (!$validator->validate($data, $rules, $labels)) {
             return ['errors' => $validator->getErrors(), 'data' => false];
         }
 

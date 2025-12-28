@@ -26,7 +26,7 @@ require_once __DIR__ . '/../layout/header.php';
                 <i class="bi bi-eye me-2"></i>
                 View Task
             </a>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&my_tasks=true" class="btn btn-outline-secondary">
+            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index<?php echo ($userRole !== 'admin') ? '&my_tasks=true' : ''; ?>" class="btn btn-outline-secondary">
                 <i class="bi bi-arrow-left me-2"></i>
                 Back to Tasks
             </a>
@@ -59,7 +59,7 @@ require_once __DIR__ . '/../layout/header.php';
                                    placeholder="Enter task title..."
                                    value="<?php echo htmlspecialchars($task['title'] ?? $_POST['title'] ?? ''); ?>">
                             <?php if (isset($errors['title'])): ?>
-                                <div class="invalid-feedback"><?php echo $errors['title']; ?></div>
+                                <div class="invalid-feedback"><?php echo $errors['title'][0]; ?></div>
                             <?php endif; ?>
                         </div>
 
@@ -70,7 +70,7 @@ require_once __DIR__ . '/../layout/header.php';
                                       id="description" name="description" rows="4"
                                       placeholder="Describe the task in detail..."><?php echo htmlspecialchars($task['description'] ?? $_POST['description'] ?? ''); ?></textarea>
                             <?php if (isset($errors['description'])): ?>
-                                <div class="invalid-feedback"><?php echo $errors['description']; ?></div>
+                                <div class="invalid-feedback"><?php echo $errors['description'][0]; ?></div>
                             <?php endif; ?>
                         </div>
 
@@ -91,7 +91,7 @@ require_once __DIR__ . '/../layout/header.php';
                                     <?php endforeach; ?>
                                 </select>
                                 <?php if (isset($errors['priority_id'])): ?>
-                                    <div class="invalid-feedback"><?php echo $errors['priority_id']; ?></div>
+                                    <div class="invalid-feedback"><?php echo $errors['priority_id'][0]; ?></div>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -116,7 +116,7 @@ require_once __DIR__ . '/../layout/header.php';
                                     <input type="hidden" name="status" value="<?php echo $task['status']; ?>">
                                 <?php endif; ?>
                                 <?php if (isset($errors['status'])): ?>
-                                    <div class="invalid-feedback"><?php echo $errors['status']; ?></div>
+                                    <div class="invalid-feedback"><?php echo $errors['status'][0]; ?></div>
                                 <?php endif; ?>
                             </div>
 
@@ -126,7 +126,7 @@ require_once __DIR__ . '/../layout/header.php';
                                        id="deadline" name="deadline"
                                        value="<?php echo htmlspecialchars($task['deadline'] ?? $_POST['deadline'] ?? ''); ?>">
                                 <?php if (isset($errors['deadline'])): ?>
-                                    <div class="invalid-feedback"><?php echo $errors['deadline']; ?></div>
+                                    <div class="invalid-feedback"><?php echo $errors['deadline'][0]; ?></div>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -159,7 +159,7 @@ require_once __DIR__ . '/../layout/header.php';
                                 <?php endforeach; ?>
                             </select>
                             <?php if (isset($errors['assigned_to'])): ?>
-                                <div class="invalid-feedback"><?php echo $errors['assigned_to']; ?></div>
+                                <div class="invalid-feedback"><?php echo $errors['assigned_to'][0]; ?></div>
                             <?php endif; ?>
                         </div>
 

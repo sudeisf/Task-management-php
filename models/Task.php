@@ -439,8 +439,8 @@ class Task
             $params[] = "%" . $filters['search'] . "%";
         }
 
-        // Restrict to user's tasks if not admin/manager
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
+        // Role-based restrictions
+        if ($user_id && $user_role && !in_array($user_role, ['admin', 'manager'])) {
             $sql .= " AND (assigned_to=? OR created_by=?)";
             $params[] = $user_id;
             $params[] = $user_id;

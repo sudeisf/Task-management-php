@@ -21,7 +21,7 @@ require_once __DIR__ . '/../layout/header.php';
             <h1 class="dashboard-title">Create New Task</h1>
             <p class="dashboard-subtitle">Add a new task to your project management system.</p>
         </div>
-        <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index" class="btn btn-outline-secondary">
+        <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index<?php echo ($userRole !== 'admin') ? '&my_tasks=true' : ''; ?>" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-2"></i>
             Back to Tasks
         </a>
@@ -133,12 +133,12 @@ require_once __DIR__ . '/../layout/header.php';
                         }
                         ?>
                         <div class="mb-3">
-                            <label for="deadline" class="form-label">Deadline</label>
+                            <label for="deadline" class="form-label">Deadline <span class="text-danger">*</span></label>
                             <input type="date" class="form-control <?php echo isset($errors['deadline']) ? 'is-invalid' : ''; ?>"
                                    id="deadline" name="deadline"
                                    min="<?= $today ?>"
                                    <?php if ($projectEndDate): ?>max="<?= $projectEndDate ?>"<?php endif; ?>
-                                   value="<?php echo htmlspecialchars($formData['deadline'] ?? ''); ?>">
+                                   value="<?php echo htmlspecialchars($formData['deadline'] ?? ''); ?>" required>
                             <?php if (isset($errors['deadline'])): ?>
                                 <div class="invalid-feedback"><?php echo is_array($errors['deadline']) ? $errors['deadline'][0] : $errors['deadline']; ?></div>
                             <?php endif; ?>
@@ -213,34 +213,11 @@ require_once __DIR__ . '/../layout/header.php';
                         </div>
 
                         <!-- Form Actions -->
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="create_another" name="create_another">
-                                <label class="form-check-label" for="create_another">
-                                    Create another task after saving
-                                </label>
-                            </div>
-
-                            <div class="btn-group">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-circle me-2"></i>
-                                    Create Task
-                                </button>
-                                <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                    <span class="visually-hidden">Toggle Dropdown</span>
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><button type="submit" name="save_and_start" value="1" class="dropdown-item">
-                                        <i class="bi bi-play-circle me-2"></i>
-                                        Create & Mark In Progress
-                                    </button></li>
-                                    <li><button type="submit" name="save_and_start" value="1" class="dropdown-item">
-                                        <i class="bi bi-play-circle me-2"></i>
-                                        Create & Mark In Progress
-                                    </button></li>
-                                </ul>
-                            </div>
+                        <div class="d-flex justify-content-end align-items-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Create Task
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -382,10 +359,6 @@ if (projectSelect) {
 <style>
 .form-check-label {
     cursor: pointer;
-}
-
-.btn-group .dropdown-toggle-split {
-    border-left: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .card.border-info {

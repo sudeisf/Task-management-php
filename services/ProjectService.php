@@ -21,11 +21,20 @@ class ProjectService
     {
         $validator = new Validator();
         $rules = [
-            'name' => 'required|not_numeric|min:3|max:255',
-            'description' => 'max:1000'
+            'name' => 'required|max:255',
+            'description' => 'max:1000',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date'
         ];
 
-        if (!$validator->validate($data, $rules)) {
+        $labels = [
+            'name' => 'Project Name',
+            'description' => 'Description',
+            'start_date' => 'Start Date',
+            'end_date' => 'End Date'
+        ];
+
+        if (!$validator->validate($data, $rules, $labels)) {
             return ['errors' => $validator->getErrors(), 'data' => false];
         }
 

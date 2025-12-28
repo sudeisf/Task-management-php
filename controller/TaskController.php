@@ -211,7 +211,13 @@ class TaskController extends Controller
         }
 
         $data = $val['data'];
-        if (!in_array($this->currentUser['role'], ['admin', 'manager'])) $data['assigned_to'] = $this->currentUser['id'];
+        
+        // Restriction: Admins and Managers cannot change status
+        if (in_array($this->currentUser['role'], ['admin', 'manager'])) {
+            $data['status'] = $task['status'];
+        } else {
+            $data['assigned_to'] = $this->currentUser['id'];
+        }
 
         if ($this->taskModel->update($id, $data)) {
             if (!empty($data['assigned_to']) && $data['assigned_to'] != $task['assigned_to'] && $data['assigned_to'] != $this->currentUser['id']) {

@@ -60,23 +60,24 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
     <h3 class="text-left mb-3">Create an Account</h3>
     <p class="text-left text-muted">Join us and start managing your tasks efficiently.</p>
 
-    <?php if (isset($_SESSION['error'])): ?>
-        <div class="alert alert-danger">
-            <?php 
-                echo $_SESSION['error']; 
-                unset($_SESSION['error']);
-            ?>
+    <?php 
+    if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <?php echo $_SESSION['error']; ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <?php unset($_SESSION['error']); ?>
         </div>
     <?php endif; ?>
 
     <?php if (isset($_SESSION['success'])): ?>
-        <div class="alert alert-success">
-            <?php 
-                echo $_SESSION['success']; 
-                unset($_SESSION['success']);
-            ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <?php echo $_SESSION['success']; ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <?php unset($_SESSION['success']); ?>
         </div>
     <?php endif; ?>
+
+    <?php echo displayValidationErrors($errors); ?>
 
     <!-- Register Form -->
     <form action="../../controller/AuthController.php?action=register" method="POST">
@@ -134,10 +135,13 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
             <input 
                 type="password" 
                 name="confirm_password" 
-                class="form-control"
+                class="form-control <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>"
                 placeholder="••••••••••"
                 required
             >
+            <?php if (isset($errors['password']) && strpos($errors['password'][0], 'confirmation') !== false): ?>
+                <div class="invalid-feedback">Passwords do not match.</div>
+            <?php endif; ?>
         </div>
 
         <!-- Role Selection -->

@@ -4,14 +4,16 @@ class Validator
 {
     private $errors = [];
     private $data = [];
+    private $labels = [];
 
     /**
      * Validate input data against rules
      */
-    public function validate($data, $rules)
+    public function validate($data, $rules, $labels = [])
     {
         $this->errors = [];
         $this->data = $data;
+        $this->labels = $labels;
 
         foreach ($rules as $field => $fieldRules) {
             $value = $data[$field] ?? null;
@@ -333,8 +335,9 @@ class Validator
         ];
 
         $message = $messages[$rule] ?? 'The :field field is invalid.';
+        $label = $this->labels[$field] ?? ucfirst(str_replace('_', ' ', $field));
 
-        return str_replace([':field', ':param'], [$field, $param], $message);
+        return str_replace([':field', ':param'], [$label, $param], $message);
     }
 
     /**

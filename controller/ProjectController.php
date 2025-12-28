@@ -58,6 +58,8 @@ class ProjectController extends Controller
     public function store()
     {
         if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) $this->errorRedirect("No permission");
+        
+        $val = $this->projectService->validateProject($_POST);
         if (!$val['data']) {
             $_SESSION['errors'] = $val['errors'];
             $_SESSION['form_data'] = $_POST;
@@ -142,7 +144,10 @@ class ProjectController extends Controller
         if (!$project) $this->errorRedirect("Not found");
 
         $val = $this->projectService->validateProject($_POST);
-        if (!$val['data']) $this->errorRedirect("Validation failed", "?action=edit&id=$id");
+        if (!$val['data']) {
+            $_SESSION['errors'] = $val['errors'];
+            $this->errorRedirect("Please fix the errors below.", "?action=edit&id=$id");
+        }
 
         if ($this->projectModel->update($id, $val['data'])) {
             $currentManagers = $this->projectModel->getManagers($id);

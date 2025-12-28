@@ -31,7 +31,16 @@ class AdminService
             $rules['new_password'] = 'min:8';
         }
 
-        if (!$validator->validate($data, $rules)) {
+        $labels = [
+            'full_name' => 'Full Name',
+            'email' => 'Email Address',
+            'role' => 'Role',
+            'status' => 'Status',
+            'password' => 'Password',
+            'new_password' => 'New Password'
+        ];
+
+        if (!$validator->validate($data, $rules, $labels)) {
             return ['errors' => $validator->getErrors(), 'data' => false];
         }
 

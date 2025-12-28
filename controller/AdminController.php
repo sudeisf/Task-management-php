@@ -49,7 +49,11 @@ class AdminController extends Controller
     public function storeUser()
     {
         $val = $this->adminService->validateUser($_POST, true);
-        if (!$val['data']) $this->errorRedirect("Validation failed", "?action=create_user");
+        if (!$val['data']) {
+            $_SESSION['errors'] = $val['errors'];
+            $_SESSION['form_data'] = $_POST;
+            $this->errorRedirect("Please fix the errors below.", "?action=create_user");
+        }
 
         $d = $val['data'];
         if ($this->userModel->create($d['full_name'], $d['email'], $d['password'], $d['role'])) {
@@ -72,7 +76,10 @@ class AdminController extends Controller
         if (!$user) $this->errorRedirect("Not found", "?action=users");
 
         $val = $this->adminService->validateUser($_POST, false);
-        if (!$val['data']) $this->errorRedirect("Validation failed", "?action=edit_user&id=$userId");
+        if (!$val['data']) {
+            $_SESSION['errors'] = $val['errors'];
+            $this->errorRedirect("Please fix the errors below.", "?action=edit_user&id=$userId");
+        }
 
         $d = $val['data'];
         if ($this->userModel->update($userId, $d['full_name'], $d['email'], $d['role'], $d['status'])) {

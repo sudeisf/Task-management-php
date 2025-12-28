@@ -4,6 +4,9 @@
  */
 
 $pageTitle = 'Edit Project';
+$errors = $_SESSION['errors'] ?? [];
+$formData = $_SESSION['form_data'] ?? $_POST ?? [];
+unset($_SESSION['errors'], $_SESSION['form_data']);
 ?>
 
 <div class="container py-4">
@@ -18,38 +21,40 @@ $pageTitle = 'Edit Project';
                         <!-- Project Name -->
                         <div class="mb-3">
                             <label for="name" class="form-label">Project Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" name="name" 
-                                   value="<?= htmlspecialchars($project['name']) ?>" required>
+                            <input type="text" class="form-control <?php echo isset($errors['name']) ? 'is-invalid' : ''; ?>" id="name" name="name" 
+                                   value="<?= htmlspecialchars($formData['name'] ?? $project['name']) ?>" required>
+                            <?php if (isset($errors['name'])): ?>
+                                <div class="invalid-feedback"><?php echo $errors['name'][0]; ?></div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Description -->
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="4"><?= htmlspecialchars($project['description'] ?? '') ?></textarea>
+                            <textarea class="form-control <?php echo isset($errors['description']) ? 'is-invalid' : ''; ?>" id="description" name="description" rows="4"><?= htmlspecialchars($formData['description'] ?? $project['description'] ?? '') ?></textarea>
+                            <?php if (isset($errors['description'])): ?>
+                                <div class="invalid-feedback"><?php echo $errors['description'][0]; ?></div>
+                            <?php endif; ?>
                         </div>
 
-                        <!-- Status -->
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status" name="status">
-                                <option value="active" <?= $project['status'] === 'active' ? 'selected' : '' ?>>Active</option>
-                                <option value="on_hold" <?= $project['status'] === 'on_hold' ? 'selected' : '' ?>>On Hold</option>
-                                <option value="completed" <?= $project['status'] === 'completed' ? 'selected' : '' ?>>Completed</option>
-                                <option value="archived" <?= $project['status'] === 'archived' ? 'selected' : '' ?>>Archived</option>
-                            </select>
-                        </div>
 
                         <!-- Dates -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" 
-                                       value="<?= $project['start_date'] ?? '' ?>">
+                                <input type="date" class="form-control <?php echo isset($errors['start_date']) ? 'is-invalid' : ''; ?>" id="start_date" name="start_date" 
+                                       value="<?= $formData['start_date'] ?? $project['start_date'] ?? '' ?>">
+                                <?php if (isset($errors['start_date'])): ?>
+                                    <div class="invalid-feedback"><?php echo $errors['start_date'][0]; ?></div>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date" 
-                                       value="<?= $project['end_date'] ?? '' ?>">
+                                <input type="date" class="form-control <?php echo isset($errors['end_date']) ? 'is-invalid' : ''; ?>" id="end_date" name="end_date" 
+                                       value="<?= $formData['end_date'] ?? $project['end_date'] ?? '' ?>">
+                                <?php if (isset($errors['end_date'])): ?>
+                                    <div class="invalid-feedback"><?php echo $errors['end_date'][0]; ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
 
