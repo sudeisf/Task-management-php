@@ -237,8 +237,17 @@ class Validator
      */
     private function validateConfirmed($field, $value)
     {
-        $confirmField = $field . '_confirmation';
-        return isset($this->data[$confirmField]) && $value === $this->data[$confirmField];
+        // Check both naming conventions: field_confirmation and confirm_field
+        $confirmField1 = $field . '_confirmation';  // e.g., password_confirmation
+        $confirmField2 = 'confirm_' . $field;       // e.g., confirm_password
+        
+        if (isset($this->data[$confirmField1])) {
+            return $value === $this->data[$confirmField1];
+        }
+        if (isset($this->data[$confirmField2])) {
+            return $value === $this->data[$confirmField2];
+        }
+        return false;
     }
 
     /**

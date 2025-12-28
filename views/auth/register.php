@@ -1,5 +1,6 @@
 <?php 
 session_start(); 
+require_once __DIR__ . '/../../helpers/functions.php';
 $errors = $_SESSION['errors'] ?? [];
 $formData = $_SESSION['form_data'] ?? [];
 unset($_SESSION['errors'], $_SESSION['form_data']);
@@ -13,6 +14,8 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
     <!-- Google Fonts: Rubik for headings, Inter for body -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -117,30 +120,42 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
         <!-- Password -->
         <div class="mb-3">
             <label class="form-label">Password</label>
-            <input 
-                type="password" 
-                name="password" 
-                class="form-control <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>"
-                placeholder="••••••••••"
-                required
-            >
+            <div class="input-group">
+                <input 
+                    type="password" 
+                    name="password" 
+                    id="password"
+                    class="form-control <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>"
+                    placeholder="••••••••••"
+                    required
+                >
+                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                    <i class="bi bi-eye" id="eyeIcon"></i>
+                </button>
+            </div>
             <?php if (isset($errors['password'])): ?>
-                <div class="invalid-feedback"><?php echo $errors['password'][0]; ?></div>
+                <div class="text-danger small mt-1"><?php echo $errors['password'][0]; ?></div>
             <?php endif; ?>
         </div>
 
         <!-- Confirm Password -->
         <div class="mb-3">
             <label class="form-label">Confirm Password</label>
-            <input 
-                type="password" 
-                name="confirm_password" 
-                class="form-control <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>"
-                placeholder="••••••••••"
-                required
-            >
+            <div class="input-group">
+                <input 
+                    type="password" 
+                    name="confirm_password" 
+                    id="confirmPassword"
+                    class="form-control <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>"
+                    placeholder="••••••••••"
+                    required
+                >
+                <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                    <i class="bi bi-eye" id="eyeIconConfirm"></i>
+                </button>
+            </div>
             <?php if (isset($errors['password']) && strpos($errors['password'][0], 'confirmation') !== false): ?>
-                <div class="invalid-feedback">Passwords do not match.</div>
+                <div class="text-danger small mt-1">Passwords do not match.</div>
             <?php endif; ?>
         </div>
 
@@ -177,4 +192,33 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
 </footer>
 
 </body>
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
+
+    // Toggle confirm password visibility
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+        const confirmInput = document.getElementById('confirmPassword');
+        const eyeIcon = document.getElementById('eyeIconConfirm');
+        
+        if (confirmInput.type === 'password') {
+            confirmInput.type = 'text';
+            eyeIcon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            confirmInput.type = 'password';
+            eyeIcon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
+</script>
 </html>

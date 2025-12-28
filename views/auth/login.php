@@ -17,6 +17,8 @@ if (Auth::check()) {
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
     <!-- Google Fonts: Rubik for headings, Inter for body -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,13 +99,19 @@ if (Auth::check()) {
         <!-- Password -->
         <div class="mb-3">
             <label class="form-label">Password</label>
-            <input 
-                type="password" 
-                name="password" 
-                class="form-control" 
-                placeholder="••••••••••" 
-                required
-            >
+            <div class="input-group">
+                <input 
+                    type="password" 
+                    name="password" 
+                    id="password"
+                    class="form-control" 
+                    placeholder="••••••••••" 
+                    required
+                >
+                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                    <i class="bi bi-eye" id="eyeIcon"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Remember Me -->
@@ -131,4 +139,20 @@ if (Auth::check()) {
 </div>
 
 </body>
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.remove('bi-eye');
+            eyeIcon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.remove('bi-eye-slash');
+            eyeIcon.classList.add('bi-eye');
+        }
+    });
+</script>
 </html>
