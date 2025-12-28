@@ -68,7 +68,7 @@ class TaskService
         $validator = new Validator();
         $rules = [
             'project_id' => 'required|integer|exists:projects,id',
-            'title' => 'required|max:255',
+            'title' => 'required|not_numeric|min:3|max:255',
             'description' => 'max:1000',
             'priority_id' => 'required|integer|in:1,2,3'
         ];

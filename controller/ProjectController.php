@@ -47,14 +47,22 @@ class ProjectController extends Controller
             $users[] = $u;
         }
         
-        $this->view('projects/create', ['users' => $users]);
+        $this->view('projects/create', [
+            'users' => $users,
+            'formData' => $_SESSION['form_data'] ?? [],
+            'errors' => $_SESSION['errors'] ?? []
+        ]);
+        unset($_SESSION['form_data'], $_SESSION['errors']);
     }
 
     public function store()
     {
         if (!$this->permissionModel->canManageProjects($this->currentUser['id'])) $this->errorRedirect("No permission");
-        $val = $this->projectService->validateProject($_POST);
-        if (!$val['data']) $this->errorRedirect("Validation failed", "?action=create");
+        if (!$val['data']) {
+            $_SESSION['errors'] = $val['errors'];
+            $_SESSION['form_data'] = $_POST;
+            $this->redirect("?action=create");
+        }
 
         $data = $val['data'];
         $data['created_by'] = $this->currentUser['id'];

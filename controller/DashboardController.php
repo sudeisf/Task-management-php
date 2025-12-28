@@ -8,6 +8,7 @@ require_once __DIR__ . '/../models/Activity.php';
 require_once __DIR__ . '/../models/Dashboard.php';
 require_once __DIR__ . '/../models/Project.php';
 require_once __DIR__ . '/../models/Notification.php';
+require_once __DIR__ . '/../helpers/functions.php';
 
 Session::start();
 

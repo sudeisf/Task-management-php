@@ -518,26 +518,3 @@ function user_options($selected = '', $includeEmpty = true)
     return $options;
 }
 
-/**
- * Generate category select options
- */
-function category_options($selected = '', $includeEmpty = true)
-{
-    require_once __DIR__ . '/../models/Category.php';
-    $categoryModel = new Category();
-
-    $options = [];
-    if ($includeEmpty) {
-        $options[''] = 'Select Category';
-    }
-
-    $user_id = $_SESSION['user_id'] ?? null;
-    $categories = $categoryModel->all($user_id);
-    
-    // Category::all() now returns array of rows (fetch_all), so we iterate over the array
-    foreach ($categories as $category) {
-        $options[$category['id']] = $category['name'];
-    }
-
-    return $options;
-}

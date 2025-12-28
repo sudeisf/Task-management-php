@@ -21,7 +21,7 @@ class ProjectService
     {
         $validator = new Validator();
         $rules = [
-            'name' => 'required|max:255',
+            'name' => 'required|not_numeric|min:3|max:255',
             'description' => 'max:1000'
         ];
 

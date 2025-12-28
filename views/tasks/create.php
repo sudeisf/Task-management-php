@@ -69,7 +69,7 @@ require_once __DIR__ . '/../layout/header.php';
                                     <?php endif; ?>
                                 </select>
                                 <?php if (isset($errors['project_id'])): ?>
-                                    <div class="invalid-feedback"><?php echo $errors['project_id']; ?></div>
+                                    <div class="invalid-feedback"><?php echo is_array($errors['project_id']) ? $errors['project_id'][0] : $errors['project_id']; ?></div>
                                 <?php endif; ?>
                                 <div class="form-text">Select the project this task belongs to.</div>
                             </div>
@@ -85,7 +85,7 @@ require_once __DIR__ . '/../layout/header.php';
                                    placeholder="Enter task title..."
                                    value="<?php echo htmlspecialchars($formData['title'] ?? ''); ?>">
                             <?php if (isset($errors['title'])): ?>
-                                <div class="invalid-feedback"><?php echo $errors['title']; ?></div>
+                                <div class="invalid-feedback"><?php echo is_array($errors['title']) ? $errors['title'][0] : $errors['title']; ?></div>
                             <?php endif; ?>
                             <div class="form-text">Give your task a clear, descriptive title.</div>
                         </div>
@@ -97,7 +97,7 @@ require_once __DIR__ . '/../layout/header.php';
                                       id="description" name="description" rows="4"
                                       placeholder="Describe the task in detail..."><?php echo htmlspecialchars($formData['description'] ?? ''); ?></textarea>
                             <?php if (isset($errors['description'])): ?>
-                                <div class="invalid-feedback"><?php echo $errors['description']; ?></div>
+                                <div class="invalid-feedback"><?php echo is_array($errors['description']) ? $errors['description'][0] : $errors['description']; ?></div>
                             <?php endif; ?>
                             <div class="form-text">Provide detailed instructions and requirements for this task.</div>
                         </div>
@@ -119,7 +119,7 @@ require_once __DIR__ . '/../layout/header.php';
                                     <?php endforeach; ?>
                                 </select>
                                 <?php if (isset($errors['priority_id'])): ?>
-                                    <div class="invalid-feedback"><?php echo $errors['priority_id']; ?></div>
+                                    <div class="invalid-feedback"><?php echo is_array($errors['priority_id']) ? $errors['priority_id'][0] : $errors['priority_id']; ?></div>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -140,7 +140,7 @@ require_once __DIR__ . '/../layout/header.php';
                                    <?php if ($projectEndDate): ?>max="<?= $projectEndDate ?>"<?php endif; ?>
                                    value="<?php echo htmlspecialchars($formData['deadline'] ?? ''); ?>">
                             <?php if (isset($errors['deadline'])): ?>
-                                <div class="invalid-feedback"><?php echo $errors['deadline']; ?></div>
+                                <div class="invalid-feedback"><?php echo is_array($errors['deadline']) ? $errors['deadline'][0] : $errors['deadline']; ?></div>
                             <?php endif; ?>
                             <div class="form-text">
                                 Cannot be in the past.
@@ -173,7 +173,7 @@ require_once __DIR__ . '/../layout/header.php';
                                 <?php endforeach; ?>
                             </select>
                             <?php if (isset($errors['assigned_to'])): ?>
-                                <div class="invalid-feedback"><?php echo $errors['assigned_to']; ?></div>
+                                <div class="invalid-feedback"><?php echo is_array($errors['assigned_to']) ? $errors['assigned_to'][0] : $errors['assigned_to']; ?></div>
                             <?php endif; ?>
                             <div class="form-text">
                                 <?php if ($userRole === 'manager'): ?>

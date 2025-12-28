@@ -428,28 +428,83 @@ function baseUrl()
 }
 
 /**
- * Get activity icon based on notification type
+ * Get activity icon based on notification type or action string
  */
-function getActivityIcon($type)
+function getActivityIcon($action)
 {
+    $action = strtolower($action);
+    
+    // Exact match for type codes
     $icons = [
-        'task_assigned' => 'person-check',
-        'task_assignment' => 'person-check', // New
-        'project_assignment' => 'briefcase', // New
-        'task_overdue' => 'exclamation-circle', // New
-        'project_overdue' => 'exclamation-triangle', // New
-        'task_completed' => 'check-circle',
-        'task_updated' => 'pencil',
-        'task_created' => 'plus-circle',
-        'comment_added' => 'chat',
-        'project_created' => 'folder-plus',
-        'project_updated' => 'folder',
-        'user_registered' => 'person-plus',
-        'status_changed' => 'arrow-repeat',
-        'deadline_approaching' => 'clock',
+        'task_assigned' => 'bi-person-check',
+        'task_assignment' => 'bi-person-check',
+        'project_assignment' => 'bi-briefcase',
+        'task_overdue' => 'bi-exclamation-circle',
+        'project_overdue' => 'bi-exclamation-triangle',
+        'task_completed' => 'bi-check-circle',
+        'task_updated' => 'bi-pencil',
+        'task_created' => 'bi-plus-circle',
+        'comment_added' => 'bi-chat',
+        'project_created' => 'bi-folder-plus',
+        'project_updated' => 'bi-folder',
+        'user_registered' => 'bi-person-plus',
+        'status_changed' => 'bi-arrow-repeat',
+        'deadline_approaching' => 'bi-clock',
+        'attachment_uploaded' => 'bi-paperclip'
     ];
     
-    return $icons[$type] ?? 'bell';
+    if (isset($icons[$action])) {
+        return $icons[$action];
+    }
+    
+    // Partial matches for action strings
+    if (strpos($action, 'created') !== false) return 'bi-plus-circle';
+    if (strpos($action, 'updated') !== false) return 'bi-pencil';
+    if (strpos($action, 'completed') !== false) return 'bi-check-circle';
+    if (strpos($action, 'comment') !== false) return 'bi-chat';
+    if (strpos($action, 'attachment') !== false) return 'bi-paperclip';
+    
+    return 'bi-bell';
+}
+
+/**
+ * Get activity type for CSS classes (task, comment, user, etc.)
+ */
+function getActivityType($action)
+{
+    $action = strtolower($action);
+    if (strpos($action, 'task') !== false) return 'task';
+    if (strpos($action, 'comment') !== false) return 'comment';
+    if (strpos($action, 'attachment') !== false) return 'attachment';
+    if (strpos($action, 'user') !== false) return 'user';
+    if (strpos($action, 'project') !== false) return 'project';
+    return 'task';
+}
+
+/**
+ * Alias for getActivityType (used in some views)
+ */
+function getActivityTypeClass($action)
+{
+    return getActivityType($action);
+}
+
+/**
+ * Get display text for activity action
+ */
+function getActivityActionText($action)
+{
+    $actions = [
+        'task_created' => 'created task',
+        'task_updated' => 'updated task',
+        'task_completed' => 'completed task',
+        'comment_added' => 'added comment to',
+        'attachment_uploaded' => 'uploaded attachment to',
+        'project_created' => 'created project',
+        'project_updated' => 'updated project'
+    ];
+    
+    return $actions[$action] ?? str_replace('_', ' ', $action);
 }
 
 /**

@@ -142,7 +142,6 @@
                                 <th>Title</th>
                                 <th>Status</th>
                                 <th>Priority</th>
-                                <th>Category</th>
                                 <th>Assigned To</th>
                                 <th>Deadline</th>
                                 <th>Created</th>
@@ -167,7 +166,6 @@
                                             <?php echo ucfirst($task['priority_name'] ?? 'N/A'); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo htmlspecialchars($task['category_name'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($task['assignee_name'] ?? 'Unassigned'); ?></td>
                                     <td>
                                         <?php if ($task['deadline']): ?>

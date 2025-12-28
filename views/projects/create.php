@@ -18,13 +18,21 @@ $pageTitle = 'Create Project';
                         <!-- Project Name -->
                         <div class="mb-3">
                             <label for="name" class="form-label">Project Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="name" name="name" required>
+                            <input type="text" class="form-control <?php echo isset($errors['name']) ? 'is-invalid' : ''; ?>" 
+                                   id="name" name="name" value="<?php echo htmlspecialchars($formData['name'] ?? ''); ?>" required>
+                            <?php if (isset($errors['name'])): ?>
+                                <div class="invalid-feedback"><?php echo $errors['name'][0]; ?></div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Description -->
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                            <textarea class="form-control <?php echo isset($errors['description']) ? 'is-invalid' : ''; ?>" 
+                                      id="description" name="description" rows="4"><?php echo htmlspecialchars($formData['description'] ?? ''); ?></textarea>
+                            <?php if (isset($errors['description'])): ?>
+                                <div class="invalid-feedback"><?php echo $errors['description'][0]; ?></div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Dates -->
@@ -32,13 +40,21 @@ $pageTitle = 'Create Project';
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="start_date" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" min="<?= $today ?>">
+                                <input type="date" class="form-control <?php echo isset($errors['start_date']) ? 'is-invalid' : ''; ?>" 
+                                       id="start_date" name="start_date" min="<?= $today ?>" value="<?php echo htmlspecialchars($formData['start_date'] ?? ''); ?>">
                                 <small class="text-muted">Cannot be in the past</small>
+                                <?php if (isset($errors['start_date'])): ?>
+                                    <div class="invalid-feedback"><?php echo $errors['start_date'][0]; ?></div>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="end_date" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date" min="<?= $today ?>">
+                                <input type="date" class="form-control <?php echo isset($errors['end_date']) ? 'is-invalid' : ''; ?>" 
+                                       id="end_date" name="end_date" min="<?= $today ?>" value="<?php echo htmlspecialchars($formData['end_date'] ?? ''); ?>">
                                 <small class="text-muted">Cannot be in the past or before start date</small>
+                                <?php if (isset($errors['end_date'])): ?>
+                                    <div class="invalid-feedback"><?php echo $errors['end_date'][0]; ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
 

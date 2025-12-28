@@ -25,7 +25,7 @@
                     </div>
                     <h5 class="card-title">Task Report</h5>
                     <p class="card-text text-muted">
-                        Generate comprehensive reports on tasks with customizable filters for status, priority, category, and date range.
+                        Generate comprehensive reports on tasks with customizable filters for status, priority, and date range.
                     </p>
                     <a href="<?php echo BASE_URL; ?>/controller/ReportController.php?action=task_report" class="btn btn-primary">
                         <i class="bi bi-file-earmark-text me-2"></i>Generate Report
@@ -89,7 +89,7 @@
                             <h6>Filtering</h6>
                             <p class="text-muted small">
                                 Use the filter options on each report page to customize the data displayed.
-                                Filters include date ranges, status, priority, categories, and user assignments.
+                                Filters include date ranges, status, priority, and user assignments.
                             </p>
                         </div>
                     </div>
