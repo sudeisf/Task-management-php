@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Tasks Index View
  * Displays list of tasks with filtering, sorting, and pagination
@@ -43,8 +44,8 @@ require_once __DIR__ . '/../layout/header.php';
                 <div class="col-md-4">
                     <label for="search" class="form-label">Search</label>
                     <input type="text" name="search" id="search" class="form-control"
-                           placeholder="Search tasks..."
-                           value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
+                        placeholder="Search tasks..."
+                        value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
                 </div>
 
                 <!-- Status Filter -->
@@ -96,13 +97,13 @@ require_once __DIR__ . '/../layout/header.php';
                 <div class="col-md-2">
                     <label for="deadline_from" class="form-label">Deadline From</label>
                     <input type="date" name="deadline_from" id="deadline_from" class="form-control"
-                           value="<?php echo $_GET['deadline_from'] ?? ''; ?>">
+                        value="<?php echo $_GET['deadline_from'] ?? ''; ?>">
                 </div>
 
                 <div class="col-md-2">
                     <label for="deadline_to" class="form-label">Deadline To</label>
                     <input type="date" name="deadline_to" id="deadline_to" class="form-control"
-                           value="<?php echo $_GET['deadline_to'] ?? ''; ?>">
+                        value="<?php echo $_GET['deadline_to'] ?? ''; ?>">
                 </div>
 
                 <!-- Action Buttons -->
@@ -145,9 +146,6 @@ require_once __DIR__ . '/../layout/header.php';
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th width="40">
-                                        <input type="checkbox" id="select-all" class="form-check-input">
-                                    </th>
                                     <th>Task</th>
                                     <th>Priority</th>
                                     <th>Status</th>
@@ -160,13 +158,9 @@ require_once __DIR__ . '/../layout/header.php';
                                 <?php foreach ($tasks as $task): ?>
                                     <tr class="task-row <?php echo ($task['status'] === 'completed') ? 'table-light' : ''; ?>">
                                         <td>
-                                            <input type="checkbox" class="task-checkbox form-check-input"
-                                                   value="<?php echo $task['id']; ?>">
-                                        </td>
-                                        <td>
                                             <div class="task-info">
                                                 <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>"
-                                                   class="task-title <?php echo ($task['status'] === 'completed') ? 'text-decoration-line-through' : ''; ?>">
+                                                    class="task-title <?php echo ($task['status'] === 'completed') ? 'text-decoration-line-through' : ''; ?>">
                                                     <?php echo htmlspecialchars($task['title']); ?>
                                                 </a>
                                                 <?php if (!empty($task['description'])): ?>
@@ -215,17 +209,17 @@ require_once __DIR__ . '/../layout/header.php';
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>"
-                                                   class="btn btn-sm btn-outline-primary" title="View">
+                                                    class="btn btn-sm btn-outline-primary" title="View">
                                                     <i class="bi bi-eye"></i>
                                                 </a>
                                                 <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=edit&id=<?php echo $task['id']; ?>"
-                                                   class="btn btn-sm btn-outline-secondary" title="Edit">
+                                                    class="btn btn-sm btn-outline-secondary" title="Edit">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
                                                 <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
                                                     <button type="button" class="btn btn-sm btn-outline-danger"
-                                                            onclick="deleteTask(<?php echo $task['id']; ?>, '<?php echo htmlspecialchars(addslashes($task['title'])); ?>')"
-                                                            title="Delete">
+                                                        onclick="deleteTask(<?php echo $task['id']; ?>, '<?php echo htmlspecialchars(addslashes($task['title'])); ?>')"
+                                                        title="Delete">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 <?php endif; ?>
@@ -257,7 +251,7 @@ require_once __DIR__ . '/../layout/header.php';
 
                                         <h5 class="card-title">
                                             <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>"
-                                               class="text-decoration-none <?php echo ($task['status'] === 'completed') ? 'text-decoration-line-through' : ''; ?>">
+                                                class="text-decoration-none <?php echo ($task['status'] === 'completed') ? 'text-decoration-line-through' : ''; ?>">
                                                 <?php echo htmlspecialchars($task['title']); ?>
                                             </a>
                                         </h5>
@@ -290,9 +284,9 @@ require_once __DIR__ . '/../layout/header.php';
                                     <div class="card-footer bg-transparent">
                                         <div class="btn-group w-100" role="group">
                                             <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>"
-                                               class="btn btn-sm btn-outline-primary">View</a>
+                                                class="btn btn-sm btn-outline-primary">View</a>
                                             <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=edit&id=<?php echo $task['id']; ?>"
-                                               class="btn btn-sm btn-outline-secondary">Edit</a>
+                                                class="btn btn-sm btn-outline-secondary">Edit</a>
                                         </div>
                                     </div>
                                 </div>
@@ -301,26 +295,6 @@ require_once __DIR__ . '/../layout/header.php';
                     </div>
                 </div>
 
-                <!-- Bulk Actions -->
-                <div class="bulk-actions mt-3 d-none">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="text-muted">Selected tasks:</span>
-                        <?php if ($userRole === 'member'): ?>
-                            <button type="button" class="btn btn-sm btn-outline-success" onclick="bulkUpdateStatus('completed')">
-                                <i class="bi bi-check-circle"></i> Mark Complete
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="bulkUpdateStatus('in_progress')">
-                                <i class="bi bi-play-circle"></i> Mark In Progress
-                            </button>
-                        <?php endif; ?>
-                        
-                        <?php if ($userRole === 'admin' || $userRole === 'manager'): ?>
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkDelete()">
-                                <i class="bi bi-trash"></i> Delete
-                            </button>
-                        <?php endif; ?>
-                    </div>
-                </div>
             <?php else: ?>
                 <div class="text-center py-5">
                     <i class="bi bi-inbox display-4 text-muted mb-3"></i>
@@ -370,121 +344,77 @@ require_once __DIR__ . '/../layout/header.php';
 </div>
 
 <style>
-.tasks-grid .card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+    .tasks-grid .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
 
-.tasks-grid .card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+    .tasks-grid .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-.task-info {
-    max-width: 300px;
-}
+    .task-info {
+        max-width: 300px;
+    }
 
-.task-title {
-    color: #007bff;
-    text-decoration: none;
-}
+    .task-title {
+        color: #007bff;
+        text-decoration: none;
+    }
 
-.task-title:hover {
-    text-decoration: underline;
-}
+    .task-title:hover {
+        text-decoration: underline;
+    }
 
-.badge-sm {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-}
-
-.bulk-actions {
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 0.375rem;
-    border: 1px solid #dee2e6;
-}
+    .badge-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
 </style>
 
 <script>
-// View toggle functionality
-document.getElementById('list-view-btn').addEventListener('click', function() {
-    document.getElementById('list-view').classList.remove('d-none');
-    document.getElementById('grid-view').classList.add('d-none');
-    this.classList.add('active');
-    document.getElementById('grid-view-btn').classList.remove('active');
-});
+    // View toggle functionality
+    document.getElementById('list-view-btn').addEventListener('click', function() {
+        document.getElementById('list-view').classList.remove('d-none');
+        document.getElementById('grid-view').classList.add('d-none');
+        this.classList.add('active');
+        document.getElementById('grid-view-btn').classList.remove('active');
+    });
 
-document.getElementById('grid-view-btn').addEventListener('click', function() {
-    document.getElementById('grid-view').classList.remove('d-none');
-    document.getElementById('list-view').classList.add('d-none');
-    this.classList.add('active');
-    document.getElementById('list-view-btn').classList.remove('active');
-});
+    document.getElementById('grid-view-btn').addEventListener('click', function() {
+        document.getElementById('grid-view').classList.remove('d-none');
+        document.getElementById('list-view').classList.add('d-none');
+        this.classList.add('active');
+        document.getElementById('list-view-btn').classList.remove('active');
+    });
 
-// Select all functionality
-document.getElementById('select-all').addEventListener('change', function() {
-    const checkboxes = document.querySelectorAll('.task-checkbox');
-    checkboxes.forEach(cb => cb.checked = this.checked);
-    updateBulkActions();
-});
 
-// Update bulk actions visibility
-document.querySelectorAll('.task-checkbox').forEach(cb => {
-    cb.addEventListener('change', updateBulkActions);
-});
+    // Delete task function
+    function deleteTask(taskId, taskTitle) {
+        if (confirm(`Are you sure you want to delete the task "${taskTitle}"? This action cannot be undone.`)) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '<?php echo BASE_URL; ?>/controller/TaskController.php?action=delete&id=' + taskId;
 
-function updateBulkActions() {
-    const checkedBoxes = document.querySelectorAll('.task-checkbox:checked');
-    const bulkActions = document.querySelector('.bulk-actions');
-    bulkActions.classList.toggle('d-none', checkedBoxes.length === 0);
-}
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'confirm_delete';
+            input.value = '1';
+            form.appendChild(input);
 
-// Delete task function
-function deleteTask(taskId, taskTitle) {
-    if (confirm(`Are you sure you want to delete the task "${taskTitle}"? This action cannot be undone.`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '<?php echo BASE_URL; ?>/controller/TaskController.php?action=delete&id=' + taskId;
-
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'confirm_delete';
-        input.value = '1';
-        form.appendChild(input);
-
-        document.body.appendChild(form);
-        form.submit();
+            document.body.appendChild(form);
+            form.submit();
+        }
     }
-}
 
-// Bulk actions
-function bulkUpdateStatus(status) {
-    const selectedTasks = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => cb.value);
-    if (selectedTasks.length === 0) return;
 
-    if (confirm(`Are you sure you want to mark ${selectedTasks.length} task(s) as ${status.replace('_', ' ')}?`)) {
-        // Implement bulk update logic
-        alert('Bulk update functionality would be implemented here');
+
+    // Helper function for pagination URLs
+    function buildPaginationUrl(page) {
+        const params = new URLSearchParams(window.location.search);
+        params.set('page', page);
+        return '<?php echo BASE_URL; ?>/controller/TaskController.php?' + params.toString();
     }
-}
-
-function bulkDelete() {
-    const selectedTasks = Array.from(document.querySelectorAll('.task-checkbox:checked')).map(cb => cb.value);
-    if (selectedTasks.length === 0) return;
-
-    if (confirm(`Are you sure you want to delete ${selectedTasks.length} task(s)? This action cannot be undone.`)) {
-        // Implement bulk delete logic
-        alert('Bulk delete functionality would be implemented here');
-    }
-}
-
-
-// Helper function for pagination URLs
-function buildPaginationUrl(page) {
-    const params = new URLSearchParams(window.location.search);
-    params.set('page', page);
-    return '<?php echo BASE_URL; ?>/controller/TaskController.php?' + params.toString();
-}
 </script>
 
 <?php

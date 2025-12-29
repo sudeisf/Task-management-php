@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Show Task View
  * Display detailed task information with comments and attachments
@@ -161,7 +162,7 @@ $userRole = strtolower($userRole ?? 'member');
                             <div class="mb-3">
                                 <label for="comment" class="form-label">Add a comment</label>
                                 <textarea class="form-control" id="comment" name="comment" rows="3" required
-                                          placeholder="Write your comment here..."></textarea>
+                                    placeholder="Write your comment here..."></textarea>
                             </div>
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-send me-1"></i>
@@ -187,16 +188,18 @@ $userRole = strtolower($userRole ?? 'member');
                                                         <?php echo date('M d, Y H:i', strtotime($comment['created_at'])); ?>
                                                     </small>
                                                 </div>
-                                                <div class="comment-actions">
-                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                <?php if ($comment['user_id'] == $currentUser['id']): ?>
+                                                    <div class="comment-actions">
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary"
                                                             onclick="editComment(<?php echo $comment['id']; ?>)">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                            <i class="bi bi-pencil"></i>
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger"
                                                             onclick="deleteComment(<?php echo $comment['id']; ?>)">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </div>
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
                                             <div class="comment-content mt-2">
                                                 <?php echo nl2br(htmlspecialchars($comment['comment'])); ?>
@@ -253,7 +256,7 @@ $userRole = strtolower($userRole ?? 'member');
                                         </div>
                                         <div class="flex-grow-1">
                                             <a href="<?php echo BASE_URL; ?>/controller/AttachmentController.php?action=download&id=<?php echo $attachment['id']; ?>"
-                                               class="text-decoration-none fw-bold">
+                                                class="text-decoration-none fw-bold">
                                                 <?php echo htmlspecialchars($attachment['file_name'] ?? 'Unnamed file'); ?>
                                             </a>
                                             <br>
@@ -263,7 +266,7 @@ $userRole = strtolower($userRole ?? 'member');
                                         </div>
                                         <div class="attachment-actions">
                                             <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    onclick="deleteAttachment(<?php echo $attachment['id']; ?>)">
+                                                onclick="deleteAttachment(<?php echo $attachment['id']; ?>)">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
@@ -314,7 +317,7 @@ $userRole = strtolower($userRole ?? 'member');
                                 <span class="stat-label">Days until deadline:</span>
                                 <span class="stat-value <?php echo (strtotime($task['deadline']) < time() && $task['status'] !== 'completed') ? 'text-danger fw-bold' : ''; ?>">
                                     <?php
-                                    $days = floor((strtotime($task['deadline']) - time()) / (60*60*24));
+                                    $days = floor((strtotime($task['deadline']) - time()) / (60 * 60 * 24));
                                     if ($days < 0 && $task['status'] !== 'completed') {
                                         echo 'Overdue by ' . abs($days) . ' days';
                                     } elseif ($days === 0) {
@@ -336,266 +339,265 @@ $userRole = strtolower($userRole ?? 'member');
 </div>
 
 <style>
+    .task-meta-item {
+        margin-bottom: 1rem;
+    }
 
-.task-meta-item {
-    margin-bottom: 1rem;
-}
+    .task-meta-item label {
+        display: block;
+        margin-bottom: 0.25rem;
+    }
 
-.task-meta-item label {
-    display: block;
-    margin-bottom: 0.25rem;
-}
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #007bff;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
 
-.avatar-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
+    .task-description {
+        padding-top: 1rem;
+        border-top: 1px solid #dee2e6;
+    }
 
-.task-description {
-    padding-top: 1rem;
-    border-top: 1px solid #dee2e6;
-}
+    .description-content {
+        line-height: 1.6;
+    }
 
-.description-content {
-    line-height: 1.6;
-}
+    .comment-item {
+        transition: background-color 0.2s ease;
+    }
 
-.comment-item {
-    transition: background-color 0.2s ease;
-}
+    .comment-item:hover {
+        background-color: #f8f9fa;
+    }
 
-.comment-item:hover {
-    background-color: #f8f9fa;
-}
+    .comment-actions {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
 
-.comment-actions {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
+    .comment-item:hover .comment-actions {
+        opacity: 1;
+    }
 
-.comment-item:hover .comment-actions {
-    opacity: 1;
-}
+    .attachments-list .attachment-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        color: #6c757d;
+    }
 
-.attachments-list .attachment-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    color: #6c757d;
-}
+    .activity-timeline {
+        position: relative;
+        padding-left: 40px;
+    }
 
-.activity-timeline {
-    position: relative;
-    padding-left: 40px;
-}
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #e9ecef;
+    }
 
-.activity-timeline::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background-color: #e9ecef;
-}
+    .activity-item {
+        position: relative;
+        margin-bottom: 1rem;
+    }
 
-.activity-item {
-    position: relative;
-    margin-bottom: 1rem;
-}
+    .activity-icon {
+        position: absolute;
+        left: -22px;
+        top: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        background-color: #007bff;
+        border: 3px solid white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
 
-.activity-icon {
-    position: absolute;
-    left: -22px;
-    top: 0;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    background-color: #007bff;
-    border: 3px solid white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+    .activity-content {
+        background-color: #f8f9fa;
+        padding: 0.75rem;
+        border-radius: 6px;
+    }
 
-.activity-content {
-    background-color: #f8f9fa;
-    padding: 0.75rem;
-    border-radius: 6px;
-}
+    .stats-list .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
 
-.stats-list .stat-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f8f9fa;
-}
+    .stats-list .stat-item:last-child {
+        border-bottom: none;
+    }
 
-.stats-list .stat-item:last-child {
-    border-bottom: none;
-}
+    .stat-label {
+        font-weight: 500;
+        color: #6c757d;
+    }
 
-.stat-label {
-    font-weight: 500;
-    color: #6c757d;
-}
-
-.stat-value {
-    font-weight: 600;
-}
+    .stat-value {
+        font-weight: 600;
+    }
 </style>
 
 <script>
-// Quick actions
-function quickUpdateStatus(status) {
-    const statusLabel = status === 'completed' ? 'completed' : 'in progress';
-    if (confirm(`Mark this task as ${statusLabel}?`)) {
-        fetch('<?php echo BASE_URL; ?>/controller/TaskController.php?action=change_status&id=<?php echo $task['id']; ?>', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-                'id': '<?php echo $task['id']; ?>',
-                'status': status,
-                'confirm_update': '1'
-            })
-        })
-        .then(response => {
-            if (response.redirected) {
-                window.location.href = response.url;
-                return;
-            }
-            return response.text().then(text => {
-                try {
-                    return JSON.parse(text);
-                } catch (e) {
-                    // If not JSON, it might be a redirect or error page
-                    location.reload();
-                }
+    // Quick actions
+    function quickUpdateStatus(status) {
+        const statusLabel = status === 'completed' ? 'completed' : 'in progress';
+        if (confirm(`Mark this task as ${statusLabel}?`)) {
+            fetch('<?php echo BASE_URL; ?>/controller/TaskController.php?action=change_status&id=<?php echo $task['id']; ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'id': '<?php echo $task['id']; ?>',
+                        'status': status,
+                        'confirm_update': '1'
+                    })
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+                    return response.text().then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            // If not JSON, it might be a redirect or error page
+                            location.reload();
+                        }
+                    });
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        alert(`Task marked as ${statusLabel}!`);
+                        location.reload();
+                    } else if (data && data.message) {
+                        alert('Failed to update task status: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // location.reload(); // Fallback to reload if something goes wrong
+                });
+        }
+    }
+
+
+    function createAndSubmitForm(action, data) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = action;
+
+        for (const key in data) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = data[key];
+            form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+
+    function editComment(commentId) {
+        const commentText = prompt("Edit your comment:");
+        if (commentText !== null && commentText.trim() !== "") {
+            createAndSubmitForm('<?php echo BASE_URL; ?>/controller/CommentController.php?action=update', {
+                'comment_id': commentId,
+                'task_id': '<?php echo $task['id']; ?>',
+                'comment': commentText
             });
-        })
-        .then(data => {
-            if (data && data.success) {
-                alert(`Task marked as ${statusLabel}!`);
-                location.reload();
-            } else if (data && data.message) {
-                alert('Failed to update task status: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            // location.reload(); // Fallback to reload if something goes wrong
-        });
+        }
     }
-}
 
-
-function createAndSubmitForm(action, data) {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = action;
-    
-    for (const key in data) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = data[key];
-        form.appendChild(input);
+    function deleteComment(commentId) {
+        if (confirm('Are you sure you want to delete this comment?')) {
+            createAndSubmitForm('<?php echo BASE_URL; ?>/controller/CommentController.php?action=delete', {
+                'comment_id': commentId,
+                'task_id': '<?php echo $task['id']; ?>'
+            });
+        }
     }
-    
-    document.body.appendChild(form);
-    form.submit();
-}
 
-
-function editComment(commentId) {
-    const commentText = prompt("Edit your comment:");
-    if (commentText !== null && commentText.trim() !== "") {
-        createAndSubmitForm('<?php echo BASE_URL; ?>/controller/CommentController.php?action=update', {
-            'comment_id': commentId,
-            'task_id': '<?php echo $task['id']; ?>',
-            'comment': commentText
-        });
+    function deleteAttachment(attachmentId) {
+        if (confirm('Are you sure you want to delete this attachment?')) {
+            createAndSubmitForm('<?php echo BASE_URL; ?>/controller/AttachmentController.php?action=delete', {
+                'attachment_id': attachmentId,
+                'task_id': '<?php echo $task['id']; ?>'
+            });
+        }
     }
-}
 
-function deleteComment(commentId) {
-    if (confirm('Are you sure you want to delete this comment?')) {
-        createAndSubmitForm('<?php echo BASE_URL; ?>/controller/CommentController.php?action=delete', {
-            'comment_id': commentId,
-            'task_id': '<?php echo $task['id']; ?>'
-        });
+    // Helper functions
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const iconMap = {
+            'pdf': 'bi-file-earmark-pdf',
+            'doc': 'bi-file-earmark-word',
+            'docx': 'bi-file-earmark-word',
+            'xls': 'bi-file-earmark-excel',
+            'xlsx': 'bi-file-earmark-excel',
+            'ppt': 'bi-file-earmark-ppt',
+            'pptx': 'bi-file-earmark-ppt',
+            'txt': 'bi-file-earmark-text',
+            'jpg': 'bi-file-earmark-image',
+            'jpeg': 'bi-file-earmark-image',
+            'png': 'bi-file-earmark-image',
+            'gif': 'bi-file-earmark-image'
+        };
+        return iconMap[ext] || 'bi-file-earmark';
     }
-}
 
-function deleteAttachment(attachmentId) {
-    if (confirm('Are you sure you want to delete this attachment?')) {
-        createAndSubmitForm('<?php echo BASE_URL; ?>/controller/AttachmentController.php?action=delete', {
-            'attachment_id': attachmentId,
-            'task_id': '<?php echo $task['id']; ?>'
-        });
+    function getActivityIcon(action) {
+        if (action.includes('created')) return 'bi-plus-circle';
+        if (action.includes('updated')) return 'bi-pencil';
+        if (action.includes('completed')) return 'bi-check-circle';
+        if (action.includes('comment')) return 'bi-chat';
+        if (action.includes('attachment')) return 'bi-paperclip';
+        return 'bi-circle';
     }
-}
 
-// Helper functions
-function getFileIcon(filename) {
-    const ext = filename.split('.').pop().toLowerCase();
-    const iconMap = {
-        'pdf': 'bi-file-earmark-pdf',
-        'doc': 'bi-file-earmark-word',
-        'docx': 'bi-file-earmark-word',
-        'xls': 'bi-file-earmark-excel',
-        'xlsx': 'bi-file-earmark-excel',
-        'ppt': 'bi-file-earmark-ppt',
-        'pptx': 'bi-file-earmark-ppt',
-        'txt': 'bi-file-earmark-text',
-        'jpg': 'bi-file-earmark-image',
-        'jpeg': 'bi-file-earmark-image',
-        'png': 'bi-file-earmark-image',
-        'gif': 'bi-file-earmark-image'
-    };
-    return iconMap[ext] || 'bi-file-earmark';
-}
+    function timeAgo(datetime) {
+        const now = new Date();
+        const past = new Date(datetime);
+        const diff = now - past;
 
-function getActivityIcon(action) {
-    if (action.includes('created')) return 'bi-plus-circle';
-    if (action.includes('updated')) return 'bi-pencil';
-    if (action.includes('completed')) return 'bi-check-circle';
-    if (action.includes('comment')) return 'bi-chat';
-    if (action.includes('attachment')) return 'bi-paperclip';
-    return 'bi-circle';
-}
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
 
-function timeAgo(datetime) {
-    const now = new Date();
-    const past = new Date(datetime);
-    const diff = now - past;
-
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return minutes + ' minutes ago';
-    if (hours < 24) return hours + ' hours ago';
-    return days + ' days ago';
-}
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return minutes + ' minutes ago';
+        if (hours < 24) return hours + ' hours ago';
+        return days + ' days ago';
+    }
 </script>
 
 <?php

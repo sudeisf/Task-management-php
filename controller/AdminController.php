@@ -19,7 +19,7 @@ class AdminController extends Controller
     {
         parent::__construct();
         if ($this->currentUser['role'] !== 'admin') $this->errorRedirect("Access denied", BASE_URL . "/controller/DashboardController.php");
-        
+
         $this->adminService = new AdminService();
         $this->userModel = new User(require __DIR__ . '/../config/db.php');
         $this->taskModel = new Task();
@@ -33,7 +33,13 @@ class AdminController extends Controller
         $perPage = ITEMS_PER_PAGE;
         $users = $this->userModel->getAll();
         $usersArray = [];
-        while ($u = $users->fetch_assoc()) $usersArray[] = $u;
+        $currentUserId = $this->currentUser['id'];
+
+        while ($u = $users->fetch_assoc()) {
+            if ($u['id'] != $currentUserId) {
+                $usersArray[] = $u;
+            }
+        }
         $totalUsers = count($usersArray);
 
         $this->view('admin/users', [
@@ -44,7 +50,10 @@ class AdminController extends Controller
         ]);
     }
 
-    public function createUser() { $this->view('admin/user_form'); }
+    public function createUser()
+    {
+        $this->view('admin/user_form');
+    }
 
     public function storeUser()
     {
@@ -57,7 +66,7 @@ class AdminController extends Controller
 
         $d = $val['data'];
         if ($this->userModel->create($d['full_name'], $d['email'], $d['password'], $d['role'])) {
-            $this->adminService->logActivity($this->currentUser['id'], 'user_registered', "Created: ".$d['email']);
+            $this->adminService->logActivity($this->currentUser['id'], 'user_registered', "Created: " . $d['email']);
             $this->successRedirect("User created", "?action=users");
         }
         $this->errorRedirect("Failed or email exists", "?action=create_user");
@@ -67,6 +76,12 @@ class AdminController extends Controller
     {
         $user = $this->userModel->getById($userId);
         if (!$user) $this->errorRedirect("Not found", "?action=users");
+
+        // Prevent editing other admins
+        if ($user['role'] === 'admin' && $user['id'] !== $this->currentUser['id']) {
+            $this->errorRedirect("You cannot edit another admin user.", "?action=users");
+        }
+
         $this->view('admin/user_form', ['user' => $user]);
     }
 
@@ -74,6 +89,11 @@ class AdminController extends Controller
     {
         $user = $this->userModel->getById($userId);
         if (!$user) $this->errorRedirect("Not found", "?action=users");
+
+        // Prevent updating other admins
+        if ($user['role'] === 'admin' && $user['id'] !== $this->currentUser['id']) {
+            $this->errorRedirect("You cannot update another admin user.", "?action=users");
+        }
 
         $val = $this->adminService->validateUser($_POST, false);
         if (!$val['data']) {
@@ -84,7 +104,7 @@ class AdminController extends Controller
         $d = $val['data'];
         if ($this->userModel->update($userId, $d['full_name'], $d['email'], $d['role'], $d['status'])) {
             if (isset($_POST['change_password']) && !empty($_POST['new_password'])) $this->userModel->changePassword($userId, $_POST['new_password']);
-            $this->adminService->logActivity($this->currentUser['id'], 'user_updated', "Updated: ".$d['email']);
+            $this->adminService->logActivity($this->currentUser['id'], 'user_updated', "Updated: " . $d['email']);
             $this->successRedirect("User updated", "?action=users");
         }
         $this->errorRedirect("Update failed", "?action=edit_user&id=$userId");
@@ -93,9 +113,20 @@ class AdminController extends Controller
     public function deleteUser($userId)
     {
         if ($userId == $this->currentUser['id']) $this->errorRedirect("Cannot delete self", "?action=users");
+
         $user = $this->userModel->getById($userId);
-        if ($user) $this->adminService->logActivity($this->currentUser['id'], 'user_deleted', "Deleted: ".$user['email']);
-        $this->successRedirect("Deletion not fully implemented in model yet", "?action=users");
+        if (!$user) $this->errorRedirect("User not found", "?action=users");
+
+        // Prevent deleting other admins
+        if ($user['role'] === 'admin') {
+            $this->errorRedirect("You cannot delete another admin user.", "?action=users");
+        }
+
+        if ($this->userModel->delete($userId)) {
+            $this->adminService->logActivity($this->currentUser['id'], 'user_deleted', "Deleted: " . $user['email']);
+            $this->successRedirect("User deleted successfully", "?action=users");
+        }
+        $this->errorRedirect("Failed to delete user", "?action=users");
     }
 
     public function allTasks()
@@ -104,7 +135,7 @@ class AdminController extends Controller
         $perPage = ITEMS_PER_PAGE;
         $filters = $this->buildFilters();
         $totalTasks = $this->taskModel->getCount($filters);
-        
+
         $this->view('admin/all_tasks', [
             'tasks' => $this->taskModel->all($filters, $perPage, ($page - 1) * $perPage),
             'totalTasks' => $totalTasks,
@@ -120,7 +151,7 @@ class AdminController extends Controller
         $page = $this->query('page', 1);
         $perPage = ITEMS_PER_PAGE;
         $totalActivities = $this->activityModel->getCount();
-        
+
         $this->view('admin/activity_logs', [
             'activities' => $this->activityModel->getAll($perPage, ($page - 1) * $perPage),
             'totalActivities' => $totalActivities,
@@ -129,7 +160,10 @@ class AdminController extends Controller
         ]);
     }
 
-    public function settings() { $this->view('admin/settings'); }
+    public function settings()
+    {
+        $this->view('admin/settings');
+    }
 
     private function buildFilters()
     {

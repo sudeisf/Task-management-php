@@ -109,7 +109,7 @@ class User
         $stmt->bind_param("s", $roleName);
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         $users = [];
         while ($row = $result->fetch_assoc()) {
             $users[] = $row;
@@ -155,6 +155,17 @@ class User
         if (!$stmt) return false;
 
         $stmt->bind_param("si", $hashed, $id);
+        return $stmt->execute();
+    }
+
+    // ---------------- DELETE USER ----------------
+    public function delete($id)
+    {
+        $sql = "DELETE FROM $this->table WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return false;
+
+        $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
 }

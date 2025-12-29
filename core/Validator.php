@@ -36,10 +36,11 @@ class Validator
         $ruleName = $ruleParts[0];
         $ruleParam = $ruleParts[1] ?? null;
 
-        $method = 'validate' . ucfirst($ruleName);
+        // Convert rule_name to validateRuleName (handle underscores)
+        $methodName = 'validate' . str_replace('_', '', ucwords($ruleName, '_'));
 
-        if (method_exists($this, $method)) {
-            if (!$this->$method($field, $value, $ruleParam)) {
+        if (method_exists($this, $methodName)) {
+            if (!$this->$methodName($field, $value, $ruleParam)) {
                 $this->addError($field, $ruleName, $ruleParam);
             }
         }

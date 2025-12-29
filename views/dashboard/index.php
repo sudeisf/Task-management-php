@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Dashboard Index View
  * Main dashboard page showing statistics, recent tasks, and activities
@@ -33,48 +34,48 @@ require_once __DIR__ . '/../layout/header.php';
     </div>
 
     <!-- Statistics Cards -->
-    <?php 
+    <?php
     // Get current user role
     $currentUser = Auth::user();
     $userRole = $currentUser['role'] ?? null;
     ?>
-    
+
     <?php if ($userRole !== 'member'): ?>
-    <!-- Project Statistics -->
-    <h5 class="mb-3 text-muted">Project Statistics</h5>
-    <div class="stats-grid mb-4">
-        <div class="stats-card">
-            <div class="stats-icon primary">
-                <i class="bi bi-folder"></i>
+        <!-- Project Statistics -->
+        <h5 class="mb-3 text-muted">Project Statistics</h5>
+        <div class="stats-grid mb-4">
+            <div class="stats-card">
+                <div class="stats-icon primary">
+                    <i class="bi bi-folder"></i>
+                </div>
+                <div class="stats-number"><?php echo $projectStats['total_projects'] ?? 0; ?></div>
+                <div class="stats-label">Total Projects</div>
             </div>
-            <div class="stats-number"><?php echo $projectStats['total_projects'] ?? 0; ?></div>
-            <div class="stats-label">Total Projects</div>
-        </div>
 
-        <div class="stats-card">
-            <div class="stats-icon secondary">
-                <i class="bi bi-circle"></i>
+            <div class="stats-card">
+                <div class="stats-icon secondary">
+                    <i class="bi bi-circle"></i>
+                </div>
+                <div class="stats-number"><?php echo $projectStats['planning_projects'] ?? 0; ?></div>
+                <div class="stats-label">To Do</div>
             </div>
-            <div class="stats-number"><?php echo $projectStats['planning_projects'] ?? 0; ?></div>
-            <div class="stats-label">To Do</div>
-        </div>
 
-        <div class="stats-card">
-            <div class="stats-icon primary">
-                <i class="bi bi-arrow-repeat"></i>
+            <div class="stats-card">
+                <div class="stats-icon primary">
+                    <i class="bi bi-arrow-repeat"></i>
+                </div>
+                <div class="stats-number"><?php echo $projectStats['in_progress_projects'] ?? 0; ?></div>
+                <div class="stats-label">In Progress</div>
             </div>
-            <div class="stats-number"><?php echo $projectStats['in_progress_projects'] ?? 0; ?></div>
-            <div class="stats-label">In Progress</div>
-        </div>
-        
-        <div class="stats-card">
-            <div class="stats-icon success">
-                <i class="bi bi-check-circle-fill"></i>
+
+            <div class="stats-card">
+                <div class="stats-icon success">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="stats-number"><?php echo $projectStats['completed_projects'] ?? 0; ?></div>
+                <div class="stats-label">Completed</div>
             </div>
-            <div class="stats-number"><?php echo $projectStats['completed_projects'] ?? 0; ?></div>
-            <div class="stats-label">Completed</div>
         </div>
-    </div>
     <?php endif; ?>
 
     <!-- Task Statistics -->
@@ -136,31 +137,46 @@ require_once __DIR__ . '/../layout/header.php';
         </div>
         <div class="quick-actions-grid">
             <?php if ($userRole !== 'member'): ?>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=create" class="quick-action-btn">
-                <div class="quick-action-icon">
-                    <i class="bi bi-plus-circle"></i>
-                </div>
-                <span class="quick-action-label">Create Task</span>
-            </a>
+                <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=create" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-plus-circle"></i>
+                    </div>
+                    <span class="quick-action-label">Create Task</span>
+                </a>
             <?php endif; ?>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&my_tasks=true" class="quick-action-btn">
-                <div class="quick-action-icon">
-                    <i class="bi bi-list-task"></i>
-                </div>
-                <span class="quick-action-label">View My Tasks</span>
-            </a>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=todo&my_tasks=true" class="quick-action-btn">
-                <div class="quick-action-icon">
-                    <i class="bi bi-circle"></i>
-                </div>
-                <span class="quick-action-label">To Do Tasks</span>
-            </a>
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=in_progress&my_tasks=true" class="quick-action-btn">
-                <div class="quick-action-icon">
-                    <i class="bi bi-play-circle"></i>
-                </div>
-                <span class="quick-action-label">In Progress</span>
-            </a>
+            <?php if ($userRole === 'member'): ?>
+                <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&my_tasks=true" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-list-task"></i>
+                    </div>
+                    <span class="quick-action-label">View My Tasks</span>
+                </a>
+                <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=todo&my_tasks=true" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-circle"></i>
+                    </div>
+                    <span class="quick-action-label">To Do Tasks</span>
+                </a>
+                <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index&status=in_progress&my_tasks=true" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-play-circle"></i>
+                    </div>
+                    <span class="quick-action-label">In Progress</span>
+                </a>
+            <?php else: ?>
+                <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=index" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-list-task"></i>
+                    </div>
+                    <span class="quick-action-label">View All Tasks</span>
+                </a>
+                <a href="<?php echo BASE_URL; ?>/controller/ProjectController.php" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="bi bi-folder"></i>
+                    </div>
+                    <span class="quick-action-label">Manage Projects</span>
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -178,16 +194,16 @@ require_once __DIR__ . '/../layout/header.php';
                 <?php if (!empty($recentTasks)): ?>
                     <?php foreach ($recentTasks as $task): ?>
                         <div class="task-item">
-                            <?php 
+                            <?php
                             $canToggle = ($userRole === 'member' && $task['assigned_to'] == $currentUser['id']);
                             ?>
                             <div class="task-checkbox <?php echo ($task['status'] === 'completed') ? 'checked' : ''; ?> <?php echo !$canToggle ? 'readonly' : ''; ?>"
-                                 data-task-id="<?php echo $task['id']; ?>"
-                                 <?php echo $canToggle ? 'onclick="toggleTaskStatus(' . $task['id'] . ')"' : ''; ?>>
+                                data-task-id="<?php echo $task['id']; ?>"
+                                <?php echo $canToggle ? 'onclick="toggleTaskStatus(' . $task['id'] . ')"' : ''; ?>>
                             </div>
                             <div class="task-content">
                                 <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>"
-                                   class="task-title <?php echo ($task['status'] === 'completed') ? 'completed' : ''; ?>">
+                                    class="task-title <?php echo ($task['status'] === 'completed') ? 'completed' : ''; ?>">
                                     <?php echo htmlspecialchars($task['title']); ?>
                                 </a>
                                 <div class="task-meta">
@@ -223,24 +239,24 @@ require_once __DIR__ . '/../layout/header.php';
             </div>
             <ul class="activities-list">
                 <?php if (!empty($recentActivities)): ?>
-    <?php foreach ($recentActivities as $activity): ?>
-        <li class="activity-item">
-            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $activity['task_id']; ?>#comments-section" class="text-decoration-none text-dark d-block">
-                <div class="activity-content">
-                    <?php echo htmlspecialchars($activity['action']); ?>
-                    <?php if (!empty($activity['details'])): ?>
-                        <br><small class="text-muted"><?php echo htmlspecialchars($activity['details']); ?></small>
-                    <?php endif; ?>
-                </div>
-                <div class="activity-meta mt-1">
-                    <div class="activity-icon <?php echo getActivityType($activity['action']); ?>">
-                        <i class="bi <?php echo getActivityIcon($activity['action']); ?>"></i>
-                    </div>
-                    <span class="ms-4 ps-2 text-muted small"><?php echo timeAgo($activity['created_at']); ?></span>
-                </div>
-            </a>
-        </li>
-    <?php endforeach; ?>
+                    <?php foreach ($recentActivities as $activity): ?>
+                        <li class="activity-item">
+                            <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $activity['task_id']; ?>#comments-section" class="text-decoration-none text-dark d-block">
+                                <div class="activity-content">
+                                    <?php echo htmlspecialchars($activity['action']); ?>
+                                    <?php if (!empty($activity['details'])): ?>
+                                        <br><small class="text-muted"><?php echo htmlspecialchars($activity['details']); ?></small>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="activity-meta mt-1">
+                                    <div class="activity-icon <?php echo getActivityType($activity['action']); ?>">
+                                        <i class="bi <?php echo getActivityIcon($activity['action']); ?>"></i>
+                                    </div>
+                                    <span class="ms-4 ps-2 text-muted small"><?php echo timeAgo($activity['created_at']); ?></span>
+                                </div>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
                 <?php else: ?>
                     <li class="activity-item">
                         <div class="activity-content text-muted">
@@ -264,7 +280,7 @@ require_once __DIR__ . '/../layout/header.php';
                         <li class="activity-item">
                             <div class="activity-content">
                                 <a href="<?php echo BASE_URL; ?>/controller/TaskController.php?action=show&id=<?php echo $task['id']; ?>"
-                                   class="text-danger">
+                                    class="text-danger">
                                     <?php echo htmlspecialchars($task['title']); ?>
                                 </a>
                                 <br><small class="text-muted">
@@ -283,64 +299,64 @@ require_once __DIR__ . '/../layout/header.php';
 </div>
 
 <script>
-// Toggle task status
-function toggleTaskStatus(taskId) {
-    if (confirm('Are you sure you want to change the task status?')) {
-        // If checkbox is checked (completed), move to in_progress. If not checked, move to completed.
-        var isCompleted = document.querySelector('[data-task-id="' + taskId + '"]').classList.contains('checked');
-        var nextStatus = isCompleted ? 'in_progress' : 'completed';
+    // Toggle task status
+    function toggleTaskStatus(taskId) {
+        if (confirm('Are you sure you want to change the task status?')) {
+            // If checkbox is checked (completed), move to in_progress. If not checked, move to completed.
+            var isCompleted = document.querySelector('[data-task-id="' + taskId + '"]').classList.contains('checked');
+            var nextStatus = isCompleted ? 'in_progress' : 'completed';
 
-        var formData = new FormData();
-        formData.append('status', nextStatus);
+            var formData = new FormData();
+            formData.append('status', nextStatus);
 
-        fetch('<?php echo BASE_URL; ?>/controller/TaskController.php?action=change_status&id=' + taskId, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (response.ok) {
-                location.reload();
-            } else {
-                alert('Error updating task status');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error updating task status');
-        });
+            fetch('<?php echo BASE_URL; ?>/controller/TaskController.php?action=change_status&id=' + taskId, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Error updating task status');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error updating task status');
+                });
+        }
     }
-}
 
-// Helper functions for activity display
-function getActivityType(action) {
-    if (action.includes('task')) return 'task';
-    if (action.includes('comment')) return 'comment';
-    if (action.includes('user')) return 'user';
-    return 'task';
-}
+    // Helper functions for activity display
+    function getActivityType(action) {
+        if (action.includes('task')) return 'task';
+        if (action.includes('comment')) return 'comment';
+        if (action.includes('user')) return 'user';
+        return 'task';
+    }
 
-function getActivityIcon(action) {
-    if (action.includes('created')) return 'bi-plus-circle';
-    if (action.includes('updated')) return 'bi-pencil';
-    if (action.includes('completed')) return 'bi-check-circle';
-    if (action.includes('comment')) return 'bi-chat';
-    return 'bi-circle';
-}
+    function getActivityIcon(action) {
+        if (action.includes('created')) return 'bi-plus-circle';
+        if (action.includes('updated')) return 'bi-pencil';
+        if (action.includes('completed')) return 'bi-check-circle';
+        if (action.includes('comment')) return 'bi-chat';
+        return 'bi-circle';
+    }
 
-function timeAgo(datetime) {
-    const now = new Date();
-    const past = new Date(datetime);
-    const diff = now - past;
+    function timeAgo(datetime) {
+        const now = new Date();
+        const past = new Date(datetime);
+        const diff = now - past;
 
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return minutes + 'm ago';
-    if (hours < 24) return hours + 'h ago';
-    return days + 'd ago';
-}
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return minutes + 'm ago';
+        if (hours < 24) return hours + 'h ago';
+        return days + 'd ago';
+    }
 </script>
 
 <?php

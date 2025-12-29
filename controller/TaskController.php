@@ -49,26 +49,26 @@ class TaskController extends Controller
         $perPage = ITEMS_PER_PAGE;
         $offset = ($page - 1) * $perPage;
         $filters = $this->buildFilters();
-        
+
         $result = $this->taskService->getTasksForIndex(
-            $this->currentUser['id'], 
-            $this->currentUser['role'], 
-            $filters, 
-            $perPage, 
-            $offset, 
+            $this->currentUser['id'],
+            $this->currentUser['role'],
+            $filters,
+            $perPage,
+            $offset,
             $this->query('my_tasks') === 'true'
         );
 
         if (!$result) $this->redirect(BASE_URL . "/controller/ProjectController.php");
 
         list($tasks, $totalTasks) = $result;
-        
+
         $this->view('tasks/index', [
             'tasks' => $tasks,
             'totalTasks' => $totalTasks,
             'totalPages' => ceil($totalTasks / $perPage),
             'priorities' => $this->priorityModel->all(),
-            'users' => in_array($this->currentUser['role'], ['admin', 'manager']) ? $this->userModel->getAll() : null,
+            'users' => in_array($this->currentUser['role'], ['admin', 'manager']) ? $this->userModel->getByRole('member') : null,
             'page' => $page
         ]);
     }
@@ -89,25 +89,20 @@ class TaskController extends Controller
         }
 
         $priorities = $this->priorityModel->all();
-        // Self-healing: Seed defaults if empty
-        if (empty($priorities)) {
-            $this->taskService->seedPriorities();
-            $priorities = $this->priorityModel->all();
-        }
 
         $users = null;
         if ($projectId) {
             if ($this->currentUser['role'] === 'member') {
-                 $users = $this->projectModel->getMembers($projectId);
+                $users = $this->projectModel->getMembers($projectId);
             } else {
-                 $users = $this->userModel->getByRole('member');
+                $users = $this->userModel->getByRole('member');
             }
         } else {
             $users = ($this->currentUser['role'] === 'admin' || $this->currentUser['role'] === 'manager') ? $this->userModel->getByRole('member') : null;
         }
 
-        $projects = ($this->currentUser['role'] === 'admin') ? 
-            $this->projectModel->all() : 
+        $projects = ($this->currentUser['role'] === 'admin') ?
+            $this->projectModel->all() :
             $this->projectModel->getAssigned($this->currentUser['id']);
 
         $this->view('tasks/create', [
@@ -148,7 +143,7 @@ class TaskController extends Controller
             if (isset($_FILES['attachment']) && !empty($_FILES['attachment']['name'])) {
                 $res = $this->attachmentService->handleUpload($_FILES['attachment'], $taskId, $this->currentUser['id'], $this->currentUser['role']);
                 if (isset($res['error'])) {
-                    $this->setFlashMessage('warning', "Task created but file upload failed: " . $res['error']);
+                    setFlashMessage("Task created but file upload failed: " . $res['error'], 'warning');
                 } else {
                     $this->activityModel->log($this->currentUser['id'], $taskId, 'file_uploaded', "Uploaded file during task creation");
                 }
@@ -189,7 +184,7 @@ class TaskController extends Controller
         $this->view('tasks/edit', [
             'task' => $task,
             'priorities' => $this->priorityModel->all(),
-            'users' => in_array($this->currentUser['role'], ['admin', 'manager']) ? $this->userModel->getAll() : null,
+            'users' => in_array($this->currentUser['role'], ['admin', 'manager']) ? $this->userModel->getByRole('member') : null,
             'canUpdateStatus' => $this->permissionModel->canUpdateTaskStatus($this->currentUser['id'], $id)
         ]);
     }
@@ -211,7 +206,7 @@ class TaskController extends Controller
         }
 
         $data = $val['data'];
-        
+
         // Restriction: Admins and Managers cannot change status
         if (in_array($this->currentUser['role'], ['admin', 'manager'])) {
             $data['status'] = $task['status'];
@@ -231,7 +226,7 @@ class TaskController extends Controller
             if (isset($_FILES['attachment']) && !empty($_FILES['attachment']['name'])) {
                 $res = $this->attachmentService->handleUpload($_FILES['attachment'], $id, $this->currentUser['id'], $this->currentUser['role']);
                 if (isset($res['error'])) {
-                    $this->setFlashMessage('warning', "Task updated but file upload failed: " . $res['error']);
+                    setFlashMessage("Task updated but file upload failed: " . $res['error'], 'warning');
                 } else {
                     $this->activityModel->log($this->currentUser['id'], $id, 'file_uploaded', "Uploaded file during task update");
                 }
@@ -280,46 +275,6 @@ class TaskController extends Controller
         $this->errorRedirect("Failed to update task status.", "?action=show&id=$id");
     }
 
-    public function bulkUpdate()
-    {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: ?action=index");
-            exit;
-        }
-
-        $taskIds = $this->post('task_ids', []);
-        $status = $this->post('status');
-        if (empty($taskIds) || empty($status)) $this->errorRedirect("No tasks selected or invalid status.");
-
-        $count = 0;
-        foreach ($taskIds as $id) {
-            if ($this->permissionModel->canUpdateTaskStatus($this->currentUser['id'], $id)) {
-                if ($this->taskModel->updateStatus($id, $status)) {
-                    $count++;
-                }
-            }
-        }
-        $this->successRedirect("$count tasks updated successfully.", "?action=index");
-    }
-
-    public function bulkDelete()
-    {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: ?action=index");
-            exit;
-        }
-
-        $taskIds = $this->post('task_ids', []);
-        if (empty($taskIds)) $this->errorRedirect("No tasks selected.");
-
-        $count = 0;
-        foreach ($taskIds as $id) {
-            if ($this->permissionModel->canEditTask($this->currentUser['id'], $id) || in_array($this->currentUser['role'], ['admin', 'manager'])) {
-                if ($this->taskModel->delete($id)) $count++;
-            }
-        }
-        $this->successRedirect("$count tasks deleted successfully.", "?action=index");
-    }
 
     public function search()
     {

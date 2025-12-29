@@ -30,7 +30,7 @@ class CommentController extends Controller
         if (isset($res['error'])) $this->errorRedirect($res['error'], "../controller/TaskController.php?action=show&id=$taskId");
 
         $this->activityModel->log($this->currentUser['id'], $taskId, 'comment_added', "Added comment");
-        $this->successRedirect("Comment added", "../controller/TaskController.php?action=show&id=$taskId#comment-".$res['id']);
+        $this->successRedirect("Comment added", "../controller/TaskController.php?action=show&id=$taskId#comment-" . $res['id']);
     }
 
     public function update()
@@ -38,7 +38,7 @@ class CommentController extends Controller
         $id = $this->post('comment_id');
         $taskId = $this->post('task_id');
         $text = $this->post('comment');
-        if (!$this->commentModel->canModify($id, $this->currentUser['id'], $this->currentUser['role'])) {
+        if (!$this->commentModel->canModify($id, $this->currentUser['id'])) {
             $this->errorRedirect("Denied", "../controller/TaskController.php?action=show&id=$taskId");
         }
 
@@ -53,11 +53,11 @@ class CommentController extends Controller
     {
         $id = $this->post('comment_id');
         $taskId = $this->post('task_id');
-        if (!$this->commentModel->canModify($id, $this->currentUser['id'], $this->currentUser['role'])) {
+        if (!$this->commentModel->canModify($id, $this->currentUser['id'])) {
             $this->errorRedirect("Denied", "../controller/TaskController.php?action=show&id=$taskId");
         }
 
-        if ($this->commentModel->delete($id, ($this->currentUser['role'] === 'admin' || $this->currentUser['role'] === 'manager') ? null : $this->currentUser['id'])) {
+        if ($this->commentModel->delete($id, $this->currentUser['id'])) {
             $this->activityModel->log($this->currentUser['id'], $taskId, 'comment_deleted', "Deleted comment");
             $this->successRedirect("Deleted", "../controller/TaskController.php?action=show&id=$taskId");
         }
@@ -70,14 +70,17 @@ class CommentController extends Controller
         $taskId = $this->query('task_id');
         $comments = $this->commentModel->getByTask($taskId);
         $res = [];
-        while ($c = $comments->fetch_assoc()) {
+        foreach ($comments as $c) {
             $res[] = [
-                'id' => $c['id'], 'comment' => $c['comment'], 'created_at' => $c['created_at'],
+                'id' => $c['id'],
+                'comment' => $c['comment'],
+                'created_at' => $c['created_at'],
                 'user_name' => $c['full_name'] ?? 'Unknown',
-                'can_edit' => $this->commentModel->canModify($c['id'], $this->currentUser['id'], $this->currentUser['role'])
+                'can_edit' => $this->commentModel->canModify($c['id'], $this->currentUser['id'])
             ];
         }
-        echo json_encode(['comments' => $res]); exit;
+        echo json_encode(['comments' => $res]);
+        exit;
     }
 }
 

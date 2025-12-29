@@ -21,9 +21,12 @@ class AdminService
         $rules = [
             'full_name' => 'required|max:255',
             'email' => 'required|email|max:255',
-            'role' => 'required|in:admin,manager,member',
-            'status' => 'required|in:active,inactive'
+            'role' => 'required|in:admin,manager,member'
         ];
+
+        if (!$isNew) {
+            $rules['status'] = 'required|in:active,inactive';
+        }
 
         if ($isNew) {
             $rules['password'] = 'required|min:8';
@@ -45,9 +48,9 @@ class AdminService
         }
 
         $sanitized = $validator->getSanitizedData();
-        
+
         // Custom password complexity check if needed (omitted for brevity but can be added here)
-        
+
         return ['errors' => [], 'data' => $sanitized];
     }
 

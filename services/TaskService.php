@@ -31,18 +31,12 @@ class TaskService
     public function getTasksForIndex($userId, $userRole, $filters, $perPage, $offset, $isMyTasks = false)
     {
         if ($isMyTasks) {
-            if ($userRole === 'manager') {
-                $managedProjects = $this->projectModel->getByManager($userId);
-                if (empty($managedProjects)) return [[], 0];
-                $projectIds = array_column($managedProjects, 'id');
-                $tasks = $this->taskModel->getByProjects($projectIds, $filters, $perPage, $offset);
-                $total = count($this->taskModel->getByProjects($projectIds, $filters));
-                return [$tasks, $total];
-            } else { // member
+            if ($userRole === 'member') {
                 $tasks = $this->taskModel->assignedTo($userId, $filters, $perPage, $offset);
                 $total = $this->taskModel->getCount($filters, $userId, $userRole);
                 return [$tasks, $total];
             }
+            return null; // Managers/Admins don't have "My Tasks" this way
         }
 
         if ($userRole === 'admin') {
@@ -92,26 +86,26 @@ class TaskService
         }
 
         $sanitized = $validator->getSanitizedData();
-        
+
         if (!empty($sanitized['assigned_to'])) {
             if ($this->getUserRole($sanitized['assigned_to']) !== 'member') {
-                 return ['errors' => ['assigned_to' => ["Tasks can only be assigned to Members."]], 'data' => false];
+                return ['errors' => ['assigned_to' => ["Tasks can only be assigned to Members."]], 'data' => false];
             }
         }
 
         $errors = [];
         $today = date('Y-m-d');
         $deadline = null;
-        
+
         // Validate deadline
         if (!empty($data['deadline'])) {
             $deadline = date('Y-m-d', strtotime($data['deadline']));
-            
+
             // Check if deadline is in the past
             if ($deadline < $today) {
                 $errors['deadline'] = ['Task deadline cannot be in the past.'];
             }
-            
+
             // Check if deadline is after project's end date
             $project = $this->projectModel->find($sanitized['project_id']);
             if ($project && !empty($project['end_date'])) {
@@ -121,7 +115,7 @@ class TaskService
                 }
             }
         }
-        
+
         if (!empty($errors)) {
             return ['errors' => $errors, 'data' => false];
         }

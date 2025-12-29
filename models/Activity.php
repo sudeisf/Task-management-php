@@ -111,8 +111,8 @@ class Activity
 
         $params = [];
 
-        // Restrict to user's activities if not admin/manager
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
+        // ALWAYS restrict to user's activities as per user request
+        if ($user_id) {
             $sql .= " AND a.user_id = ?";
             $params[] = $user_id;
         }
@@ -164,39 +164,6 @@ class Activity
         return $result['count'] ?? 0;
     }
 
-    // Search activities
-    public function search($query, $user_id = null, $user_role = null, $limit = null, $offset = null)
-    {
-        $sql = "SELECT a.*, u.full_name, u.email, t.title as task_title
-                FROM $this->table a
-                LEFT JOIN users u ON a.user_id = u.id
-                LEFT JOIN tasks t ON a.task_id = t.id
-                WHERE (a.action LIKE ? OR a.details LIKE ? OR u.full_name LIKE ? OR t.title LIKE ?)";
-
-        $params = ["%$query%", "%$query%", "%$query%", "%$query%"];
-
-        // Restrict to user's activities if not admin/manager
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
-            $sql .= " AND a.user_id = ?";
-            $params[] = $user_id;
-        }
-
-        $sql .= " ORDER BY a.created_at DESC";
-
-        if ($limit) {
-            $sql .= " LIMIT ?";
-            $params[] = $limit;
-        }
-
-        if ($offset) {
-            $sql .= " OFFSET ?";
-            $params[] = $offset;
-        }
-
-        $this->db->prepare($sql);
-        $this->db->execute($params);
-        return $this->db->getRows();
-    }
 
 
     // Get action types for filtering
@@ -220,5 +187,4 @@ class Activity
 
         return $actions;
     }
-
 }

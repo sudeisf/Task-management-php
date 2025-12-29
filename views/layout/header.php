@@ -27,6 +27,7 @@ if ($currentUser) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,6 +51,7 @@ if ($currentUser) {
     <!-- jQuery (for Bootstrap) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm" style="z-index: 2000;">
@@ -71,9 +73,9 @@ if ($currentUser) {
                             </a>
                         </li>
 
-                            <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ProjectController.php">
-                                <i class="bi bi-folder2-open"></i> Projects
-                            </a>
+                        <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/ProjectController.php">
+                            <i class="bi bi-folder2-open"></i> Projects
+                        </a>
                         </li>
 
 
@@ -98,8 +100,10 @@ if ($currentUser) {
                                 <?php endif; ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end notification-dropdown" style="z-index: 2001; min-width: 300px;">
-                                <li><h6 class="dropdown-header">Notifications</h6></li>
-                                <?php 
+                                <li>
+                                    <h6 class="dropdown-header">Notifications</h6>
+                                </li>
+                                <?php
                                 // Get recent notifications for dropdown
                                 require_once __DIR__ . '/../../models/Notification.php';
                                 $notifModel = new Notification();
@@ -118,7 +122,9 @@ if ($currentUser) {
                                 <?php else: ?>
                                     <li><span class="dropdown-item-text">No new notifications</span></li>
                                 <?php endif; ?>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item text-center" href="<?php echo BASE_URL; ?>/controller/NotificationController.php">View all notifications</a></li>
                             </ul>
                         </li>
@@ -130,12 +136,16 @@ if ($currentUser) {
                                 <?php echo htmlspecialchars($currentUser['name']); ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" style="z-index: 2001;">
-                                <li><h6 class="dropdown-header"><?php echo htmlspecialchars($currentUser['name']); ?></h6></li>
+                                <li>
+                                    <h6 class="dropdown-header"><?php echo htmlspecialchars($currentUser['name']); ?></h6>
+                                </li>
                                 <li><span class="dropdown-item-text small text-muted"><?php echo getRoleDisplayName($userRole); ?></span></li>
-                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/controller/AuthController.php?action=logout">
-                                    <i class="bi bi-box-arrow-right"></i> Logout
-                                </a></li>
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </a></li>
                             </ul>
                         </li>
                     </ul>
@@ -155,7 +165,7 @@ if ($currentUser) {
                         <ul class="nav flex-column">
                             <?php if ($userRole === 'admin'): ?>
                                 <!-- Admin Sidebar -->
-                                
+
                                 <!-- Projects Section -->
                                 <li class="nav-item mt-3">
                                     <small class="text-muted px-3 text-uppercase fw-bold">Projects</small>
@@ -185,7 +195,7 @@ if ($currentUser) {
                                         <i class="bi bi-folder2-open"></i> All Projects
                                     </a>
                                 </li>
-                                
+
                                 <!-- Management Section -->
                                 <li class="nav-item mt-3">
                                     <small class="text-muted px-3 text-uppercase fw-bold">Management</small>
@@ -220,7 +230,7 @@ if ($currentUser) {
                                             <i class="bi bi-folder2-open"></i> Projects
                                         </a>
                                     </li>
-                                    
+
                                     <!-- Manager: Tasks Section -->
                                     <li class="nav-item mt-3">
                                         <small class="text-muted px-3 text-uppercase fw-bold">Tasks</small>
@@ -248,11 +258,6 @@ if ($currentUser) {
                                     <li class="nav-item">
                                         <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?show_all=true">
                                             <i class="bi bi-list-task"></i> All Tasks
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="<?php echo BASE_URL; ?>/controller/TaskController.php?my_tasks=true">
-                                            <i class="bi bi-list-task"></i> My Tasks
                                         </a>
                                     </li>
                                 <?php elseif ($userRole === 'member'): ?>
@@ -293,12 +298,12 @@ if ($currentUser) {
                     $flashMessage = getFlashMessage();
                     if ($flashMessage):
                     ?>
-                    <div class="mt-3">
-                        <div class="alert alert-<?php echo $flashMessage['type'] === 'error' ? 'danger' : $flashMessage['type']; ?> alert-dismissible fade show" role="alert">
-                            <?php echo htmlspecialchars($flashMessage['message']); ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        <div class="mt-3">
+                            <div class="alert alert-<?php echo $flashMessage['type'] === 'error' ? 'danger' : $flashMessage['type']; ?> alert-dismissible fade show" role="alert">
+                                <?php echo htmlspecialchars($flashMessage['message']); ?>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
                         </div>
-                    </div>
                     <?php endif; ?>
 
                     <?php
@@ -328,26 +333,26 @@ if ($currentUser) {
                             <?php endforeach; ?>
                         </ol>
                     </nav>
-            <?php else: ?>
-                <!-- Full width for auth pages -->
-                <main class="col-12">
-                    <!-- Flash Messages & Validation Errors -->
-                    <?php
-                    $flashMessage = getFlashMessage();
-                    if ($flashMessage):
-                    ?>
-                    <div class="mt-3">
-                        <div class="alert alert-<?php echo $flashMessage['type'] === 'error' ? 'danger' : $flashMessage['type']; ?> alert-dismissible fade show" role="alert">
-                            <?php echo htmlspecialchars($flashMessage['message']); ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    </div>
-                    <?php endif; ?>
+                <?php else: ?>
+                    <!-- Full width for auth pages -->
+                    <main class="col-12">
+                        <!-- Flash Messages & Validation Errors -->
+                        <?php
+                        $flashMessage = getFlashMessage();
+                        if ($flashMessage):
+                        ?>
+                            <div class="mt-3">
+                                <div class="alert alert-<?php echo $flashMessage['type'] === 'error' ? 'danger' : $flashMessage['type']; ?> alert-dismissible fade show" role="alert">
+                                    <?php echo htmlspecialchars($flashMessage['message']); ?>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
 
-                    <?php
-                    if (isset($_SESSION['errors']) && !empty($_SESSION['errors'])):
-                        echo '<div class="mt-3">' . displayValidationErrors($_SESSION['errors']) . '</div>';
-                        unset($_SESSION['errors']);
-                    endif;
-                    ?>
-            <?php endif; ?>
+                        <?php
+                        if (isset($_SESSION['errors']) && !empty($_SESSION['errors'])):
+                            echo '<div class="mt-3">' . displayValidationErrors($_SESSION['errors']) . '</div>';
+                            unset($_SESSION['errors']);
+                        endif;
+                        ?>
+                    <?php endif; ?>

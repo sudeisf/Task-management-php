@@ -313,13 +313,13 @@ function displayValidationErrors($errors)
     $output = '<div class="alert alert-danger alert-dismissible fade show" role="alert">';
     $output .= '<h6><i class="bi bi-exclamation-triangle me-2"></i>Please fix the following errors:</h6>';
     $output .= '<ul class="mb-0 small">';
-    
+
     foreach ($errors as $field => $fieldErrors) {
         foreach ($fieldErrors as $error) {
             $output .= '<li>' . htmlspecialchars($error) . '</li>';
         }
     }
-    
+
     $output .= '</ul>';
     $output .= '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
     $output .= '</div>';
@@ -341,7 +341,7 @@ function setFlashMessage($message, $type = 'info')
 function isAjaxRequest()
 {
     return isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-           strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 }
 
 
@@ -376,55 +376,6 @@ function getTaskProgress($tasks)
     return calculatePercentage($completed, $total);
 }
 
-/**
- * Generate pagination links
- */
-function generatePaginationLinks($currentPage, $totalPages, $baseUrl, $params = [])
-{
-    $links = '';
-
-    if ($totalPages <= 1) return $links;
-
-    // Previous link
-    if ($currentPage > 1) {
-        $prevUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => $currentPage - 1]));
-        $links .= '<li class="page-item"><a class="page-link" href="' . $prevUrl . '">Previous</a></li>';
-    }
-
-    // Page numbers
-    $start = max(1, $currentPage - 2);
-    $end = min($totalPages, $currentPage + 2);
-
-    if ($start > 1) {
-        $firstUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => 1]));
-        $links .= '<li class="page-item"><a class="page-link" href="' . $firstUrl . '">1</a></li>';
-        if ($start > 2) {
-            $links .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
-        }
-    }
-
-    for ($i = $start; $i <= $end; $i++) {
-        $pageUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => $i]));
-        $activeClass = ($i == $currentPage) ? ' active' : '';
-        $links .= '<li class="page-item' . $activeClass . '"><a class="page-link" href="' . $pageUrl . '">' . $i . '</a></li>';
-    }
-
-    if ($end < $totalPages) {
-        if ($end < $totalPages - 1) {
-            $links .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
-        }
-        $lastUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => $totalPages]));
-        $links .= '<li class="page-item"><a class="page-link" href="' . $lastUrl . '">' . $totalPages . '</a></li>';
-    }
-
-    // Next link
-    if ($currentPage < $totalPages) {
-        $nextUrl = $baseUrl . '?' . http_build_query(array_merge($params, ['page' => $currentPage + 1]));
-        $links .= '<li class="page-item"><a class="page-link" href="' . $nextUrl . '">Next</a></li>';
-    }
-
-    return $links;
-}
 
 /**
  * Build URL with parameters
@@ -457,7 +408,7 @@ function baseUrl()
 function getActivityIcon($action)
 {
     $action = strtolower($action);
-    
+
     // Exact match for type codes
     $icons = [
         'task_assigned' => 'bi-person-check',
@@ -476,18 +427,18 @@ function getActivityIcon($action)
         'deadline_approaching' => 'bi-clock',
         'attachment_uploaded' => 'bi-paperclip'
     ];
-    
+
     if (isset($icons[$action])) {
         return $icons[$action];
     }
-    
+
     // Partial matches for action strings
     if (strpos($action, 'created') !== false) return 'bi-plus-circle';
     if (strpos($action, 'updated') !== false) return 'bi-pencil';
     if (strpos($action, 'completed') !== false) return 'bi-check-circle';
     if (strpos($action, 'comment') !== false) return 'bi-chat';
     if (strpos($action, 'attachment') !== false) return 'bi-paperclip';
-    
+
     return 'bi-bell';
 }
 
@@ -527,7 +478,7 @@ function getActivityActionText($action)
         'project_created' => 'created project',
         'project_updated' => 'updated project'
     ];
-    
+
     return $actions[$action] ?? str_replace('_', ' ', $action);
 }
 

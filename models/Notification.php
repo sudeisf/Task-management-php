@@ -17,7 +17,7 @@ class Notification
     {
         // Check if new columns exist (backward compatibility)
         $hasNewColumns = $this->checkNewColumnsExist();
-        
+
         if ($hasNewColumns) {
             $sql = "INSERT INTO $this->table (user_id, task_id, project_id, type, message, is_read)
                     VALUES (?, ?, ?, ?, ?, ?)";
@@ -48,12 +48,12 @@ class Notification
 
         return false;
     }
-    
+
     // Check if new columns (project_id, type) exist in notifications table
     private function checkNewColumnsExist()
     {
         static $hasNewColumns = null;
-        
+
         if ($hasNewColumns === null) {
             try {
                 $sql = "SHOW COLUMNS FROM $this->table LIKE 'project_id'";
@@ -65,7 +65,7 @@ class Notification
                 $hasNewColumns = false;
             }
         }
-        
+
         return $hasNewColumns;
     }
 
@@ -73,7 +73,7 @@ class Notification
     public function getByUser($user_id, $limit = null, $offset = null, $onlyUnread = false)
     {
         $hasNewColumns = $this->checkNewColumnsExist();
-        
+
         if ($hasNewColumns) {
             $sql = "SELECT n.*, t.title as task_title, p.name as project_name
                     FROM $this->table n
@@ -108,7 +108,7 @@ class Notification
         $this->db->prepare($sql);
         $this->db->execute($params);
         $rows = $this->db->getRows();
-        
+
         if (!$hasNewColumns && !empty($rows)) {
             foreach ($rows as &$row) {
                 if (!isset($row['type'])) {
@@ -123,7 +123,7 @@ class Notification
                 }
             }
         }
-        
+
         return $rows;
     }
 
@@ -131,7 +131,7 @@ class Notification
     public function find($id)
     {
         $hasNewColumns = $this->checkNewColumnsExist();
-        
+
         if ($hasNewColumns) {
             $sql = "SELECT n.*, t.title as task_title, p.name as project_name
                     FROM $this->table n
@@ -271,7 +271,7 @@ class Notification
         if (!$task || empty($task['deadline'])) return false;
 
         $daysOverdue = floor((time() - strtotime($task['deadline'])) / (60 * 60 * 24));
-        
+
         if ($daysOverdue <= 0) return false; // Not overdue
 
         // Check if already sent today
@@ -303,7 +303,7 @@ class Notification
         if (!$project || empty($project['end_date'])) return false;
 
         $daysOverdue = floor((time() - strtotime($project['end_date'])) / (60 * 60 * 24));
-        
+
         if ($daysOverdue <= 0) return false; // Not overdue
 
         // Check if already sent today
@@ -328,7 +328,7 @@ class Notification
     public function checkAndNotifyOverdueTasks($user_id, $user_role)
     {
         $today = date('Y-m-d');
-        
+
         if ($user_role === 'admin') {
             // Admin sees all overdue tasks
             $sql = "SELECT t.id, t.assigned_to FROM tasks t 
@@ -357,9 +357,9 @@ class Notification
             $this->db->prepare($sql);
             $this->db->execute([$user_id, $today]);
         }
-        
+
         $tasks = $this->db->getRows();
-        
+
         foreach ($tasks as $task) {
             $this->createTaskOverdueNotification($task['id'], $user_id);
         }
@@ -372,7 +372,7 @@ class Notification
     public function checkAndNotifyOverdueProjects($user_id, $user_role)
     {
         $today = date('Y-m-d');
-        
+
         if ($user_role === 'admin') {
             // Admin sees all overdue projects
             $sql = "SELECT p.id FROM projects p 
@@ -395,9 +395,9 @@ class Notification
             // Members don't get project overdue notifications
             return;
         }
-        
+
         $projects = $this->db->getRows();
-        
+
         foreach ($projects as $project) {
             $this->createProjectOverdueNotification($project['id'], $user_id);
         }
@@ -413,23 +413,23 @@ class Notification
     public function hasNotificationToday($userId, $entityId, $type, $isProject = false)
     {
         $hasNewColumns = $this->checkNewColumnsExist();
-        
+
         if ($hasNewColumns) {
             $entityColumn = $isProject ? 'project_id' : 'task_id';
-            
+
             $sql = "SELECT COUNT(*) as count 
                     FROM $this->table 
                     WHERE user_id = ? 
                     AND $entityColumn = ? 
                     AND type = ?
                     AND DATE(created_at) = CURDATE()";
-            
+
             $this->db->prepare($sql);
             $this->db->execute([$userId, $entityId, $type]);
         } else {
             // Fallback: check by message content for old schema
             $typeKeyword = str_contains($type, 'overdue') ? 'overdue' : 'assigned';
-            
+
             if ($isProject) {
                 // For project notifications in old schema, task_id is NULL
                 $sql = "SELECT COUNT(*) as count 
@@ -449,70 +449,16 @@ class Notification
                         AND DATE(created_at) = CURDATE()";
                 $params = [$userId, $entityId, "%{$typeKeyword}%"];
             }
-            
+
             $this->db->prepare($sql);
             $this->db->execute($params);
         }
-        
+
         $result = $this->db->getRow();
         return ($result['count'] ?? 0) > 0;
     }
 
-    // Get notification statistics
-    public function getStatistics($user_id = null)
-    {
-        $stats = [
-            'total_notifications' => 0,
-            'unread_notifications' => 0,
-            'today_notifications' => 0,
-            'week_notifications' => 0
-        ];
 
-        $baseSql = "SELECT COUNT(*) as count FROM $this->table WHERE 1=1";
-        $params = [];
-
-        if ($user_id) {
-            $baseSql .= " AND user_id = ?";
-            $params = [$user_id];
-        }
-
-        // Total notifications
-        $this->db->prepare($baseSql);
-        $this->db->execute($params);
-        $result = $this->db->getRow();
-        $stats['total_notifications'] = $result['count'] ?? 0;
-
-        // Unread notifications
-        $unreadSql = $baseSql . " AND is_read = 0";
-        $this->db->prepare($unreadSql);
-        $this->db->execute($params);
-        $result = $this->db->getRow();
-        $stats['unread_notifications'] = $result['count'] ?? 0;
-
-        // Today's notifications
-        $todaySql = $baseSql . " AND DATE(created_at) = CURDATE()";
-        $this->db->prepare($todaySql);
-        $this->db->execute($params);
-        $result = $this->db->getRow();
-        $stats['today_notifications'] = $result['count'] ?? 0;
-
-        // This week's notifications
-        $weekSql = $baseSql . " AND YEARWEEK(created_at) = YEARWEEK(CURDATE())";
-        $this->db->prepare($weekSql);
-        $this->db->execute($params);
-        $result = $this->db->getRow();
-        $stats['week_notifications'] = $result['count'] ?? 0;
-
-        return $stats;
-    }
-
-    // Clean old notifications (for maintenance)
-    public function cleanOldNotifications($days = 30)
-    {
-        $sql = "DELETE FROM $this->table WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY) AND is_read = 1";
-        $this->db->prepare($sql);
-        return $this->db->execute([$days]);
-    }
 
     // Get notification count
     public function getCount($user_id = null, $onlyUnread = false)

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Admin Users Management View
  * Display and manage all users in the system
@@ -59,13 +60,13 @@ $pageTitle = 'Manage Users';
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <?php if (!empty($user['avatar'])): ?>
-                                                <img src="<?= BASE_URL ?>/<?= htmlspecialchars($user['avatar']) ?>" 
-                                                     alt="Avatar" 
-                                                     class="rounded-circle me-2" 
-                                                     style="width: 32px; height: 32px; object-fit: cover;">
+                                                <img src="<?= BASE_URL ?>/<?= htmlspecialchars($user['avatar']) ?>"
+                                                    alt="Avatar"
+                                                    class="rounded-circle me-2"
+                                                    style="width: 32px; height: 32px; object-fit: cover;">
                                             <?php else: ?>
-                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
-                                                     style="width: 32px; height: 32px;">
+                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                                                    style="width: 32px; height: 32px;">
                                                     <?= strtoupper(substr($user['full_name'], 0, 1)) ?>
                                                 </div>
                                             <?php endif; ?>
@@ -100,16 +101,19 @@ $pageTitle = 'Manage Users';
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <a href="?action=edit_user&id=<?= $user['id'] ?>" 
-                                               class="btn btn-outline-primary" 
-                                               title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <?php if ($user['id'] != $currentUser['id']): ?>
-                                                <button type="button" 
-                                                        class="btn btn-outline-danger" 
-                                                        onclick="confirmDelete(<?= $user['id'] ?>, '<?= htmlspecialchars($user['full_name']) ?>')"
-                                                        title="Delete">
+                                            <?php if ($user['role'] !== 'admin' || $user['id'] == $currentUser['id']): ?>
+                                                <a href="?action=edit_user&id=<?= $user['id'] ?>"
+                                                    class="btn btn-outline-primary"
+                                                    title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            <?php endif; ?>
+
+                                            <?php if ($user['id'] != $currentUser['id'] && $user['role'] !== 'admin'): ?>
+                                                <button type="button"
+                                                    class="btn btn-outline-danger"
+                                                    onclick="confirmDelete(<?= $user['id'] ?>, '<?= htmlspecialchars($user['full_name']) ?>')"
+                                                    title="Delete">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             <?php endif; ?>
@@ -163,24 +167,24 @@ $pageTitle = 'Manage Users';
 </form>
 
 <script>
-function confirmDelete(userId, userName) {
-    if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
-        const form = document.getElementById('deleteForm');
-        form.action = '?action=delete_user&id=' + userId;
-        document.getElementById('deleteUserId').value = userId;
-        form.submit();
+    function confirmDelete(userId, userName) {
+        if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+            const form = document.getElementById('deleteForm');
+            form.action = '?action=delete_user&id=' + userId;
+            document.getElementById('deleteUserId').value = userId;
+            form.submit();
+        }
     }
-}
 </script>
 
 <style>
-.table th {
-    font-weight: 600;
-    color: #6c757d;
-    border-bottom: 2px solid #dee2e6;
-}
+    .table th {
+        font-weight: 600;
+        color: #6c757d;
+        border-bottom: 2px solid #dee2e6;
+    }
 
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
 </style>

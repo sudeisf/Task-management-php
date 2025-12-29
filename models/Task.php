@@ -37,7 +37,7 @@ class Task
         return false;
     }
 
-    // Update task with enhanced fieldsF
+    // Update task with enhanced fields
     public function update($id, $data)
     {
         $sql = "UPDATE $this->table SET
@@ -188,7 +188,6 @@ class Task
         return $this->db->getRows();
     }
 
-    // Get all tasks (admin/manager view)
     // Get all tasks (with optional role filters)
     public function all($filters = [], $limit = null, $offset = null, $user_id = null, $user_role = null)
     {
@@ -267,84 +266,6 @@ class Task
         return $this->db->getRows();
     }
 
-    // Search tasks
-    public function search($query, $user_id = null, $user_role = null, $limit = null, $offset = null)
-    {
-        $sql = "SELECT t.*,
-                       p.name as priority_name,
-                       creator.full_name as creator_name,
-                       assignee.full_name as assignee_name
-                FROM $this->table t
-                LEFT JOIN priority_levels p ON t.priority_id = p.id
-                LEFT JOIN users creator ON t.created_by = creator.id
-                LEFT JOIN users assignee ON t.assigned_to = assignee.id
-                WHERE (t.title LIKE ? OR t.description LIKE ?)";
-
-        $params = ["%$query%", "%$query%"];
-
-        // Restrict to user's tasks if not admin/manager
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
-            $sql .= " AND (t.assigned_to=? OR t.created_by=?)";
-            $params[] = $user_id;
-            $params[] = $user_id;
-        }
-
-        $sql .= " ORDER BY t.created_at DESC";
-
-        if ($limit) {
-            $sql .= " LIMIT ?";
-            $params[] = $limit;
-        }
-
-        if ($offset) {
-            $sql .= " OFFSET ?";
-            $params[] = $offset;
-        }
-
-        $this->db->prepare($sql);
-        $this->db->execute($params);
-        return $this->db->getRows();
-    }
-
-    // Get tasks statistics
-    public function getStatistics($user_id = null, $user_role = null)
-    {
-        $stats = [
-            'total' => 0,
-            'todo' => 0,
-            'in_progress' => 0,
-            'completed' => 0,
-            'overdue' => 0,
-            'due_today' => 0,
-            'due_this_week' => 0
-        ];
-
-        // Base query
-        $base_sql = "SELECT
-            COUNT(*) as total,
-            SUM(CASE WHEN status='todo' THEN 1 ELSE 0 END) as todo,
-            SUM(CASE WHEN status='in_progress' THEN 1 ELSE 0 END) as in_progress,
-            SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as completed,
-            SUM(CASE WHEN deadline < CURDATE() AND status != 'completed' THEN 1 ELSE 0 END) as overdue,
-            SUM(CASE WHEN deadline = CURDATE() AND status != 'completed' THEN 1 ELSE 0 END) as due_today,
-            SUM(CASE WHEN deadline BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND status != 'completed' THEN 1 ELSE 0 END) as due_this_week
-            FROM $this->table WHERE 1=1";
-
-        $params = [];
-
-        // Restrict to user's tasks if not admin/manager
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
-            $base_sql .= " AND (assigned_to=? OR created_by=?)";
-            $params = [$user_id, $user_id];
-        }
-
-        $this->db->prepare($base_sql);
-        $this->db->execute($params);
-        $result = $this->db->getRow();
-
-        return $result ?: $stats;
-    }
-
     // Get tasks by priority distribution
     public function getPriorityDistribution($user_id = null, $user_role = null)
     {
@@ -381,7 +302,8 @@ class Task
 
         $params = [];
 
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
+        // ALWAYS restrict to user's tasks (assigned or created) as per user request
+        if ($user_id) {
             $sql .= " AND (t.assigned_to=? OR t.created_by=?)";
             $params = [$user_id, $user_id];
         }
@@ -546,7 +468,7 @@ class Task
         }
 
         $placeholders = str_repeat('?,', count($projectIds) - 1) . '?';
-        
+
         $sql = "SELECT t.*,
                        p.name as priority_name,
                        creator.full_name as creator_name,

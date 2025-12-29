@@ -13,12 +13,12 @@ class Project
     }
 
     // ==================== CREATE ====================
-    
+
     public function create($data)
     {
         $sql = "INSERT INTO $this->table (name, description, status, start_date, end_date, created_by) 
                 VALUES (?, ?, ?, ?, ?, ?)";
-        
+
         $this->db->prepare($sql);
         $params = [
             $data['name'],
@@ -28,16 +28,16 @@ class Project
             $data['end_date'] ?? null,
             $data['created_by']
         ];
-        
+
         if ($this->db->execute($params)) {
             return $this->db->getLastInsertId();
         }
-        
+
         return false;
     }
 
     // ==================== READ ====================
-    
+
     public function find($id)
     {
         $sql = "SELECT p.*, u.full_name as creator_name,
@@ -50,7 +50,7 @@ class Project
                 LEFT JOIN project_users pu ON p.id = pu.project_id
                 WHERE p.id = ?
                 GROUP BY p.id";
-        
+
         $this->db->prepare($sql);
         $this->db->execute([$id]);
         return $this->db->getRow();
@@ -67,9 +67,9 @@ class Project
                 LEFT JOIN tasks t ON p.id = t.project_id
                 LEFT JOIN project_users pu ON p.id = pu.project_id
                 WHERE 1=1";
-        
+
         $params = [];
-        
+
         // Apply filters
         if (!empty($filters['status'])) {
             if (is_array($filters['status'])) {
@@ -81,16 +81,16 @@ class Project
                 $params[] = $filters['status'];
             }
         }
-        
+
         if (!empty($filters['search'])) {
             $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
             $searchTerm = '%' . $filters['search'] . '%';
             $params[] = $searchTerm;
             $params[] = $searchTerm;
         }
-        
+
         $sql .= " GROUP BY p.id ORDER BY p.created_at DESC";
-        
+
         $this->db->prepare($sql);
         $this->db->execute($params);
         return $this->db->getRows();
@@ -108,7 +108,7 @@ class Project
                 GROUP BY p.id
                 ORDER BY p.created_at DESC
                 LIMIT ?";
-        
+
         $this->db->prepare($sql);
         $this->db->execute([$limit]);
         return $this->db->getRows();
@@ -139,22 +139,14 @@ class Project
                 $sql .= " AND p.status = ?";
             }
         }
-        
+
         if (!empty($filters['search'])) {
             $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
             $searchTerm = '%' . $filters['search'] . '%';
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
         }
 
         $sql .= " GROUP BY p.id ORDER BY p.created_at DESC";
-        
-        // Add ID to params at the beginning (wait, params are positional!)
-        // The first param is ? for user_id in subquery.
-        // So params list starts with $managerId.
-        // Then we append filter params.
-        // Fix: Use array_unshift or build array carefully.
-        
+
         $queryParams = [$managerId];
         if (!empty($filters['status'])) {
             if (is_array($filters['status'])) {
@@ -190,7 +182,6 @@ class Project
                 )";
 
         // Apply filters
-        // Apply filters
         if (!empty($filters['status'])) {
             if (is_array($filters['status'])) {
                 $placeholders = implode(',', array_fill(0, count($filters['status']), '?'));
@@ -199,12 +190,10 @@ class Project
                 $sql .= " AND p.status = ?";
             }
         }
-        
+
         if (!empty($filters['search'])) {
             $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
             $searchTerm = '%' . $filters['search'] . '%';
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
         }
 
         $sql .= " GROUP BY p.id ORDER BY p.created_at DESC";
@@ -221,20 +210,20 @@ class Project
             $queryParams[] = $searchTerm;
             $queryParams[] = $searchTerm;
         }
-        
+
         $this->db->prepare($sql);
         $this->db->execute($queryParams);
         return $this->db->getRows();
     }
 
     // ==================== UPDATE ====================
-    
+
     public function update($id, $data)
     {
         $sql = "UPDATE $this->table 
                 SET name = ?, description = ?, status = ?, start_date = ?, end_date = ?
                 WHERE id = ?";
-        
+
         $this->db->prepare($sql);
         $params = [
             $data['name'],
@@ -244,12 +233,12 @@ class Project
             $data['end_date'] ?? null,
             $id
         ];
-        
+
         return $this->db->execute($params);
     }
 
     // ==================== DELETE ====================
-    
+
     public function delete($id)
     {
         $sql = "DELETE FROM $this->table WHERE id = ?";
@@ -258,14 +247,14 @@ class Project
     }
 
     // ==================== PROJECT USERS ====================
-    
+
     // Assign user to project
     public function assignUser($projectId, $userId, $role = 'member')
     {
         $sql = "INSERT INTO project_users (project_id, user_id, role_in_project) 
                 VALUES (?, ?, ?)
                 ON DUPLICATE KEY UPDATE role_in_project = ?";
-        
+
         $this->db->prepare($sql);
         return $this->db->execute([$projectId, $userId, $role, $role]);
     }
@@ -286,7 +275,7 @@ class Project
                 JOIN users u ON pu.user_id = u.id
                 WHERE pu.project_id = ?
                 ORDER BY pu.role_in_project, u.full_name";
-        
+
         $this->db->prepare($sql);
         $this->db->execute([$projectId]);
         return $this->db->getRows();
@@ -300,7 +289,7 @@ class Project
                 JOIN users u ON pu.user_id = u.id
                 WHERE pu.project_id = ? AND pu.role_in_project = 'manager'
                 ORDER BY u.full_name";
-        
+
         $this->db->prepare($sql);
         $this->db->execute([$projectId]);
         return $this->db->getRows();
@@ -314,7 +303,7 @@ class Project
                 JOIN users u ON pu.user_id = u.id
                 WHERE pu.project_id = ? AND pu.role_in_project = 'member'
                 ORDER BY u.full_name";
-        
+
         $this->db->prepare($sql);
         $this->db->execute([$projectId]);
         return $this->db->getRows();
@@ -327,74 +316,54 @@ class Project
         if ($userRole === 'admin') {
             return true;
         }
-        
+
         // Check if user is assigned to project
         $sql = "SELECT COUNT(*) as count FROM project_users 
                 WHERE project_id = ? AND user_id = ?";
-        
+
         $this->db->prepare($sql);
         $this->db->execute([$projectId, $userId]);
         $result = $this->db->getRow();
-        
+
         if ($result['count'] > 0) {
             return true;
         }
-        
+
         // For members, also check if they have any tasks in the project
         if ($userRole === 'member') {
             $sql = "SELECT COUNT(*) as count FROM tasks 
                     WHERE project_id = ? AND assigned_to = ?";
-            
+
             $this->db->prepare($sql);
             $this->db->execute([$projectId, $userId]);
             $result = $this->db->getRow();
-            
+
             return $result['count'] > 0;
         }
-        
+
         return false;
     }
 
     // ==================== STATISTICS ====================
-    
+
     public function getStatistics($projectId = null)
     {
-        if ($projectId) {
-            // Single project stats
-            $sql = "SELECT 
-                    COUNT(DISTINCT t.id) as total_tasks,
-                    COUNT(DISTINCT CASE WHEN t.status = 'todo' THEN t.id END) as todo_tasks,
-                    COUNT(DISTINCT CASE WHEN t.status = 'in_progress' THEN t.id END) as in_progress_tasks,
-                    COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
-                    COUNT(DISTINCT pu.user_id) as team_size,
-                    COUNT(DISTINCT c.id) as total_comments
-                    FROM projects p
-                    LEFT JOIN tasks t ON p.id = t.project_id
-                    LEFT JOIN project_users pu ON p.id = pu.project_id
-                    LEFT JOIN comments c ON t.id = c.task_id
-                    WHERE p.id = ?";
-            
-            $this->db->prepare($sql);
-            $this->db->execute([$projectId]);
-            return $this->db->getRow();
-        } else {
-            // System-wide stats
-            $sql = "SELECT 
-                    COUNT(DISTINCT p.id) as total,
-                    COUNT(DISTINCT CASE WHEN p.status = 'planning' THEN p.id END) as planning,
-                    COUNT(DISTINCT CASE WHEN p.status = 'in_progress' THEN p.id END) as in_progress,
-                    COUNT(DISTINCT CASE WHEN p.status = 'completed' THEN p.id END) as completed,
-                    COUNT(DISTINCT CASE WHEN p.status = 'on_hold' THEN p.id END) as on_hold,
-                    COUNT(DISTINCT t.id) as total_tasks,
-                    COUNT(DISTINCT pu.user_id) as total_team_members
-                    FROM projects p
-                    LEFT JOIN tasks t ON p.id = t.project_id
-                    LEFT JOIN project_users pu ON p.id = pu.project_id";
-            
-            $this->db->prepare($sql);
-            $this->db->execute([]);
-            return $this->db->getRow();
-        }
+        $sql = "SELECT 
+                COUNT(DISTINCT t.id) as total_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'todo' THEN t.id END) as todo_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'in_progress' THEN t.id END) as in_progress_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tasks,
+                COUNT(DISTINCT pu.user_id) as team_size,
+                COUNT(DISTINCT c.id) as total_comments
+                FROM projects p
+                LEFT JOIN tasks t ON p.id = t.project_id
+                LEFT JOIN project_users pu ON p.id = pu.project_id
+                LEFT JOIN comments c ON t.id = c.task_id
+                WHERE p.id = ?";
+
+        $this->db->prepare($sql);
+        $this->db->execute([$projectId]);
+        return $this->db->getRow();
     }
 
     // Get projects user is assigned to (any role)
@@ -415,7 +384,7 @@ class Project
 
         // Apply filters
         $queryParams = [$userId];
-        
+
         if (!empty($filters['status'])) {
             if (is_array($filters['status'])) {
                 $placeholders = implode(',', array_fill(0, count($filters['status']), '?'));
@@ -426,7 +395,7 @@ class Project
                 $queryParams[] = $filters['status'];
             }
         }
-        
+
         if (!empty($filters['search'])) {
             $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
             $searchTerm = '%' . $filters['search'] . '%';
@@ -435,7 +404,7 @@ class Project
         }
 
         $sql .= " GROUP BY p.id ORDER BY p.created_at DESC";
-        
+
         $this->db->prepare($sql);
         $this->db->execute($queryParams);
         return $this->db->getRows();
@@ -511,18 +480,18 @@ class Project
                 COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress_tasks
                 FROM tasks 
                 WHERE project_id = ?";
-        
+
         $this->db->prepare($sql);
         $this->db->execute([$projectId]);
         $stats = $this->db->getRow();
-        
+
         $totalTasks = $stats['total_tasks'] ?? 0;
         $completedTasks = $stats['completed_tasks'] ?? 0;
         $inProgressTasks = $stats['in_progress_tasks'] ?? 0;
-        
+
         // Determine new status
         $newStatus = 'planning'; // Default: To Do
-        
+
         if ($totalTasks > 0) {
             if ($completedTasks === $totalTasks) {
                 $newStatus = 'completed'; // All tasks completed
@@ -530,7 +499,7 @@ class Project
                 $newStatus = 'in_progress'; // Some tasks completed or in progress
             }
         }
-        
+
         // Update project status
         $updateSql = "UPDATE $this->table SET status = ? WHERE id = ?";
         $this->db->prepare($updateSql);

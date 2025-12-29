@@ -185,40 +185,6 @@ class Attachment
         return $totalSize;
     }
 
-    // Search attachments
-    public function search($query, $user_id = null, $user_role = null, $limit = null, $offset = null)
-    {
-        $sql = "SELECT a.*, t.title as task_title, u.full_name, u.email
-                FROM $this->table a
-                LEFT JOIN tasks t ON a.task_id = t.id
-                LEFT JOIN users u ON a.uploaded_by = u.id
-                WHERE (a.file_name LIKE ? OR t.title LIKE ?)
-                AND t.id IS NOT NULL"; // Ensure task still exists
-
-        $params = ["%$query%", "%$query%"];
-
-        // Restrict to user's attachments if not admin/manager
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
-            $sql .= " AND a.uploaded_by = ?";
-            $params[] = $user_id;
-        }
-
-        $sql .= " ORDER BY a.created_at DESC";
-
-        if ($limit) {
-            $sql .= " LIMIT ?";
-            $params[] = $limit;
-        }
-
-        if ($offset) {
-            $sql .= " OFFSET ?";
-            $params[] = $offset;
-        }
-
-        $this->db->prepare($sql);
-        $this->db->execute($params);
-        return $this->db->getRows();
-    }
 
     // Get file extension from path
     public function getFileExtension($filePath)
@@ -277,57 +243,5 @@ class Attachment
 
         // Users can delete their own attachments
         return $attachment['uploaded_by'] == $user_id;
-    }
-
-    // Get attachment statistics
-    public function getStatistics($user_id = null, $user_role = null)
-    {
-        $stats = [
-            'total_attachments' => 0,
-            'total_size' => 0,
-            'by_type' => []
-        ];
-
-        // Base query
-        $baseSql = "SELECT COUNT(*) as count FROM $this->table WHERE 1=1";
-        $params = [];
-
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
-            $baseSql .= " AND uploaded_by = ?";
-            $params = [$user_id];
-        }
-
-        // Total attachments
-        $this->db->prepare($baseSql);
-        $this->db->execute($params);
-        $result = $this->db->getRow();
-        $stats['total_attachments'] = $result['count'] ?? 0;
-
-        // Get attachments for size calculation
-        $attachmentsSql = "SELECT file_path FROM $this->table WHERE 1=1";
-        if ($user_role !== 'admin' && $user_role !== 'manager') {
-            $attachmentsSql .= " AND uploaded_by = ?";
-        }
-
-        $this->db->prepare($attachmentsSql);
-        $this->db->execute($params);
-        $attachments = $this->db->getResult();
-
-        $totalSize = 0;
-        $typeCount = [];
-
-        while ($attachment = $attachments->fetch_assoc()) {
-            $filePath = UPLOAD_PATH . '/' . $attachment['file_path'];
-            if (file_exists($filePath)) {
-                $totalSize += filesize($filePath);
-                $fileType = $this->getFileType($attachment['file_path']);
-                $typeCount[$fileType] = ($typeCount[$fileType] ?? 0) + 1;
-            }
-        }
-
-        $stats['total_size'] = $totalSize;
-        $stats['by_type'] = $typeCount;
-
-        return $stats;
     }
 }

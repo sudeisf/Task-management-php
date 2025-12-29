@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Admin User Form View
  * Create or edit user
@@ -28,27 +29,27 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
                     <form method="POST" action="?action=<?= $isEdit ? 'update_user' : 'store_user' ?><?= $isEdit ? '&id=' . $user['id'] : '' ?>">
-                        
+
                         <!-- Full Name -->
                         <div class="mb-3">
                             <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="full_name" 
-                                   name="full_name" 
-                                   value="<?= $isEdit ? htmlspecialchars($user['full_name']) : '' ?>" 
-                                   required>
+                            <input type="text"
+                                class="form-control"
+                                id="full_name"
+                                name="full_name"
+                                value="<?= $isEdit ? htmlspecialchars($user['full_name']) : '' ?>"
+                                required>
                         </div>
 
                         <!-- Email -->
                         <div class="mb-3">
                             <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                            <input type="email" 
-                                   class="form-control" 
-                                   id="email" 
-                                   name="email" 
-                                   value="<?= $isEdit ? htmlspecialchars($user['email']) : '' ?>" 
-                                   required>
+                            <input type="email"
+                                class="form-control"
+                                id="email"
+                                name="email"
+                                value="<?= $isEdit ? htmlspecialchars($user['email']) : '' ?>"
+                                required>
                         </div>
 
                         <!-- Role -->
@@ -67,24 +68,26 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
                             </div>
                         </div>
 
-                        <!-- Status -->
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status" name="status">
-                                <option value="active" <?= ($isEdit && $user['status'] === 'active') ? 'selected' : '' ?>>Active</option>
-                                <option value="inactive" <?= ($isEdit && $user['status'] === 'inactive') ? 'selected' : '' ?>>Inactive</option>
-                            </select>
-                        </div>
+                        <!-- Status (Edit Only) -->
+                        <?php if ($isEdit): ?>
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="active" <?= ($user['status'] === 'active') ? 'selected' : '' ?>>Active</option>
+                                    <option value="inactive" <?= ($user['status'] === 'inactive') ? 'selected' : '' ?>>Inactive</option>
+                                </select>
+                            </div>
+                        <?php endif; ?>
 
                         <?php if (!$isEdit): ?>
                             <!-- Password (Create Only) -->
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                                <input type="password" 
-                                       class="form-control" 
-                                       id="password" 
-                                       name="password" 
-                                       required>
+                                <input type="password"
+                                    class="form-control"
+                                    id="password"
+                                    name="password"
+                                    required>
                                 <div class="form-text">
                                     Password must contain at least 8 characters, including uppercase, lowercase, number, and special character.
                                 </div>
@@ -93,21 +96,21 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
                             <!-- Confirm Password -->
                             <div class="mb-3">
                                 <label for="confirm_password" class="form-label">Confirm Password <span class="text-danger">*</span></label>
-                                <input type="password" 
-                                       class="form-control" 
-                                       id="confirm_password" 
-                                       name="confirm_password" 
-                                       required>
+                                <input type="password"
+                                    class="form-control"
+                                    id="confirm_password"
+                                    name="confirm_password"
+                                    required>
                             </div>
                         <?php else: ?>
                             <!-- Change Password (Edit Only) -->
                             <div class="mb-3">
                                 <div class="form-check">
-                                    <input class="form-check-input" 
-                                           type="checkbox" 
-                                           id="change_password" 
-                                           name="change_password"
-                                           onchange="togglePasswordFields()">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="change_password"
+                                        name="change_password"
+                                        onchange="togglePasswordFields()">
                                     <label class="form-check-label" for="change_password">
                                         Change Password
                                     </label>
@@ -117,10 +120,10 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
                             <div id="password_fields" style="display: none;">
                                 <div class="mb-3">
                                     <label for="new_password" class="form-label">New Password</label>
-                                    <input type="password" 
-                                           class="form-control" 
-                                           id="new_password" 
-                                           name="new_password">
+                                    <input type="password"
+                                        class="form-control"
+                                        id="new_password"
+                                        name="new_password">
                                     <div class="form-text">
                                         Password must contain at least 8 characters, including uppercase, lowercase, number, and special character.
                                     </div>
@@ -128,10 +131,10 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
 
                                 <div class="mb-3">
                                     <label for="confirm_new_password" class="form-label">Confirm New Password</label>
-                                    <input type="password" 
-                                           class="form-control" 
-                                           id="confirm_new_password" 
-                                           name="confirm_new_password">
+                                    <input type="password"
+                                        class="form-control"
+                                        id="confirm_new_password"
+                                        name="confirm_new_password">
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -154,51 +157,51 @@ unset($_SESSION['errors'], $_SESSION['form_data']);
 </div>
 
 <script>
-function togglePasswordFields() {
-    const checkbox = document.getElementById('change_password');
-    const fields = document.getElementById('password_fields');
-    const newPassword = document.getElementById('new_password');
-    const confirmPassword = document.getElementById('confirm_new_password');
-    
-    if (checkbox.checked) {
-        fields.style.display = 'block';
-        newPassword.required = true;
-        confirmPassword.required = true;
-    } else {
-        fields.style.display = 'none';
-        newPassword.required = false;
-        confirmPassword.required = false;
-        newPassword.value = '';
-        confirmPassword.value = '';
-    }
-}
+    function togglePasswordFields() {
+        const checkbox = document.getElementById('change_password');
+        const fields = document.getElementById('password_fields');
+        const newPassword = document.getElementById('new_password');
+        const confirmPassword = document.getElementById('confirm_new_password');
 
-// Password validation
-document.querySelector('form').addEventListener('submit', function(e) {
-    const password = document.getElementById('password') || document.getElementById('new_password');
-    const confirmPassword = document.getElementById('confirm_password') || document.getElementById('confirm_new_password');
-    
-    if (password && password.value) {
-        if (password.value !== confirmPassword.value) {
-            e.preventDefault();
-            alert('Passwords do not match!');
-            return false;
+        if (checkbox.checked) {
+            fields.style.display = 'block';
+            newPassword.required = true;
+            confirmPassword.required = true;
+        } else {
+            fields.style.display = 'none';
+            newPassword.required = false;
+            confirmPassword.required = false;
+            newPassword.value = '';
+            confirmPassword.value = '';
         }
     }
-});
+
+    // Password validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const password = document.getElementById('password') || document.getElementById('new_password');
+        const confirmPassword = document.getElementById('confirm_password') || document.getElementById('confirm_new_password');
+
+        if (password && password.value) {
+            if (password.value !== confirmPassword.value) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+                return false;
+            }
+        }
+    });
 </script>
 
 <style>
-.form-label {
-    font-weight: 600;
-    color: #495057;
-}
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+    }
 
-.form-text {
-    font-size: 0.875rem;
-}
+    .form-text {
+        font-size: 0.875rem;
+    }
 
-.card {
-    border-radius: 8px;
-}
+    .card {
+        border-radius: 8px;
+    }
 </style>
